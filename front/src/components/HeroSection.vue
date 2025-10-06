@@ -218,3 +218,38 @@ onUnmounted(() => {
   }
 });
 </script>
+
+<style scoped>
+/* Simple glitch effect */
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.glitch-layer.red {
+  color: #ff0055;
+  transform: translate(-2px, -2px);
+}
+
+.glitch-layer.cyan {
+  color: #00ffff;
+  transform: translate(2px, 2px);
+}
+
+.glitch.active .glitch-text {
+  opacity: 0;
+}
+
+.glitch.active .glitch-layer {
+  opacity: 1;
+}
+</style>
