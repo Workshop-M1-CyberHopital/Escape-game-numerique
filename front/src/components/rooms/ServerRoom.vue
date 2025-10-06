@@ -451,6 +451,13 @@ const checkPuzzleAnswer = () => {
         puzzleSolved.value = true;
         isCompleted.value = true;
         createFireworks(3000);
+
+        showSuccess(
+            "RÉPONSE CORRECTE",
+            "Excellent ! Vous avez réussi à décoder le mot de passe et à restaurer le pare-feu. La sécurité des données de santé est maintenant protégée.",
+            8000
+        );
+
         emit("room-completed", "server");
     } else {
         alert("Réponse incorrecte. Essayez encore !");
