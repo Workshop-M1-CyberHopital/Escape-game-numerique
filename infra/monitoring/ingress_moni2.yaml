@@ -31,7 +31,7 @@ spec:
             name: prometheus-grafana
             port:
               number: 80
-  - host: smoothie-loki.simplon-duna.space
+  - host: loki.eisi-dune.eu
     http:
       paths:
       - pathType: Prefix
