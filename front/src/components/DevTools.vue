@@ -120,7 +120,7 @@ const emit = defineEmits([
     "reset-game",
 ]);
 
-const isDev = ref(true);
+const isDev = ref(false);
 
 const toggleDev = () => {
     isDev.value = !isDev.value;
