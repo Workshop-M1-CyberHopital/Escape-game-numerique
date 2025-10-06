@@ -165,12 +165,6 @@
                   <i data-lucide="play" class="w-5 h-5"></i>
                   COMMENCER LA MISSION
               </button>
-              <button
-                  class="flex items-center justify-center gap-2 px-8 py-6 border-2 border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10 font-cyber text-lg rounded-lg transition-all"
-              >
-                  <i data-lucide="shield" class="w-5 h-5"></i>
-                  EN SAVOIR PLUS
-              </button>
           </div>
       </div>
   </section>
