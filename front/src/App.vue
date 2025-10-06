@@ -37,11 +37,19 @@
             <!-- Hero Section -->
             <HeroSection @start-mission="handleStartMission" />
 
-            <!-- Team Setup Section -->
-            <TeamSetup
-                v-if="showTeamSetup"
+            <!-- Team Setup Modal -->
+            <TeamSetupModal
+                :visible="showTeamSetup"
                 @close="showTeamSetup = false"
                 @start-game="handleStartGame"
+            />
+            
+            <!-- Loading Screen -->
+            <LoadingScreen
+                :visible="showLoadingScreen"
+                :team-name="loadingTeamName"
+                :players="loadingPlayers"
+                @complete="handleLoadingComplete"
             />
 
             <!-- Rooms Section (Preview) -->
@@ -153,7 +161,8 @@
 <script setup>
 import { ref, onMounted, nextTick, watch } from "vue";
 import HeroSection from "./components/HeroSection.vue";
-import TeamSetup from "./components/TeamSetup.vue";
+import TeamSetupModal from "./components/TeamSetupModal.vue";
+import LoadingScreen from "./components/LoadingScreen.vue";
 import RoomsSection from "./components/RoomsSection.vue";
 import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
@@ -178,6 +187,9 @@ const { gameState, startGame, enterRoom, exitRoom, unlockRoom, unlockAllRooms, r
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
 const showTeamSetup = ref(false);
+const showLoadingScreen = ref(false);
+const loadingTeamName = ref('');
+const loadingPlayers = ref([]);
 const hasPlayedRoomSelectionAudio = ref(false);
 const showAudioActivationButton = ref(false);
 const showAudioBriefing = ref(false);
@@ -461,22 +473,23 @@ const handleCloseFinishImagingRoomBriefing = () => {
 
 const handleStartMission = () => {
     showTeamSetup.value = true;
-    
-    // Scroll vers la section de configuration d'équipe
-    setTimeout(() => {
-        const teamSetupSection = document.querySelector('.team-setup-section');
-        if (teamSetupSection) {
-            teamSetupSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }
-    }, 100);
 };
 
 const handleStartGame = async (teamData) => {
-    startGame(teamData);
+    // Afficher l'écran de chargement
+    showLoadingScreen.value = true;
+    loadingTeamName.value = teamData.name;
+    loadingPlayers.value = teamData.players;
     showTeamSetup.value = false;
+};
+
+const handleLoadingComplete = async () => {
+    // Démarrer le jeu après le chargement
+    startGame({
+        name: loadingTeamName.value,
+        players: loadingPlayers.value
+    });
+    showLoadingScreen.value = false;
     
     // Attendre que le DOM soit mis à jour
     await nextTick();
