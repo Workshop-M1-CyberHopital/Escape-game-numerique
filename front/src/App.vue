@@ -1,47 +1,68 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+  <div class="relative z-10 w-full min-h-screen">
+    <!-- Animated Background Canvas -->
+    <canvas id="animated-bg"></canvas>
+    
+    <!-- Hero Section -->
+    <HeroSection @start-mission="handleStartMission" />
+    
+    <!-- Team Setup Section -->
+    <TeamSetup 
+      v-if="showTeamSetup" 
+      @close="showTeamSetup = false"
+      @start-game="handleStartGame"
+    />
+    
+    <!-- Rooms Section -->
+    <RoomsSection />
+    
+    <!-- Footer -->
+    <footer class="py-8 px-4 border-t border-gray-800">
+      <div class="max-w-7xl mx-auto text-center">
+        <p class="text-gray-500 font-tech text-sm">
+          © 2024 Cyber-Hôpital – Mission Résilience | Escape Game Numérique Pédagogique
+        </p>
+      </div>
+    </footer>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
+<script setup>
+import { ref, onMounted } from 'vue'
+import HeroSection from './components/HeroSection.vue'
+import TeamSetup from './components/TeamSetup.vue'
+import RoomsSection from './components/RoomsSection.vue'
+import { initAnimations } from './utils/animations'
+
+const showTeamSetup = ref(false)
+
+const handleStartMission = () => {
+  showTeamSetup.value = true
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+const handleStartGame = (teamData) => {
+  console.log('Starting game with team:', teamData)
+  showTeamSetup.value = false
+  // Ici vous pouvez ajouter la logique pour démarrer le jeu
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+onMounted(() => {
+  initAnimations()
+})
+</script>
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+<style>
+@import './assets/cyber-styles.css';
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+#app {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.relative.z-10 {
+  width: 100%;
+  min-height: 100vh;
 }
 </style>
