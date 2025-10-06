@@ -17,11 +17,12 @@ const showToast = (options) => {
   
   // Limiter à 2 toasts maximum
   if (toasts.value.length >= 2) {
-    // Supprimer le plus ancien toast
-    toasts.value.shift()
+    // Supprimer le plus ancien toast (le dernier dans le tableau)
+    toasts.value.pop()
   }
   
-  toasts.value.push(toast)
+  // Ajouter le nouveau toast au début pour qu'il s'affiche en haut
+  toasts.value.unshift(toast)
   
   // Auto remove after duration
   if (toast.autoClose) {
