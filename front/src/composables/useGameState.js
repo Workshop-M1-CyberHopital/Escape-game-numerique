@@ -52,6 +52,21 @@ export function useGameState() {
     }
   }
 
+  const unlockAllRooms = () => {
+    gameState.unlockedRooms = ['server', 'dna-lab', 'imaging', 'heart']
+  }
+
+  const resetGame = () => {
+    gameState.isGameStarted = false
+    gameState.teamName = ''
+    gameState.players = []
+    gameState.currentRoom = null
+    gameState.unlockedRooms = ['server']
+    gameState.startTime = null
+    gameState.timer = 0
+    stopTimer()
+  }
+
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
@@ -70,6 +85,8 @@ export function useGameState() {
     enterRoom,
     exitRoom,
     unlockRoom,
+    unlockAllRooms,
+    resetGame,
     formatTime
   }
 }

@@ -64,6 +64,15 @@
         <!-- Audio Controls -->
         <AudioControls />
         
+        <!-- DevTools -->
+        <DevTools 
+            :game-state="gameState"
+            @start-game="handleStartGame"
+            @enter-room="handleEnterRoom"
+            @unlock-all-rooms="handleUnlockAllRooms"
+            @reset-game="handleResetGame"
+        />
+        
         <!-- Audio Briefing -->
         <AudioBriefing 
             :visible="showAudioBriefing"
@@ -151,6 +160,7 @@ import DNARoom from "./components/rooms/DNARoom.vue";
 import ImagingRoom from "./components/rooms/ImagingRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
+import DevTools from "./components/DevTools.vue";
 import AudioBriefing from "./components/briefing/AudioBriefing.vue";
 import FinishServerRoomBriefing from "./components/briefing/FinishServerRoomBriefing.vue";
 import FinishDNARoomBriefing from "./components/briefing/FinishDNARoomBriefing.vue";
@@ -163,7 +173,7 @@ import { useToast } from "./composables/useToast";
 import { useAudio } from "./composables/useAudio";
 import { initAnimations } from "./utils/animations";
 
-const { gameState, startGame, enterRoom, exitRoom, unlockRoom } =
+const { gameState, startGame, enterRoom, exitRoom, unlockRoom, unlockAllRooms, resetGame } =
     useGameState();
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
@@ -316,10 +326,10 @@ const playImagingRoomAudio = async () => {
         hasPlayedImagingRoomAudio.value = true;
         console.log('✅ Son de la Salle d\'Imagerie joué avec succès');
         
-        // Masquer le briefing après la lecture (environ 50 secondes)
+        // Masquer le briefing après la lecture (environ 45 secondes)
         setTimeout(() => {
             showImagingRoomBriefing.value = false;
-        }, 50000);
+        }, 45000);
         
     } catch (error) {
         console.error('❌ Erreur lors de la lecture du son de la Salle d\'Imagerie:', error);
@@ -432,7 +442,7 @@ const playFinishImagingRoomAudio = async () => {
         console.log('✅ Son de félicitations ImagingRoom joué avec succès');
         setTimeout(() => {
             showFinishImagingRoomBriefing.value = false;
-        }, 35000); // 35 secondes
+        }, 33000); // 33 secondes
     } catch (error) {
         console.error('❌ Erreur lors de la lecture du son de félicitations ImagingRoom:', error);
         showFinishImagingRoomBriefing.value = false;
@@ -613,6 +623,17 @@ const handleRoomCompleted = async (roomId) => {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
     }, 50);
+};
+
+// Fonctions pour DevTools
+const handleUnlockAllRooms = () => {
+    unlockAllRooms();
+    showSuccess("DÉVELOPPEMENT", "Toutes les salles ont été débloquées !");
+};
+
+const handleResetGame = () => {
+    resetGame();
+    showInfo("DÉVELOPPEMENT", "Jeu réinitialisé");
 };
 
 // Watcher pour détecter l'arrivée sur la sélection des salles

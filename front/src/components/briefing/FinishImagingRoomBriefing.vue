@@ -113,7 +113,7 @@ const props = defineProps({
   },
   duration: {
     type: Number,
-    default: 35000 // 35 seconds
+    default: 33000 // 33 seconds
   }
 })
 
