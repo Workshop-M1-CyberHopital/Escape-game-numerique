@@ -196,9 +196,9 @@ const isUnlocked = (roomId) => {
 }
 
 const handleRoomClick = (roomId) => {
-  if (isUnlocked(roomId)) {
-    emit('enter-room', roomId)
-  }
+  // Toujours émettre l'événement, même si la salle est verrouillée
+  // Le composant parent gérera l'affichage du toast d'erreur
+  emit('enter-room', roomId)
 }
 
 onMounted(() => {

@@ -51,6 +51,9 @@
                 </div>
             </footer>
         </div>
+        
+        <!-- Toast Container -->
+        <ToastContainer />
     </div>
 </template>
 
@@ -61,11 +64,14 @@ import TeamSetup from "./components/TeamSetup.vue";
 import RoomsSection from "./components/RoomsSection.vue";
 import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
+import ToastContainer from "./components/ToastContainer.vue";
 import { useGameState } from "./composables/useGameState";
+import { useToast } from "./composables/useToast";
 import { initAnimations } from "./utils/animations";
 
 const { gameState, startGame, enterRoom, exitRoom, unlockRoom } =
     useGameState();
+const { showError, showSuccess, showWarning, showInfo } = useToast();
 const showTeamSetup = ref(false);
 
 const handleStartMission = () => {
@@ -93,6 +99,15 @@ const handleStartGame = async (teamData) => {
 };
 
 const handleEnterRoom = (roomId) => {
+    // Vérifier si la salle est débloquée
+    if (!gameState.unlockedRooms.includes(roomId)) {
+        showError(
+            "SALLE VERROUILLÉE",
+            "Vous devez compléter les salles précédentes pour débloquer cette zone."
+        );
+        return;
+    }
+    
     enterRoom(roomId);
 };
 
