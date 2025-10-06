@@ -476,11 +476,16 @@ const handleStartMission = () => {
 };
 
 const handleStartGame = async (teamData) => {
-    // Afficher l'écran de chargement
-    showLoadingScreen.value = true;
-    loadingTeamName.value = teamData.name;
-    loadingPlayers.value = teamData.players;
+    // Fermer d'abord la modal
     showTeamSetup.value = false;
+    
+    // Attendre un peu avant d'afficher l'écran de chargement
+    await nextTick();
+    setTimeout(() => {
+        showLoadingScreen.value = true;
+        loadingTeamName.value = teamData.name;
+        loadingPlayers.value = teamData.players;
+    }, 100);
 };
 
 const handleLoadingComplete = async () => {
