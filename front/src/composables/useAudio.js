@@ -31,6 +31,14 @@ const initializeSounds = () => {
     sounds.dnaRoom.preload = 'auto'
     sounds.dnaRoom.volume = audioState.volume
     
+    sounds.finishServerRoom = new Audio('/FinishServerRoom.mp3')
+    sounds.finishServerRoom.preload = 'auto'
+    sounds.finishServerRoom.volume = audioState.volume
+    
+    sounds.finishDNARoom = new Audio('/FinishDNARoom.mp3')
+    sounds.finishDNARoom.preload = 'auto'
+    sounds.finishDNARoom.volume = audioState.volume
+    
     // Gestion des erreurs de chargement
     sounds.roomSelection.addEventListener('error', (e) => {
       console.error('Erreur de chargement du son roomSelection:', e)
@@ -66,6 +74,30 @@ const initializeSounds = () => {
     
     sounds.dnaRoom.addEventListener('loadstart', () => {
       console.log('Début du chargement du son dnaRoom')
+    })
+    
+    sounds.finishServerRoom.addEventListener('error', (e) => {
+      console.error('Erreur de chargement du son finishServerRoom:', e)
+    })
+    
+    sounds.finishServerRoom.addEventListener('canplaythrough', () => {
+      console.log('Son finishServerRoom prêt à être joué')
+    })
+    
+    sounds.finishServerRoom.addEventListener('loadstart', () => {
+      console.log('Début du chargement du son finishServerRoom')
+    })
+    
+    sounds.finishDNARoom.addEventListener('error', (e) => {
+      console.error('Erreur de chargement du son finishDNARoom:', e)
+    })
+    
+    sounds.finishDNARoom.addEventListener('canplaythrough', () => {
+      console.log('Son finishDNARoom prêt à être joué')
+    })
+    
+    sounds.finishDNARoom.addEventListener('loadstart', () => {
+      console.log('Début du chargement du son finishDNARoom')
     })
   } catch (error) {
     console.error('Erreur lors de l\'initialisation des sons:', error)

@@ -76,6 +76,16 @@
             @close="handleCloseDNARoomBriefing"
         />
         
+        <FinishServerRoomBriefing 
+            :visible="showFinishServerRoomBriefing"
+            @close="handleCloseFinishServerRoomBriefing"
+        />
+        
+        <FinishDNARoomBriefing 
+            :visible="showFinishDNARoomBriefing"
+            @close="handleCloseFinishDNARoomBriefing"
+        />
+        
         <!-- Audio Activation Button -->
         <div 
             v-if="showAudioActivationButton"
@@ -124,9 +134,11 @@ import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
-import AudioBriefing from "./components/AudioBriefing.vue";
-import ServerRoomBriefing from "./components/ServerRoomBriefing.vue";
-import DNARoomBriefing from "./components/DNARoomBriefing.vue";
+import AudioBriefing from "./components/briefing/AudioBriefing.vue";
+import FinishServerRoomBriefing from "./components/briefing/FinishServerRoomBriefing.vue";
+import FinishDNARoomBriefing from "./components/briefing/FinishDNARoomBriefing.vue";
+import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
+import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
 import { useAudio } from "./composables/useAudio";
@@ -144,6 +156,10 @@ const showServerRoomBriefing = ref(false);
 const hasPlayedServerRoomAudio = ref(false);
 const showDNARoomBriefing = ref(false);
 const hasPlayedDNARoomAudio = ref(false);
+const showFinishServerRoomBriefing = ref(false);
+const hasPlayedFinishServerRoomAudio = ref(false);
+const showFinishDNARoomBriefing = ref(false);
+const hasPlayedFinishDNARoomAudio = ref(false);
 
 // Fonction pour jouer le son de sélection des salles
 const playRoomSelectionAudio = async () => {
@@ -296,6 +312,60 @@ const handleCloseDNARoomBriefing = () => {
     console.log('🎵 DNA room briefing fermé et son arrêté');
 };
 
+// Fonction pour jouer le son de félicitations ServerRoom
+const playFinishServerRoomAudio = async () => {
+    try {
+        console.log('🎵 Lecture du son de félicitations ServerRoom...');
+        showFinishServerRoomBriefing.value = true;
+        await playSound('finishServerRoom');
+        hasPlayedFinishServerRoomAudio.value = true;
+        console.log('✅ Son de félicitations ServerRoom joué avec succès');
+        setTimeout(() => {
+            showFinishServerRoomBriefing.value = false;
+        }, 30000); // 30 secondes
+    } catch (error) {
+        console.error('❌ Erreur lors de la lecture du son de félicitations ServerRoom:', error);
+        showFinishServerRoomBriefing.value = false;
+    }
+};
+
+const handleCloseFinishServerRoomBriefing = () => {
+    showFinishServerRoomBriefing.value = false;
+    stopSound('finishServerRoom');
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound('finishServerRoom');
+    }, 100);
+    console.log('🎵 Finish ServerRoom briefing fermé et son arrêté');
+};
+
+// Fonction pour jouer le son de félicitations DNARoom
+const playFinishDNARoomAudio = async () => {
+    try {
+        console.log('🎵 Lecture du son de félicitations DNARoom...');
+        showFinishDNARoomBriefing.value = true;
+        await playSound('finishDNARoom');
+        hasPlayedFinishDNARoomAudio.value = true;
+        console.log('✅ Son de félicitations DNARoom joué avec succès');
+        setTimeout(() => {
+            showFinishDNARoomBriefing.value = false;
+        }, 38000); // 38 secondes
+    } catch (error) {
+        console.error('❌ Erreur lors de la lecture du son de félicitations DNARoom:', error);
+        showFinishDNARoomBriefing.value = false;
+    }
+};
+
+const handleCloseFinishDNARoomBriefing = () => {
+    showFinishDNARoomBriefing.value = false;
+    stopSound('finishDNARoom');
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound('finishDNARoom');
+    }, 100);
+    console.log('🎵 Finish DNARoom briefing fermé et son arrêté');
+};
+
 const handleStartMission = () => {
     showTeamSetup.value = true;
     
@@ -396,6 +466,29 @@ const handleRoomCompleted = async (roomId) => {
         unlockRoom("dna-lab");
     }
     exitRoom();
+    
+    // Si c'est la salle ServerRoom, jouer l'audio de félicitations
+    if (roomId === 'server' && !hasPlayedFinishServerRoomAudio.value && audioState.isEnabled) {
+        console.log('🎵 Déclenchement de l\'audio de félicitations ServerRoom...');
+        await playFinishServerRoomAudio();
+    }
+    
+    // Si c'est la salle DNARoom, jouer l'audio de félicitations
+    console.log('🔍 Debug handleRoomCompleted:', {
+        roomId,
+        hasPlayedFinishDNARoomAudio: hasPlayedFinishDNARoomAudio.value,
+        audioStateEnabled: audioState.isEnabled
+    });
+    
+    if (roomId === 'dna-lab' && !hasPlayedFinishDNARoomAudio.value && audioState.isEnabled) {
+        console.log('🎵 Déclenchement de l\'audio de félicitations DNARoom...');
+        await playFinishDNARoomAudio();
+    } else if (roomId === 'dna-lab') {
+        console.log('❌ Conditions DNARoom non remplies:', {
+            hasPlayedFinishDNARoomAudio: hasPlayedFinishDNARoomAudio.value,
+            audioStateEnabled: audioState.isEnabled
+        });
+    }
     
     // Attendre que le DOM soit mis à jour
     await nextTick();
