@@ -98,8 +98,10 @@
 <script setup>
 import { ref } from 'vue'
 import { Users, UserPlus, Trash2, Play } from 'lucide-vue-next'
+import { useToast } from '../composables/useToast'
 
 const emit = defineEmits(['close', 'start-game'])
+const { showError, showWarning, showSuccess, showInfo } = useToast()
 
 const teamName = ref('')
 const players = ref([
@@ -115,6 +117,19 @@ const addPlayer = () => {
     setTimeout(() => {
       newPlayer.entering = false
     }, 10)
+    
+    // Toast de confirmation
+    showSuccess(
+      "JOUEUR AJOUTÉ",
+      `Nouveau membre ajouté à l'équipe (${players.value.length}/4)`,
+      2000
+    )
+  } else {
+    showWarning(
+      "LIMITE ATTEINTE",
+      "Maximum 4 joueurs autorisés par équipe",
+      3000
+    )
   }
 }
 
@@ -123,9 +138,22 @@ const removePlayer = (index) => {
     const player = players.value[index]
     player.entering = false
     
+    // Toast d'information
+    showInfo(
+      "JOUEUR SUPPRIMÉ",
+      `${player.name || 'Joueur'} retiré de l'équipe`,
+      2000
+    )
+    
     setTimeout(() => {
       players.value.splice(index, 1)
     }, 300)
+  } else {
+    showWarning(
+      "ÉQUIPE MINIMALE",
+      "Au moins un joueur requis pour commencer",
+      3000
+    )
   }
 }
 
@@ -135,11 +163,44 @@ const startGame = () => {
     players: players.value.map(p => p.name).filter(name => name.trim())
   }
   
+  // Validation avec toasts
   if (teamData.players.length === 0) {
-    alert('Veuillez ajouter au moins un joueur')
+    showError(
+      "ÉQUIPE INCOMPLÈTE",
+      "Veuillez ajouter au moins un joueur pour commencer la mission",
+      4000
+    )
     return
   }
   
-  emit('start-game', teamData)
+  if (!teamName.value.trim()) {
+    showError(
+      "NOM D'ÉQUIPE MANQUANT",
+      "Veuillez saisir un nom pour votre équipe",
+      3000
+    )
+    return
+  }
+  
+  if (teamData.players.length < teamData.players.filter(name => name.trim()).length) {
+    showError(
+      "NOMS INCOMPLETS",
+      "Veuillez remplir tous les noms de joueurs",
+      3000
+    )
+    return
+  }
+  
+  // Toast de succès avant de lancer
+  showSuccess(
+    "MISSION INITIÉE",
+    `Équipe "${teamData.name}" prête pour l'opération`,
+    2000
+  )
+  
+  // Délai pour laisser le toast s'afficher
+  setTimeout(() => {
+    emit('start-game', teamData)
+  }, 1000)
 }
 </script>
