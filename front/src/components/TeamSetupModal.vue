@@ -1,11 +1,11 @@
 <template>
   <div 
     v-if="visible"
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
   >
     <div class="bg-gray-900/95 border-2 border-cyber-red rounded-lg max-w-2xl w-full relative overflow-hidden">
       <!-- Scanlines effect -->
-      <div class="absolute inset-0 scanline opacity-20"></div>
+      <div class="absolute inset-0 scanline opacity-20 pointer-events-none"></div>
       
       <!-- Header -->
       <div class="border-b border-cyber-red/50 p-6">
@@ -66,7 +66,7 @@
               v-model="teamName"
               type="text"
               placeholder="Entrez le nom de votre équipe..."
-              class="w-full px-4 py-3 bg-gray-900 border border-cyber-red/50 rounded-lg text-white font-tech focus:border-cyber-red focus:outline-none transition-all"
+              class="w-full px-4 py-3 bg-gray-900 border border-cyber-red/50 rounded-lg text-white font-tech focus:border-cyber-red focus:outline-none transition-all pointer-events-auto"
             />
           </div>
           
@@ -78,7 +78,7 @@
               </label>
               <button
                 @click="addPlayer"
-                class="px-3 py-1 bg-cyber-red/20 border border-cyber-red text-cyber-red font-tech text-xs rounded hover:bg-cyber-red/30 transition-all"
+                class="px-3 py-1 bg-cyber-red/20 border border-cyber-red text-cyber-red font-tech text-xs rounded hover:bg-cyber-red/30 transition-all pointer-events-auto"
               >
                 + AJOUTER
               </button>
