@@ -23,7 +23,7 @@ middlewares:
 # Configuration des règles d'IPSource
 routers:
   my-router:
-    rule: "Host(`traefik.eisi-dune.eu`) || (HostRegexp(`traefik.eisi-dune.eu`, `{subdomain:[a-z]+}.traefik.eisi-dune.eu`) && IPWhiteList(`88.175.71.99`))" #`192.168.1.0/24`, `10.0.0.0/8`, `78.202.15.42`
+    rule: "Host(`smoothie-traefik.simplon-duna.space`) || (HostRegexp(`smoothie-traefik.simplon-duna.space`, `{subdomain:[a-z]+}.smoothie-traefik.simplon-duna.space`) && IPWhiteList(`88.175.71.99`))" #`192.168.1.0/24`, `10.0.0.0/8`, `78.202.15.42`
     middlewares:
       - name: my-auth
     service: vote-service # Le nom du service de la voting-app
@@ -34,7 +34,7 @@ routers:
 http:
   routers:
     whoami-http:
-      rule: "Host(`traefik.eisi-dune.eu`)"
+      rule: "Host(`smoothie-traefik.simplon-duna.space`)"
       service: vote-service # Remplacer par le nom du service approprié
       entryPoints:
         - http # Utiliser l'entrypoint http pour HTTP
@@ -42,7 +42,7 @@ http:
 # Permet de rediriger le trafic HTTP vers HTTPS une fois le TLS mis en place
 # Routeur "whoami-https" pour se connecter en HTTPS
   whoami-https:
-    rule: "Host(`traefik.eisi-dune.eu`)"
+    rule: "Host(`smoothie-traefik.simplon-duna.space`)"
     service: vote-service # Remplacer par le nom du service approprié
     entryPoints:
       - websecure # Utiliser l'entrypoint websecure pour HTTPS

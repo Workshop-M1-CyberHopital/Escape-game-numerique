@@ -61,7 +61,7 @@ else
     :
 fi
 
-# Create Redis database and deploying the escape game app
+# Create Redis database and deploying the Azure voting app
 echo "Creating Redis database secret and deploying the escape game app..."
 kubectl apply -f escape.yaml -n dev
 echo "Redis database secret created and Azure voting app deployed."

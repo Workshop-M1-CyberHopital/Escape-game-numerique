@@ -1,9 +1,9 @@
 <template>
-  <section class="team-setup-section px-4 py-20 max-w-2xl mx-auto">
+  <section class="px-4 py-20 max-w-2xl mx-auto">
     <div class="bg-gray-900/80 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-8 scanline">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-12 h-12 rounded-lg bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center">
-          <Users class="w-6 h-6 text-cyan-500" />
+          <i data-lucide="users" class="w-6 h-6 text-cyan-500"></i>
         </div>
         <div>
           <h3 class="text-2xl font-cyber font-bold text-cyan-500">
@@ -36,7 +36,7 @@
               v-if="players.length < 4"
               class="px-3 py-1 border border-cyan-500/30 text-cyber-blue hover:bg-cyan-500/10 font-tech text-sm rounded transition-all flex items-center gap-2"
             >
-              <UserPlus class="w-4 h-4" />
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
               Ajouter
             </button>
           </div>
@@ -57,7 +57,7 @@
                 @click="removePlayer(index)"
                 class="px-4 py-3 bg-transparent hover:bg-red-400/10 text-red-400 hover:text-red-300 rounded-lg transition-all"
               >
-                <Trash2 class="w-4 h-4" />
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </div>
           </div>
@@ -88,7 +88,7 @@
         @click="startGame"
         class="flex items-center justify-center gap-2 px-12 py-6 bg-cyber-green hover:bg-cyber-green/80 text-black font-cyber text-lg rounded-lg mx-auto transition-all"
       >
-        <Play class="w-5 h-5" />
+        <i data-lucide="play" class="w-5 h-5"></i>
         LANCER L'ESCAPE GAME
       </button>
     </div>
@@ -96,8 +96,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Users, UserPlus, Trash2, Play } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
 
 const emit = defineEmits(['close', 'start-game'])
 
@@ -142,4 +141,11 @@ const startGame = () => {
   
   emit('start-game', teamData)
 }
+
+onMounted(() => {
+  // Initialize Lucide Icons
+  if (window.lucide) {
+    window.lucide.createIcons()
+  }
+})
 </script>

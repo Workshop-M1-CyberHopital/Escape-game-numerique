@@ -1,13 +1,21 @@
 <template>
     <div class="relative z-10 w-full min-h-screen">
+        <!-- Dev Tools -->
+        <DevTools
+            :game-state="gameState"
+            @start-game="handleStartGame"
+            @enter-room="handleEnterRoom"
+            @unlock-all-rooms="handleUnlockAllRooms"
+            @reset-game="handleResetGame"
+        />
+
         <!-- Animated Background Canvas -->
         <canvas id="animated-bg"></canvas>
 
         <!-- Game Started: Show Rooms -->
         <div v-if="gameState.isGameStarted">
-            <!-- Rooms Section - Only show when not in a room -->
+            <!-- Rooms Section -->
             <RoomsSection
-                v-if="!gameState.currentRoom"
                 :unlocked-rooms="gameState.unlockedRooms"
                 @enter-room="handleEnterRoom"
             />
@@ -21,6 +29,12 @@
 
             <DNARoom
                 v-if="gameState.currentRoom === 'dna-lab'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
+
+            <ImagingRoom
+                v-if="gameState.currentRoom === 'imaging'"
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
@@ -51,117 +65,68 @@
                 </div>
             </footer>
         </div>
-        
-        <!-- Toast Container -->
-        <ToastContainer />
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import HeroSection from "./components/HeroSection.vue";
 import TeamSetup from "./components/TeamSetup.vue";
 import RoomsSection from "./components/RoomsSection.vue";
 import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
-import ToastContainer from "./components/ToastContainer.vue";
+import ImagingRoom from "./components/rooms/ImagingRoom.vue";
+import DevTools from "./components/DevTools.vue";
 import { useGameState } from "./composables/useGameState";
-import { useToast } from "./composables/useToast";
 import { initAnimations } from "./utils/animations";
 
-const { gameState, startGame, enterRoom, exitRoom, unlockRoom } =
-    useGameState();
-const { showError, showSuccess, showWarning, showInfo } = useToast();
+const {
+    gameState,
+    startGame,
+    enterRoom,
+    exitRoom,
+    unlockRoom,
+    unlockAllRooms,
+    resetGame,
+} = useGameState();
 const showTeamSetup = ref(false);
 
 const handleStartMission = () => {
     showTeamSetup.value = true;
-    
-    // Scroll vers la section de configuration d'équipe
-    setTimeout(() => {
-        const teamSetupSection = document.querySelector('.team-setup-section');
-        if (teamSetupSection) {
-            teamSetupSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }
-    }, 100);
 };
 
-const handleStartGame = async (teamData) => {
+const handleStartGame = (teamData) => {
     startGame(teamData);
     showTeamSetup.value = false;
-    
-    // Attendre que le DOM soit mis à jour
-    await nextTick();
-    
-    // Forcer le scroll vers le haut immédiatement
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-    // Double vérification après un court délai
-    setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    }, 50);
 };
 
 const handleEnterRoom = (roomId) => {
-    // Vérifier si la salle est débloquée
-    if (!gameState.unlockedRooms.includes(roomId)) {
-        showError(
-            "SALLE VERROUILLÉE",
-            "Vous devez compléter les salles précédentes pour débloquer cette zone."
-        );
-        return;
-    }
-    
     enterRoom(roomId);
 };
 
-const handleExitRoom = async () => {
+const handleExitRoom = () => {
     exitRoom();
-    
-    // Attendre que le DOM soit mis à jour
-    await nextTick();
-    
-    // Forcer le scroll vers le haut immédiatement
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-    // Double vérification après un court délai
-    setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    }, 50);
+    window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-const handleRoomCompleted = async (roomId) => {
+const handleRoomCompleted = (roomId) => {
     // Débloquer la prochaine salle
     if (roomId === "server") {
         unlockRoom("dna-lab");
+    } else if (roomId === "dna") {
+        unlockRoom("imaging");
     }
     exitRoom();
-    
-    // Attendre que le DOM soit mis à jour
-    await nextTick();
-    
-    // Forcer le scroll vers le haut immédiatement
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-    // Double vérification après un court délai
-    setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    }, 50);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+const handleUnlockAllRooms = () => {
+    unlockAllRooms();
+};
+
+const handleResetGame = () => {
+    resetGame();
+    window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 onMounted(() => {
