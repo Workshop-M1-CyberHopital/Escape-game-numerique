@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed top-4 left-4 z-50 flex items-center gap-3 bg-gray-900/80 backdrop-blur-md border border-cyber-blue/50 rounded-lg p-3">
+  <div class="fixed bottom-4 left-4 z-50 flex items-center gap-3 bg-gray-900/80 backdrop-blur-md border border-cyber-blue/50 rounded-lg p-3">
     <!-- Mute/Unmute Button -->
     <button
       @click="toggleMute"

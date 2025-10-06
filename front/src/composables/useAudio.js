@@ -157,10 +157,33 @@ export function useAudio() {
   }
 
   const stopSound = (soundName) => {
+    console.log(`🛑 Arrêt du son: ${soundName}`)
     const audio = sounds[soundName]
     if (audio) {
+      console.log(`🛑 État avant arrêt:`, {
+        paused: audio.paused,
+        currentTime: audio.currentTime,
+        volume: audio.volume,
+        muted: audio.muted
+      })
+      
+      // Arrêt agressif pour Safari
       audio.pause()
       audio.currentTime = 0
+      audio.volume = 0
+      audio.muted = true
+      
+      // Forcer l'arrêt en réinitialisant complètement
+      audio.load()
+      
+      console.log(`🛑 État après arrêt:`, {
+        paused: audio.paused,
+        currentTime: audio.currentTime,
+        volume: audio.volume,
+        muted: audio.muted
+      })
+    } else {
+      console.warn(`🛑 Son "${soundName}" non trouvé pour l'arrêt`)
     }
   }
 
@@ -179,9 +202,13 @@ export function useAudio() {
   }
 
   const stopAllSounds = () => {
+    console.log('🛑 Arrêt de tous les sons')
     Object.values(sounds).forEach(audio => {
       audio.pause()
       audio.currentTime = 0
+      audio.volume = 0
+      audio.muted = true
+      audio.load()
     })
   }
 

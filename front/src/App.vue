@@ -269,18 +269,30 @@ const playDNARoomAudio = async () => {
 const handleCloseAudioBriefing = () => {
     showAudioBriefing.value = false;
     stopSound('roomSelection');
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound('roomSelection');
+    }, 100);
     console.log('🎵 Audio briefing fermé et son arrêté');
 };
 
 const handleCloseServerRoomBriefing = () => {
     showServerRoomBriefing.value = false;
     stopSound('serverRoom');
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound('serverRoom');
+    }, 100);
     console.log('🎵 Server room briefing fermé et son arrêté');
 };
 
 const handleCloseDNARoomBriefing = () => {
     showDNARoomBriefing.value = false;
     stopSound('dnaRoom');
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound('dnaRoom');
+    }, 100);
     console.log('🎵 DNA room briefing fermé et son arrêté');
 };
 
