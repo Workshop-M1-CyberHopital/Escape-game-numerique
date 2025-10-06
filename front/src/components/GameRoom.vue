@@ -44,7 +44,7 @@
             <div class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-red rounded-lg p-6 scanline">
               <div class="flex items-start gap-4">
                 <div class="w-16 h-16 rounded-lg flex items-center justify-center" :style="`background-color: ${roomData.color}20; border: 2px solid ${roomData.color};`">
-                  <i :data-lucide="roomData.icon" class="w-8 h-8" :style="`color: ${roomData.color};`"></i>
+                  <component :is="getIconComponent(roomData.icon)" class="w-8 h-8" :style="`color: ${roomData.color};`" />
                 </div>
                 <div class="flex-1">
                   <h1 class="text-3xl font-cyber font-bold mb-2" :style="`color: ${roomData.color};`">
@@ -74,7 +74,7 @@
   
 <script setup>
 import { useGameState } from '../composables/useGameState'
-import { ArrowLeft, Clock, Users } from 'lucide-vue-next'
+import { ArrowLeft, Clock, Users, Server, Dna, ScanLine, Heart } from 'lucide-vue-next'
 
 const props = defineProps({
   roomData: {
@@ -86,4 +86,17 @@ const props = defineProps({
 const emit = defineEmits(['exit-room'])
 
 const { gameState, formatTime } = useGameState()
+
+// Mapping des icônes
+const iconMap = {
+  'server': Server,
+  'dna': Dna,
+  'scan-line': ScanLine,
+  'heart': Heart
+}
+
+// Fonction pour obtenir le composant d'icône
+const getIconComponent = (iconName) => {
+  return iconMap[iconName] || Server
+}
 </script>
