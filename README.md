@@ -33,8 +33,8 @@ Chaque énigme réussie **débloque une clé** pour restaurer une partie du syst
 
 **Technos recommandées :**
 
-* **Front-end** : React ou Vue.js (interface claire, chronomètre, navigation entre salles).
-* **Back-end** : Node.js / Express ou Python (Flask/Django) pour la logique serveur.
+* **Front-end** : Vue.js (interface claire, chronomètre, navigation entre salles).
+* **Back-end** : Node.js pour la logique serveur.
 * **Communication multi-joueurs** : Firebase Realtime DB ou WebSocket simple.
 * **Hébergement rapide** : Vercel ou Netlify.
 * **Stockage / sauvegarde** : localStorage ou Firebase.
