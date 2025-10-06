@@ -15,7 +15,7 @@
 
           <!-- Main Title with Glitch Effect -->
           <h1
-              class="text-6xl md:text-8xl font-cyber font-black text-white glitch"
+              class="text-6xl md:text-7xl font-cyber font-black text-white glitch"
               ref="glitchTitle"
           >
               <span class="glitch-text">URGENCE à l'HÔPITAL</span>
