@@ -12,7 +12,7 @@
 #     cert-manager.io/issuer-group: cert-manager.io
 # spec:
 #   rules:
-#   - host: smoothie-traefik.simplon-duna.space
+#   - host: traefik.eisi-dune.eu
 #     http:
 #       paths:
 #       - path: /
@@ -22,7 +22,7 @@
 #             name: vote-service
 #             port: 
 #               number: 80
-#   - host: smoothie-traefik.simplon-duna.space
+#   - host: traefik.eisi-dune.eu
 #     http:
 #       paths:
 #       - path: /_oauth
@@ -32,7 +32,7 @@
 #             name: proxy-google-oauth
 #             port: 
 #               number: 8080
-#   - host: smoothie-traefik.simplon-duna.space
+#   - host: traefik.eisi-dune.eu
 #     http:
 #       paths:
 #       - path: /checkauth
@@ -42,7 +42,7 @@
 #             name: proxy-google-oauth
 #             port: 
 #               number: 8080
-#   - host: smoothie-traefik.simplon-duna.space
+#   - host: traefik.eisi-dune.eu
 #     http:
 #       paths:
 #       - path: /oauth2callback
@@ -54,7 +54,7 @@
 #               number: 8080
 #   tls: # placing a host in the TLS config will determine what ends up in the cert's subjectAlt
 #   - hosts:
-#     - smoothie-traefik.simplon-duna.space
+#     - traefik.eisi-dune.eu
 #     secretName: secret-tls # cert-manager will store the created certificate in this secret.
 
 ---
@@ -67,7 +67,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-  - match: Host(`smoothie-traefik.simplon-duna.space`)
+  - match: Host(`traefik.eisi-dune.eu`)
     kind: Rule
     services:
     - name: vote-service 
@@ -90,17 +90,17 @@ spec:
   entryPoints:
     - websecure
   routes:
-  - match: Host(`smoothie-traefik.simplon-duna.space`) && Path(`/_oauth`) # To authorize the user
+  - match: Host(`traefik.eisi-dune.eu`) && Path(`/_oauth`) # To authorize the user
     kind: Rule
     services:
     - name: proxy-google-oauth
       port: 8080
-  - match: Host(`smoothie-traefik.simplon-duna.space`) && Path(`/checkauth`) # To rollback the user (when he has been identified) to the home page of the application
+  - match: Host(`traefik.eisi-dune.eu`) && Path(`/checkauth`) # To rollback the user (when he has been identified) to the home page of the application
     kind: Rule
     services:
     - name: proxy-google-oauth
       port: 8080
-  - match: Host(`smoothie-traefik.simplon-duna.space`) && Path(`/oauth2callback`) # To sent back to the authorization page if not successful
+  - match: Host(`traefik.eisi-dune.eu`) && Path(`/oauth2callback`) # To sent back to the authorization page if not successful
     kind: Rule
     services:
     - name: proxy-google-oauth

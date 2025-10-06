@@ -12,7 +12,7 @@ metadata:
     cert-manager.io/issuer-group: cert-manager.io
 spec:
   rules:
-  - host: smoothie-traefik.simplon-duna.space
+  - host: traefik.eisi-dune.eu
     http:
       paths:
       - path: /
@@ -24,5 +24,5 @@ spec:
               number: 80
   tls: # placing a host in the TLS config will determine what ends up in the cert's subjectAlt
   - hosts:
-    - smoothie-traefik.simplon-duna.space
+    - traefik.eisi-dune.eu
     secretName: secret-tls # cert-manager will store the created certificate in this secret.

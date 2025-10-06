@@ -5,9 +5,9 @@ metadata:
   name:  smoothiemoni.simplon-duna.space
 spec:
   dnsNames:
-  - smoothie-prometheus.simplon-duna.space
-  - smoothie-grafana.simplon-duna.space
-  - smoothie-loki.simplon-duna.space
+  - prometheus.eisi-dune.eu
+  - grafana.eisi-dune.eu
+  - loki.eisi-dune.eu
   issuerRef:
     name: letsencrypt
     kind: Issuer

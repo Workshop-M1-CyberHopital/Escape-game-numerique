@@ -31,7 +31,7 @@ spec:
         - name: FORWARD_AUTH_HEADER
           value: "Bearer zhjghfzejng"
         - name: REDIRECT_URI
-          value: https://smoothie-traefik.simplon-duna.space/oauth2callback
+          value: https://traefik.eisi-dune.eu/oauth2callback
         - name: PORT
           value: "8080"
         ports:
