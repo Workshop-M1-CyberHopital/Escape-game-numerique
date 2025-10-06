@@ -170,6 +170,14 @@ onUnmounted(() => {
   );
   background-size: 100% 4px;
   animation: scanline 0.1s linear infinite;
+  pointer-events: none;
+}
+
+/* S'assurer que les boutons sont cliquables */
+button {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
 }
 
 @keyframes scanline {

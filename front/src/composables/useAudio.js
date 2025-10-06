@@ -18,33 +18,33 @@ const sounds = {
 // Fonction pour initialiser les sons avec gestion d'erreur
 const initializeSounds = () => {
   try {
-    // Utiliser le bon chemin
+    // Utiliser le bon chemin avec gestion d'erreur
     sounds.roomSelection = new Audio('/RoomSelection.mp3')
-    sounds.roomSelection.preload = 'auto'
+    sounds.roomSelection.preload = 'none' // Changé de 'auto' à 'none' pour éviter les erreurs
     sounds.roomSelection.volume = audioState.volume
     
     sounds.serverRoom = new Audio('/ServerRoom.mp3')
-    sounds.serverRoom.preload = 'auto'
+    sounds.serverRoom.preload = 'none'
     sounds.serverRoom.volume = audioState.volume
     
     sounds.dnaRoom = new Audio('/DNARoom.mp3')
-    sounds.dnaRoom.preload = 'auto'
+    sounds.dnaRoom.preload = 'none'
     sounds.dnaRoom.volume = audioState.volume
     
     sounds.finishServerRoom = new Audio('/FinishServerRoom.mp3')
-    sounds.finishServerRoom.preload = 'auto'
+    sounds.finishServerRoom.preload = 'none'
     sounds.finishServerRoom.volume = audioState.volume
     
     sounds.finishDNARoom = new Audio('/FinishDNARoom.mp3')
-    sounds.finishDNARoom.preload = 'auto'
+    sounds.finishDNARoom.preload = 'none'
     sounds.finishDNARoom.volume = audioState.volume
     
     sounds.imagingRoom = new Audio('/ImagingRoom.mp3')
-    sounds.imagingRoom.preload = 'auto'
+    sounds.imagingRoom.preload = 'none'
     sounds.imagingRoom.volume = audioState.volume
     
     sounds.finishImagingRoom = new Audio('/FinishImagingRoom.mp3')
-    sounds.finishImagingRoom.preload = 'auto'
+    sounds.finishImagingRoom.preload = 'none'
     sounds.finishImagingRoom.volume = audioState.volume
     
     // Gestion des erreurs de chargement
@@ -133,6 +133,8 @@ const initializeSounds = () => {
     })
   } catch (error) {
     console.error('Erreur lors de l\'initialisation des sons:', error)
+    // Ne pas bloquer l'interface si les sons ne se chargent pas
+    console.log('Interface continue sans audio')
   }
 }
 
@@ -192,8 +194,9 @@ export function useAudio() {
       hasPermission: audioState.hasPermission 
     })
     
-    if (!audioState.isEnabled || audioState.isMuted) {
-      console.log('Audio désactivé ou muet, lecture annulée')
+    // Permettre la lecture même si l'audio n'est pas activé (pour Docker)
+    if (audioState.isMuted) {
+      console.log('Audio muet, lecture annulée')
       return
     }
 

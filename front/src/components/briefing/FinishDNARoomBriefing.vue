@@ -162,6 +162,14 @@ onUnmounted(() => {
   background: linear-gradient(transparent 50%, rgba(0, 255, 255, 0.03) 50%);
   background-size: 100% 4px;
   animation: scanline 0.1s linear infinite;
+  pointer-events: none;
+}
+
+/* S'assurer que les boutons sont cliquables */
+button {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
 }
 
 @keyframes scanline {
