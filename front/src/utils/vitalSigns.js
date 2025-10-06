@@ -1,55 +1,81 @@
-// Vital Signs Monitor Animation
-
 export function drawHeartbeat(canvas) {
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
-  let offset = 0;
+  let x = 0;
+  let animationId = null;
+
+  const baseY = canvas.height / 2;
+  const heartbeatPattern = [];
+
+  function generateHeartbeatPattern() {
+    const pattern = [];
+    const cycleLength = 200;
+
+    for (let i = 0; i < cycleLength; i++) {
+      let y = 0;
+
+      if (i < 10) {
+        y = -5;
+      } else if (i < 20) {
+        y = -30;
+      } else if (i < 30) {
+        y = 10;
+      } else if (i < 50) {
+        y = -40;
+      } else if (i < 60) {
+        y = 5;
+      } else {
+        y = Math.sin(i * 0.05) * 2;
+      }
+
+      pattern.push(y);
+    }
+
+    return pattern;
+  }
+
+  heartbeatPattern.push(...generateHeartbeatPattern());
 
   function draw() {
-    // Fill with slight transparency for trailing effect
-    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const currentY = baseY + heartbeatPattern[x % heartbeatPattern.length];
+
+    if (x === 0) {
+      ctx.fillStyle = "rgba(0, 0, 0, 1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#ff0055";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, currentY);
+    }
 
     ctx.strokeStyle = "#ff0055";
     ctx.lineWidth = 2;
-    ctx.beginPath();
-
-    const baseY = canvas.height / 2;
-
-    for (let x = 0; x < canvas.width; x++) {
-      const adjustedX = (x + offset) % canvas.width;
-      let y = baseY;
-
-      // Create heartbeat pattern
-      const cycle = adjustedX % 200;
-
-      if (cycle < 10) {
-        y = baseY - 5;
-      } else if (cycle < 20) {
-        y = baseY - 30;
-      } else if (cycle < 30) {
-        y = baseY + 10;
-      } else if (cycle < 50) {
-        y = baseY - 40;
-      } else if (cycle < 60) {
-        y = baseY + 5;
-      } else {
-        y = baseY + Math.sin(adjustedX * 0.05) * 2;
-      }
-
-      if (x === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-
+    ctx.lineTo(x, currentY);
     ctx.stroke();
 
-    offset += 6;
-    requestAnimationFrame(draw);
+    if (x >= canvas.width - 1) {
+      ctx.clearRect(x + 1, 0, 5, canvas.height);
+    }
+
+    x += 5;
+
+    if (x >= canvas.width) {
+      x = 0;
+      ctx.fillStyle = "rgba(0, 0, 0, 1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.moveTo(0, currentY);
+    }
+
+    animationId = requestAnimationFrame(draw);
   }
 
   draw();
+
+  return () => {
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+    }
+  };
 }

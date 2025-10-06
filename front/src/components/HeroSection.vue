@@ -185,6 +185,7 @@ const emit = defineEmits(["start-mission"]);
 const glitchTitle = ref(null);
 const vitalCanvas = ref(null);
 let glitchInterval = null;
+let stopHeartbeat = null;
 
 onMounted(() => {
     // Initialize Lucide Icons
@@ -204,13 +205,16 @@ onMounted(() => {
 
     // Start vital signs animation
     if (vitalCanvas.value) {
-        drawHeartbeat(vitalCanvas.value);
+        stopHeartbeat = drawHeartbeat(vitalCanvas.value);
     }
 });
 
 onUnmounted(() => {
     if (glitchInterval) {
         clearInterval(glitchInterval);
+    }
+    if (stopHeartbeat) {
+        stopHeartbeat();
     }
 });
 </script>
