@@ -1,0 +1,7 @@
+.idea
+
+front/node_modules
+
+front/dist
+
+front/.vscode
