@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -Eeuxo pipefail
 
 # Set variables
-rgname="b11duna"
+rgname="workshop-EISI"
 aksname="AKSClusterDuna"
 rgloc="francecentral"
 redusrtraefik="devusertraefik"
