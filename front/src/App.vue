@@ -24,6 +24,12 @@
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
+
+            <ImagingRoom
+                v-if="gameState.currentRoom === 'imaging'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
         </div>
 
         <!-- Game Not Started: Show Landing Page -->
@@ -58,6 +64,15 @@
         <!-- Audio Controls -->
         <AudioControls />
         
+        <!-- DevTools -->
+        <DevTools 
+            :game-state="gameState"
+            @start-game="handleStartGame"
+            @enter-room="handleEnterRoom"
+            @unlock-all-rooms="handleUnlockAllRooms"
+            @reset-game="handleResetGame"
+        />
+        
         <!-- Audio Briefing -->
         <AudioBriefing 
             :visible="showAudioBriefing"
@@ -84,6 +99,16 @@
         <FinishDNARoomBriefing 
             :visible="showFinishDNARoomBriefing"
             @close="handleCloseFinishDNARoomBriefing"
+        />
+        
+        <ImagingRoomBriefing 
+            :visible="showImagingRoomBriefing"
+            @close="handleCloseImagingRoomBriefing"
+        />
+        
+        <FinishImagingRoomBriefing 
+            :visible="showFinishImagingRoomBriefing"
+            @close="handleCloseFinishImagingRoomBriefing"
         />
         
         <!-- Audio Activation Button -->
@@ -132,19 +157,23 @@ import TeamSetup from "./components/TeamSetup.vue";
 import RoomsSection from "./components/RoomsSection.vue";
 import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
+import ImagingRoom from "./components/rooms/ImagingRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
+import DevTools from "./components/DevTools.vue";
 import AudioBriefing from "./components/briefing/AudioBriefing.vue";
 import FinishServerRoomBriefing from "./components/briefing/FinishServerRoomBriefing.vue";
 import FinishDNARoomBriefing from "./components/briefing/FinishDNARoomBriefing.vue";
+import FinishImagingRoomBriefing from "./components/briefing/FinishImagingRoomBriefing.vue";
 import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
 import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
+import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
 import { useAudio } from "./composables/useAudio";
 import { initAnimations } from "./utils/animations";
 
-const { gameState, startGame, enterRoom, exitRoom, unlockRoom } =
+const { gameState, startGame, enterRoom, exitRoom, unlockRoom, unlockAllRooms, resetGame } =
     useGameState();
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
@@ -160,6 +189,10 @@ const showFinishServerRoomBriefing = ref(false);
 const hasPlayedFinishServerRoomAudio = ref(false);
 const showFinishDNARoomBriefing = ref(false);
 const hasPlayedFinishDNARoomAudio = ref(false);
+const showImagingRoomBriefing = ref(false);
+const hasPlayedImagingRoomAudio = ref(false);
+const showFinishImagingRoomBriefing = ref(false);
+const hasPlayedFinishImagingRoomAudio = ref(false);
 
 // Fonction pour jouer le son de sélection des salles
 const playRoomSelectionAudio = async () => {
@@ -281,6 +314,29 @@ const playDNARoomAudio = async () => {
     }
 };
 
+// Fonction pour jouer le son de la Salle d'Imagerie
+const playImagingRoomAudio = async () => {
+    try {
+        console.log('🎵 Lecture du son de la Salle d\'Imagerie...');
+        
+        // Afficher le briefing pendant la lecture
+        showImagingRoomBriefing.value = true;
+        
+        await playSound('imagingRoom');
+        hasPlayedImagingRoomAudio.value = true;
+        console.log('✅ Son de la Salle d\'Imagerie joué avec succès');
+        
+        // Masquer le briefing après la lecture (environ 45 secondes)
+        setTimeout(() => {
+            showImagingRoomBriefing.value = false;
+        }, 45000);
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de la lecture du son de la Salle d\'Imagerie:', error);
+        showImagingRoomBriefing.value = false;
+    }
+};
+
 // Fonctions de fermeture des popups avec arrêt audio
 const handleCloseAudioBriefing = () => {
     showAudioBriefing.value = false;
@@ -310,6 +366,16 @@ const handleCloseDNARoomBriefing = () => {
         stopSound('dnaRoom');
     }, 100);
     console.log('🎵 DNA room briefing fermé et son arrêté');
+};
+
+const handleCloseImagingRoomBriefing = () => {
+    showImagingRoomBriefing.value = false;
+    stopSound('imagingRoom');
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound('imagingRoom');
+    }, 100);
+    console.log('🎵 Imaging room briefing fermé et son arrêté');
 };
 
 // Fonction pour jouer le son de félicitations ServerRoom
@@ -364,6 +430,33 @@ const handleCloseFinishDNARoomBriefing = () => {
         stopSound('finishDNARoom');
     }, 100);
     console.log('🎵 Finish DNARoom briefing fermé et son arrêté');
+};
+
+// Fonction pour jouer le son de félicitations ImagingRoom
+const playFinishImagingRoomAudio = async () => {
+    try {
+        console.log('🎵 Lecture du son de félicitations ImagingRoom...');
+        showFinishImagingRoomBriefing.value = true;
+        await playSound('finishImagingRoom');
+        hasPlayedFinishImagingRoomAudio.value = true;
+        console.log('✅ Son de félicitations ImagingRoom joué avec succès');
+        setTimeout(() => {
+            showFinishImagingRoomBriefing.value = false;
+        }, 33000); // 33 secondes
+    } catch (error) {
+        console.error('❌ Erreur lors de la lecture du son de félicitations ImagingRoom:', error);
+        showFinishImagingRoomBriefing.value = false;
+    }
+};
+
+const handleCloseFinishImagingRoomBriefing = () => {
+    showFinishImagingRoomBriefing.value = false;
+    stopSound('finishImagingRoom');
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound('finishImagingRoom');
+    }, 100);
+    console.log('🎵 Finish ImagingRoom briefing fermé et son arrêté');
 };
 
 const handleStartMission = () => {
@@ -438,6 +531,22 @@ const handleEnterRoom = async (roomId) => {
         setTimeout(() => {
             showDNARoomBriefing.value = false;
         }, 5000); // 5 secondes pour le test
+    } else if (roomId === 'imaging' && !hasPlayedImagingRoomAudio.value && audioState.isEnabled) {
+        console.log('🎵 Tentative de lecture du son Imaging Room...');
+        await playImagingRoomAudio();
+    } else if (roomId === 'imaging') {
+        console.log('❌ Conditions Imaging Room non remplies:', {
+            hasPlayedImagingRoomAudio: hasPlayedImagingRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+            unlockedRooms: gameState.unlockedRooms
+        });
+        
+        // Test: forcer l'affichage du popup Imaging pour debug
+        console.log('🧪 Test: Affichage forcé du popup Imaging...');
+        showImagingRoomBriefing.value = true;
+        setTimeout(() => {
+            showImagingRoomBriefing.value = false;
+        }, 5000); // 5 secondes pour le test
     }
 };
 
@@ -464,6 +573,10 @@ const handleRoomCompleted = async (roomId) => {
     // Débloquer la prochaine salle
     if (roomId === "server") {
         unlockRoom("dna-lab");
+    } else if (roomId === "dna-lab") {
+        unlockRoom("imaging");
+    } else if (roomId === "imaging") {
+        unlockRoom("heart");
     }
     exitRoom();
     
@@ -490,6 +603,12 @@ const handleRoomCompleted = async (roomId) => {
         });
     }
     
+    // Si c'est la salle ImagingRoom, jouer l'audio de félicitations
+    if (roomId === 'imaging' && !hasPlayedFinishImagingRoomAudio.value && audioState.isEnabled) {
+        console.log('🎵 Déclenchement de l\'audio de félicitations ImagingRoom...');
+        await playFinishImagingRoomAudio();
+    }
+    
     // Attendre que le DOM soit mis à jour
     await nextTick();
     
@@ -504,6 +623,17 @@ const handleRoomCompleted = async (roomId) => {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
     }, 50);
+};
+
+// Fonctions pour DevTools
+const handleUnlockAllRooms = () => {
+    unlockAllRooms();
+    showSuccess("DÉVELOPPEMENT", "Toutes les salles ont été débloquées !");
+};
+
+const handleResetGame = () => {
+    resetGame();
+    showInfo("DÉVELOPPEMENT", "Jeu réinitialisé");
 };
 
 // Watcher pour détecter l'arrivée sur la sélection des salles
