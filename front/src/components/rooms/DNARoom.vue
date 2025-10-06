@@ -199,6 +199,7 @@
 <script setup>
 import { ref } from "vue";
 import GameRoom from "../GameRoom.vue";
+import { createFireworks } from "../../utils/fireworks";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
 
@@ -255,6 +256,7 @@ const checkSequence = () => {
     if (isCorrect) {
         puzzleSolved.value = true;
         isCompleted.value = true;
+        createFireworks(3000);
     } else {
         alert(
             "La séquence n'est pas correcte. Vérifiez les règles d'appariement !",

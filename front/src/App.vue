@@ -82,6 +82,7 @@ const handleEnterRoom = (roomId) => {
 
 const handleExitRoom = () => {
     exitRoom();
+    window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 const handleRoomCompleted = (roomId) => {
@@ -90,6 +91,7 @@ const handleRoomCompleted = (roomId) => {
         unlockRoom("dna-lab");
     }
     exitRoom();
+    window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 onMounted(() => {
