@@ -37,7 +37,7 @@
 
           <div class="grid grid-cols-3 gap-4 mb-4">
             <div class="text-center">
-              <div class="text-2xl font-bold text-red-500 font-cyber">72 BPM</div>
+              <div class="text-2xl font-bold text-red-500 font-cyber">98 BPM</div>
               <div class="text-xs text-gray-500 font-tech">FRÉQUENCE</div>
             </div>
             <div class="text-center">
