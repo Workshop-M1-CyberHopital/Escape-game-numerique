@@ -39,6 +39,14 @@ const initializeSounds = () => {
     sounds.finishDNARoom.preload = 'auto'
     sounds.finishDNARoom.volume = audioState.volume
     
+    sounds.imagingRoom = new Audio('/ImagingRoom.mp3')
+    sounds.imagingRoom.preload = 'auto'
+    sounds.imagingRoom.volume = audioState.volume
+    
+    sounds.finishImagingRoom = new Audio('/FinishImagingRoom.mp3')
+    sounds.finishImagingRoom.preload = 'auto'
+    sounds.finishImagingRoom.volume = audioState.volume
+    
     // Gestion des erreurs de chargement
     sounds.roomSelection.addEventListener('error', (e) => {
       console.error('Erreur de chargement du son roomSelection:', e)
@@ -98,6 +106,30 @@ const initializeSounds = () => {
     
     sounds.finishDNARoom.addEventListener('loadstart', () => {
       console.log('Début du chargement du son finishDNARoom')
+    })
+    
+    sounds.imagingRoom.addEventListener('error', (e) => {
+      console.error('Erreur de chargement du son imagingRoom:', e)
+    })
+    
+    sounds.imagingRoom.addEventListener('canplaythrough', () => {
+      console.log('Son imagingRoom prêt à être joué')
+    })
+    
+    sounds.imagingRoom.addEventListener('loadstart', () => {
+      console.log('Début du chargement du son imagingRoom')
+    })
+    
+    sounds.finishImagingRoom.addEventListener('error', (e) => {
+      console.error('Erreur de chargement du son finishImagingRoom:', e)
+    })
+    
+    sounds.finishImagingRoom.addEventListener('canplaythrough', () => {
+      console.log('Son finishImagingRoom prêt à être joué')
+    })
+    
+    sounds.finishImagingRoom.addEventListener('loadstart', () => {
+      console.log('Début du chargement du son finishImagingRoom')
     })
   } catch (error) {
     console.error('Erreur lors de l\'initialisation des sons:', error)
