@@ -144,12 +144,12 @@ spec:
       storage: 3Gi
 
 ---
-## Autoscale Voteapp
-#apiVersion: autoscaling/v2
-#kind: HorizontalPodAutoscaler
-#metadata:
+# # Autoscale Voteapp
+# apiVersion: autoscaling/v2
+# kind: HorizontalPodAutoscaler
+# metadata:
 #  name: scale-vote
-#spec:
+# spec:
 #  scaleTargetRef:
 #    apiVersion: apps/v1
 #    kind: Deployment
@@ -163,7 +163,7 @@ spec:
 #      target:
 #        type: Utilization
 #        averageUtilization: 70
-#status:
+# status:
 #  observedGeneration: 1
 #  lastScaleTime: 
 #  currentReplicas: 1
