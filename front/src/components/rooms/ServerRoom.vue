@@ -192,7 +192,7 @@
           <!-- Indices pour l'énigme -->
           <div v-if="puzzleDecoded && !puzzleSolved">
             <div v-if="hintsShown >= 1" class="fade-in">
-              💡 Pensez aux critères de sécurité pour le don de sang
+              💡 C'est un nombre entre 40 et 60
             </div>
             <div v-if="hintsShown >= 2" class="fade-in">
               💡 C'est un poids minimum requis pour la sécurité du donneur
