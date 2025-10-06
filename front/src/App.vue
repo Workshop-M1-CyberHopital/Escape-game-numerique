@@ -76,6 +76,17 @@ const showTeamSetup = ref(false);
 
 const handleStartMission = () => {
     showTeamSetup.value = true;
+    
+    // Scroll vers la section de configuration d'équipe
+    setTimeout(() => {
+        const teamSetupSection = document.querySelector('.team-setup-section');
+        if (teamSetupSection) {
+            teamSetupSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }
+    }, 100);
 };
 
 const handleStartGame = async (teamData) => {

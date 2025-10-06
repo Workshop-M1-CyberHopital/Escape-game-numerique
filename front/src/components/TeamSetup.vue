@@ -1,5 +1,5 @@
 <template>
-  <section class="px-4 py-20 max-w-2xl mx-auto">
+  <section class="team-setup-section px-4 py-20 max-w-2xl mx-auto">
     <div class="bg-gray-900/80 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-8 scanline">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-12 h-12 rounded-lg bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center">
