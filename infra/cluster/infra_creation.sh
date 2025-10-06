@@ -2,11 +2,11 @@
 
 # Set variables
 rgname="workshop-EISI"
-aksname="AKSClusterDuna"
+aksname="AKSClusterWorkshop"
 rgloc="francecentral"
 redusrtraefik="devusertraefik"
 redpasstraefik="password_redis_519"
-apitoken="xKAj86qFn5Tj6WH5T2rENi4B"
+apitoken="xKAj86qFn5Tj6WH5T2rENi4B" # A MODIFIER
 certvers="v1.10.1"
 Ingtraefik="traefik"
 
@@ -31,7 +31,7 @@ curl -sS https://webinstall.dev/k9s | bash
 echo "The watchdog is here."
 
 # Create Dev namespace
-echo "Creating Prod namespace for traefik and voting-app..."
+echo "Creating Prod namespace for traefik and escape game app..."
 kubectl create namespace dev
 echo "Namespaces created"
 
@@ -62,8 +62,8 @@ else
 fi
 
 # Create Redis database and deploying the Azure voting app
-echo "Creating Redis database secret and deploying the Azure voting app..."
-kubectl apply -f azure-vote.yaml -n dev
+echo "Creating Redis database secret and deploying the escape game app..."
+kubectl apply -f escape.yaml -n dev
 echo "Redis database secret created and Azure voting app deployed."
 
 # Install traefik Ingress Controller
