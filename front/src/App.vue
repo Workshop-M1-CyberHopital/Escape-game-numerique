@@ -5,8 +5,9 @@
 
         <!-- Game Started: Show Rooms -->
         <div v-if="gameState.isGameStarted">
-            <!-- Rooms Section -->
+            <!-- Rooms Section - Only show when not in a room -->
             <RoomsSection
+                v-if="!gameState.currentRoom"
                 :unlocked-rooms="gameState.unlockedRooms"
                 @enter-room="handleEnterRoom"
             />
@@ -54,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import HeroSection from "./components/HeroSection.vue";
 import TeamSetup from "./components/TeamSetup.vue";
 import RoomsSection from "./components/RoomsSection.vue";
@@ -71,27 +72,70 @@ const handleStartMission = () => {
     showTeamSetup.value = true;
 };
 
-const handleStartGame = (teamData) => {
+const handleStartGame = async (teamData) => {
     startGame(teamData);
     showTeamSetup.value = false;
+    
+    // Attendre que le DOM soit mis à jour
+    await nextTick();
+    
+    // Forcer le scroll vers le haut immédiatement
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Double vérification après un court délai
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }, 50);
 };
 
 const handleEnterRoom = (roomId) => {
     enterRoom(roomId);
 };
 
-const handleExitRoom = () => {
+const handleExitRoom = async () => {
     exitRoom();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    // Attendre que le DOM soit mis à jour
+    await nextTick();
+    
+    // Forcer le scroll vers le haut immédiatement
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Double vérification après un court délai
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }, 50);
 };
 
-const handleRoomCompleted = (roomId) => {
+const handleRoomCompleted = async (roomId) => {
     // Débloquer la prochaine salle
     if (roomId === "server") {
         unlockRoom("dna-lab");
     }
     exitRoom();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    // Attendre que le DOM soit mis à jour
+    await nextTick();
+    
+    // Forcer le scroll vers le haut immédiatement
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Double vérification après un court délai
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }, 50);
 };
 
 onMounted(() => {
