@@ -8,7 +8,7 @@
               @click="$emit('exit-room')"
               class="flex items-center gap-2 px-4 py-2 border border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10 font-tech text-sm rounded transition-all"
             >
-              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              <ArrowLeft class="w-4 h-4" />
               RETOUR
             </button>
             <div class="text-cyber-blue font-cyber font-bold text-lg">
@@ -19,7 +19,7 @@
           <div class="flex items-center gap-6">
             <!-- Timer -->
             <div class="flex items-center gap-2">
-              <i data-lucide="clock" class="w-5 h-5 text-cyber-red"></i>
+              <Clock class="w-5 h-5 text-cyber-red" />
               <span class="font-tech text-cyber-red font-bold">
                 {{ formatTime(gameState.timer) }}
               </span>
@@ -27,7 +27,7 @@
             
             <!-- Équipe -->
             <div class="flex items-center gap-2">
-              <i data-lucide="users" class="w-5 h-5 text-cyber-green"></i>
+              <Users class="w-5 h-5 text-cyber-green" />
               <span class="font-tech text-cyber-green">
                 {{ gameState.teamName }}
               </span>
@@ -72,17 +72,18 @@
     </div>
   </template>
   
-  <script setup>
-  import { useGameState } from '../composables/useGameState'
-  
-  const props = defineProps({
-    roomData: {
-      type: Object,
-      required: true
-    }
-  })
-  
-  const emit = defineEmits(['exit-room'])
-  
-  const { gameState, formatTime } = useGameState()
-  </script>
+<script setup>
+import { useGameState } from '../composables/useGameState'
+import { ArrowLeft, Clock, Users } from 'lucide-vue-next'
+
+const props = defineProps({
+  roomData: {
+    type: Object,
+    required: true
+  }
+})
+
+const emit = defineEmits(['exit-room'])
+
+const { gameState, formatTime } = useGameState()
+</script>
