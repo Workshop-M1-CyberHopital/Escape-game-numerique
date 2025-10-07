@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const dataStore = require('../storage/dataStore');
 const router = express.Router();
 
 // Middleware d'authentification
@@ -24,13 +25,12 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// Stockage en mémoire (en production, utiliser une base de données)
-const users = new Map();
+// Le stockage est maintenant géré par dataStore
 
 // Récupérer le profil de l'utilisateur connecté
 router.get('/profile', authenticateToken, (req, res) => {
     try {
-        const user = users.get(req.user.userId);
+        const user = dataStore.getUser(req.user.userId);
         
         if (!user || !user.isActive) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -60,7 +60,7 @@ router.get('/profile', authenticateToken, (req, res) => {
 router.put('/profile', authenticateToken, (req, res) => {
     try {
         const { username, teamName } = req.body;
-        const user = users.get(req.user.userId);
+        const user = dataStore.getUser(req.user.userId);
         
         if (!user || !user.isActive) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -84,7 +84,7 @@ router.put('/profile', authenticateToken, (req, res) => {
         if (teamName !== undefined) user.teamName = teamName?.trim() || null;
         
         user.updatedAt = new Date();
-        users.set(user.id, user);
+        dataStore.setUser(user.id, user);
 
         res.json({
             success: true,
@@ -106,7 +106,7 @@ router.put('/profile', authenticateToken, (req, res) => {
 // Récupérer les statistiques de l'utilisateur
 router.get('/stats', authenticateToken, (req, res) => {
     try {
-        const user = users.get(req.user.userId);
+        const user = dataStore.getUser(req.user.userId);
         
         if (!user || !user.isActive) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -169,7 +169,7 @@ router.get('/leaderboard', (req, res) => {
     try {
         const { limit = 10, sortBy = 'bestScore' } = req.query;
         
-        const allUsers = Array.from(users.values())
+        const allUsers = dataStore.getAllUsers()
             .filter(user => user.isActive)
             .sort((a, b) => {
                 switch (sortBy) {
@@ -220,7 +220,7 @@ router.get('/search', (req, res) => {
         }
 
         const searchTerm = q.toLowerCase().trim();
-        const matchingUsers = Array.from(users.values())
+        const matchingUsers = dataStore.getAllUsers()
             .filter(user => 
                 user.isActive && (
                     user.username.toLowerCase().includes(searchTerm) ||
@@ -254,7 +254,7 @@ router.get('/most-active', (req, res) => {
         const { limit = 10, period = 'week' } = req.query;
         
         // Simulation des utilisateurs les plus actifs
-        const activeUsers = Array.from(users.values())
+        const activeUsers = dataStore.getAllUsers()
             .filter(user => user.isActive)
             .sort((a, b) => b.gamesPlayed - a.gamesPlayed)
             .slice(0, parseInt(limit))
