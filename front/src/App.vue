@@ -27,7 +27,7 @@
                             title="Quitter la partie en cours"
                         >
                             <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
-                            QUITTER
+                            QUITTER LA PARTIE
                         </button>
                         
                         <!-- Bouton Scores -->
@@ -259,13 +259,13 @@
 
         <!-- Audio Briefing -->
         <AudioBriefing
-            :visible="showAudioBriefing"
+            :visible="showAudioBriefing && !isBriefingShown('audio')"
             @close="handleCloseAudioBriefing"
         />
 
         <!-- Server Room Briefing -->
         <ServerRoomBriefing
-            :visible="showServerRoomBriefing"
+            :visible="showServerRoomBriefing && !isBriefingShown('serverRoom')"
             @close="handleCloseServerRoomBriefing"
         />
 
@@ -386,6 +386,8 @@ const {
     formatTime,
     calculateFinalScore,
     isGameComplete,
+    markBriefingAsShown,
+    isBriefingShown,
 } = useGameState();
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
@@ -572,6 +574,7 @@ const playImagingRoomAudio = async () => {
 // Fonctions de fermeture des popups avec arrêt audio
 const handleCloseAudioBriefing = () => {
     showAudioBriefing.value = false;
+    markBriefingAsShown('audio');
     stopSound("roomSelection");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -582,6 +585,7 @@ const handleCloseAudioBriefing = () => {
 
 const handleCloseServerRoomBriefing = () => {
     showServerRoomBriefing.value = false;
+    markBriefingAsShown('serverRoom');
     stopSound("serverRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {

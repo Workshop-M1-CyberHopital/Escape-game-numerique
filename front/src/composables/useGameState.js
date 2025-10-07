@@ -24,6 +24,16 @@ const gameState = reactive({
   roomStartTime: null, // Timestamp de début de salle
   completedRooms: [], // Liste des salles complétées
   finalScore: null, // Score final calculé
+  // États des briefings
+  briefingsShown: {
+    audio: false,
+    serverRoom: false,
+    dnaRoom: false,
+    imagingRoom: false,
+    finishServerRoom: false,
+    finishDNARoom: false,
+    finishImagingRoom: false
+  }
 });
 
 // Timer
@@ -307,6 +317,17 @@ export function useGameState() {
     return mainRooms.every((room) => gameState.completedRooms.includes(room));
   };
 
+  // Fonctions pour gérer les briefings
+  const markBriefingAsShown = (briefingType) => {
+    if (gameState.briefingsShown.hasOwnProperty(briefingType)) {
+      gameState.briefingsShown[briefingType] = true;
+    }
+  };
+
+  const isBriefingShown = (briefingType) => {
+    return gameState.briefingsShown[briefingType] || false;
+  };
+
   return {
     gameState,
     startGame,
@@ -324,6 +345,8 @@ export function useGameState() {
     calculateFinalScore,
     isGameComplete,
     clearGameState,
+    markBriefingAsShown,
+    isBriefingShown,
     PENALTY_PER_ERROR,
     PENALTY_PER_HINT,
     MAX_SCORE,
