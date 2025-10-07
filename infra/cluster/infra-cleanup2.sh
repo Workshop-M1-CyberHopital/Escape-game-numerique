@@ -12,8 +12,21 @@
 
 set -Eeuo pipefail
 
+# --- Fonctions ---
+separator() {
+  echo "-----------------------------------------------"
+}
+
+# --- Variables principales ---
 rgname="workshop-EISI"
 aksname="AKSClusterWorkshop"
+share_redis="redis-fileshare"
+share_mariadb="mariadb-fileshare"
+storageaccount="workshopstorageeisi"
+
+# --- Connexion Azure ---
+echo "===== Connexion à Azure ====="
+az account show > /dev/null 2>&1 || az login --use-device-code
 
 echo "============================"
 echo "   MENU DE NETTOYAGE FINAL"
@@ -27,72 +40,77 @@ echo "5.  Supprimer TOUT + les Azure Files (volumes persistants)"
 echo ""
 read -p "Choisis une option [1-5] : " choice
 
-# --- Option 1 ---
 case $choice in
   1)
     echo ""
     echo "Suppression de toutes les ressources du namespace 'workshop'..."
-    sleep 3
+    sleep 5
     kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all -n workshop || true
+    kubectl delete namespace workshop --ignore-not-found
     echo "Namespace nettoyé. Le cluster AKS reste actif."
     ;;
-# --- Option 2 ---
   2)
     echo ""
     read -p "Es-tu sûr de vouloir SUPPRIMER le groupe de ressources Azure '$rgname' ? (y/N) : " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
       echo "Suppression complète du groupe de ressources Azure..."
-      sleep 3
+      sleep 5
       az group delete -n "$rgname" --yes --no-wait
       echo "Suppression demandée. Cela peut prendre quelques minutes..."
     else
       echo "Suppression annulée."
     fi
     ;;
-# --- Option 3 ---
   3)
     echo ""
     read -p "CONFIRMATION FINALE — Supprimer TOUT (Azure + Kubernetes) ? (y/N) : " confirm_all
     if [[ "$confirm_all" =~ ^[Yy]$ ]]; then
       echo "Suppression du namespace 'workshop'..."
-      sleep 3
+      sleep 5
       kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all -n workshop || true
+      kubectl delete namespace workshop --ignore-not-found
       echo "Suppression du cluster et du groupe de ressources Azure..."
-      sleep 3
+      sleep 5
       az group delete -n "$rgname" --yes --no-wait
       echo "L'ensemble de l'infrastructure est en cours de suppression..."
     else
       echo "Suppression complète annulée."
     fi
     ;;
-# --- Option 4 ---
   4)
     echo ""
     echo "Sortie sans suppression. Rien n’a été supprimé."
     ;;
-# --- Option 5 ---
   5)
     echo ""
     read -p "CONFIRMATION ULTIME — Supprimer TOUT (Azure + Kubernetes + Azure Files) ? (y/N) : " confirm_all
     if [[ "$confirm_all" =~ ^[Yy]$ ]]; then
       echo "Suppression du namespace 'workshop'..."
-      sleep 3
+      sleep 5
       kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all -n workshop || true
+      kubectl delete namespace workshop --ignore-not-found
+
       echo "Suppression du cluster et du groupe de ressources Azure..."
-      sleep 3
+      sleep 5
       az group delete -n "$rgname" --yes --no-wait
-      echo "Suppression des Azure Files (Redis + MariaDB)..."
-      sleep 3
-      az storage share delete --name "$share_redis" --account-name "$storageaccount" --yes || true
-      az storage share delete --name "$share_mariadb" --account-name "$storageaccount" --yes || true
+
+      echo "Suppression de tous les Azure Files présents dans le groupe de ressources $rgname..."
+      sleep 5
+      storage_accounts=$(az storage account list -g "$rgname" --query "[].name" -o tsv)
+
+      for account in $storage_accounts; do
+        echo "→ Suppression des partages de fichiers du compte $account..."
+        shares=$(az storage share list --account-name "$account" --query "[].name" -o tsv 2>/dev/null || true)
+        for share in $shares; do
+          echo "   - Suppression du partage : $share"
+          az storage share delete --name "$share" --account-name "$account" --yes || true
+        done
+      done
+
       echo "L'ensemble de l'infrastructure et des volumes persistants est en cours de suppression..."
     else
       echo "Suppression complète annulée."
     fi
-    ;;
-  *)
-    echo ""
-    echo "Option invalide. Aucune action effectuée."
     ;;
 esac
 
