@@ -388,6 +388,7 @@ const {
     isGameComplete,
     markBriefingAsShown,
     isBriefingShown,
+    clearGameState,
 } = useGameState();
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
@@ -894,6 +895,10 @@ const handleRoomCompleted = async (roomId) => {
             
             // Soumettre le score si l'utilisateur est connecté
             await handleScoreSubmission(gameData);
+            
+            // Nettoyer le cache après la fin de mission
+            console.log('🎉 Mission terminée - Nettoyage du cache');
+            clearGameState();
         }, 2000); // Délai de 2 secondes après la dernière salle
     } else {
         exitRoom();

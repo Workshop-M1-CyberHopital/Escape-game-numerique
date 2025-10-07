@@ -243,6 +243,16 @@ export function useGameState() {
     gameState.roomStartTime = null;
     gameState.completedRooms = [];
     gameState.finalScore = null;
+    // Réinitialiser les briefings
+    gameState.briefingsShown = {
+      audio: false,
+      serverRoom: false,
+      dnaRoom: false,
+      imagingRoom: false,
+      finishServerRoom: false,
+      finishDNARoom: false,
+      finishImagingRoom: false
+    };
     stopTimer();
     
     // Nettoyer le localStorage
