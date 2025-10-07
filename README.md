@@ -7,7 +7,7 @@ Les dossiers médicaux des patients sont corrompus par un **virus informatique i
 Votre équipe (les joueurs) est une **unité spéciale de cybersécurité médicale** chargée de rétablir le système avant que les patients ne soient en danger.
 
 🎯 **Objectif du jeu** :
-Réparer les systèmes vitaux (3-4 salles virtuelles) en résolvant des énigmes liées à :
+Réparer les systèmes vitaux (4 salles virtuelles) en résolvant des énigmes liées à :
 
 * la **cybersécurité médicale**,
 * la **santé humaine (données, ADN, IRM, rythme cardiaque)**,
