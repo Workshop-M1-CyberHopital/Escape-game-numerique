@@ -9,7 +9,7 @@ metadata:
 spec:
   ipWhiteList:
     sourceRange:
-      - 78.202.15.42 # Adresse IP autorisée 
+      - 147.161.180.123 # Adresse IP autorisée 
       - 192.168.0.48/24 # Sous-réseau local autorisé
       - 10.60.60.0/22
 ---
