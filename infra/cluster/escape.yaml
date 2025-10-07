@@ -86,43 +86,43 @@ spec:
         app: mariadb
     spec:
       containers:
-        - name: mariadb
-          image: mariadb:11.4
-          env:
-            - name: MARIADB_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mariadb-secret
-                  key: root_password
-            - name: MARIADB_DATABASE
-              valueFrom:
-                secretKeyRef:
-                  name: mariadb-secret
-                  key: database
-            - name: MARIADB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mariadb-secret
-                  key: user
-            - name: MARIADB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mariadb-secret
-                  key: password
-          ports:
-            - containerPort: 3306
-          volumeMounts:
-            - name: mariadb-storage
-              mountPath: /var/lib/mysql
+      - name: mariadb
+        image: mariadb:11.4
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: root_password
+        - name: MARIADB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: database
+        - name: MARIADB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: user
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: password
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mariadb-storage
+          mountPath: /var/lib/mysql
   volumeClaimTemplates:
-    - metadata:
-        name: mariadb-storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: azurefile-csi
-        resources:
-          requests:
-            storage: 5Gi
+  - metadata:
+      name: mariadb-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: azurefile-csi
+      resources:
+        requests:
+          storage: 5Gi
 ---
 # Service for MariaDB
 apiVersion: v1
@@ -156,7 +156,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: escape
-        image: monrepo/escape-game:latest # nom de l'image sur docker
+        image: gaetandev/espace-workshop:latest # nom de l'image sur docker gaetandev/espace-workshop
         resources:
           requests:
             cpu: 100m

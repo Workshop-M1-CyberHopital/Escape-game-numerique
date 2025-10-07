@@ -20,10 +20,6 @@ aksname="AKSClusterWorkshop"    # Nom du cluster AKS
 rgloc="francecentral"           # Région Azure
 apitoken="ubVqfAcvE7507ZwuTWamvCJe"
 redpass="password_redis_519"    # Mot de passe Redis
-azdb_host="escape-db.mysql.database.azure.com"  # ⚠️ Nom DNS Azure Database
-azdb_user="escapeadmin@escape-db"
-azdb_pass="TonMotDePasseSûr123!"
-azdb_name="escape_db"
 
 # --- Connexion Azure ---
 echo "===== Connexion à Azure ====="
@@ -51,18 +47,21 @@ echo "📁 Création du namespace 'workshop'..."
 kubectl create namespace workshop || true
 
 # --- Création des secrets nécessaires ---
-echo "🔐 Création des secrets Redis, Azure DB et Gandi..."
+echo "🔐 Création des secrets Redis, MariaDB et Gandi..."
 kubectl -n workshop create secret generic redis-secret-traefik \
   --from-literal=password="$redpass" --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl -n workshop create secret generic azure-db-secret \
-  --from-literal=username="$azdb_user" \
-  --from-literal=password="$azdb_pass" \
+kubectl -n workshop create secret generic mariadb-secret \
+  --from-literal=root_password=root123 \
+  --from-literal=user=escape \
+  --from-literal=password=escape123 \
+  --from-literal=database=escape_db \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n workshop create secret generic gandi-credentials \
   --from-literal=api-token="$apitoken" \
   --dry-run=client -o yaml | kubectl apply -f -
+
 
 # --- Déploiement de l'application ---
 echo "🚀 Déploiement de Redis et de l’application Escape Game (base externe Azure)..."
