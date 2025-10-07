@@ -134,7 +134,7 @@ router.get('/my-scores', authenticateToken, (req, res) => {
     try {
         const { limit = 10, offset = 0, sortBy = 'date' } = req.query;
         
-        let userScores = Array.from(scores.values())
+        let userScores = dataStore.getAllScores()
             .filter(score => score.userId === req.user.userId);
 
         // Trier selon le critère
@@ -180,7 +180,7 @@ router.get('/leaderboard', (req, res) => {
             period = 'all' 
         } = req.query;
         
-        let allScores = Array.from(scores.values());
+        let allScores = dataStore.getAllScores();
 
         // Filtrer par période
         if (period !== 'all') {
@@ -222,10 +222,13 @@ router.get('/leaderboard', (req, res) => {
 
         const leaderboard = allScores
             .slice(parseInt(offset), parseInt(offset) + parseInt(limit))
-            .map((score, index) => ({
-                rank: parseInt(offset) + index + 1,
-                ...score
-            }));
+            .map((score, index) => {
+                const { rank, ...scoreWithoutRank } = score;
+                return {
+                    rank: parseInt(offset) + index + 1,
+                    ...scoreWithoutRank
+                };
+            });
 
         res.json({
             success: true,
@@ -296,7 +299,7 @@ router.get('/recent', (req, res) => {
     try {
         const { limit = 20 } = req.query;
         
-        const recentScores = Array.from(scores.values())
+        const recentScores = dataStore.getAllScores()
             .sort((a, b) => b.submittedAt - a.submittedAt)
             .slice(0, parseInt(limit));
 
@@ -316,7 +319,7 @@ router.get('/best', (req, res) => {
     try {
         const { limit = 10 } = req.query;
         
-        const bestScores = Array.from(scores.values())
+        const bestScores = dataStore.getAllScores()
             .sort((a, b) => b.score - a.score)
             .slice(0, parseInt(limit));
 

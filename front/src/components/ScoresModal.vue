@@ -91,7 +91,7 @@
                         <p class="text-gray-400 font-tech mt-2">Chargement...</p>
                     </div>
 
-                    <div v-else class="space-y-2">
+                    <div v-else class="space-y-2 max-h-96 overflow-y-auto pr-2">
                         <div
                             v-for="(score, index) in leaderboard"
                             :key="score.id"
@@ -142,7 +142,7 @@
                         <p class="text-gray-400 font-tech">Aucun score enregistré</p>
                     </div>
 
-                    <div v-else class="space-y-2">
+                    <div v-else class="space-y-2 max-h-96 overflow-y-auto pr-2">
                         <div
                             v-for="score in userScores"
                             :key="score.id"
