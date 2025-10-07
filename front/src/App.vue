@@ -526,13 +526,24 @@ const handleStartGame = async (teamData) => {
     // Fermer d'abord la modal
     showTeamSetup.value = false;
 
-    // Attendre un peu avant d'afficher l'écran de chargement
-    await nextTick();
-    setTimeout(() => {
-        showLoadingScreen.value = true;
-        loadingTeamName.value = teamData.name;
-        loadingPlayers.value = teamData.players;
-    }, 100);
+    // Détecter si c'est un démarrage depuis DevTool (équipe "Équipe DEV")
+    const isDevToolStart = teamData.name === "Équipe DEV";
+    
+    if (isDevToolStart) {
+        // Démarrage direct sans loading screen pour DevTool
+        startGame({
+            name: teamData.name,
+            players: teamData.players,
+        });
+    } else {
+        // Attendre un peu avant d'afficher l'écran de chargement pour le démarrage normal
+        await nextTick();
+        setTimeout(() => {
+            showLoadingScreen.value = true;
+            loadingTeamName.value = teamData.name;
+            loadingPlayers.value = teamData.players;
+        }, 100);
+    }
 };
 
 const handleLoadingComplete = async () => {
