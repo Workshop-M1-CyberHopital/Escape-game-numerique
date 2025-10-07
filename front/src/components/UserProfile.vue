@@ -87,8 +87,15 @@
                         CHANGER LE MOT DE PASSE
                     </button>
                     <button
-                        @click="openDeleteAccount"
-                        class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-600/80 text-white font-cyber font-bold rounded-lg transition-all flex items-center justify-center"
+                        @click="handleDeleteAccountClick"
+                        :disabled="gameState.isGameStarted"
+                        :class="[
+                            'flex-1 px-4 py-3 font-cyber font-bold rounded-lg transition-all flex items-center justify-center',
+                            gameState.isGameStarted
+                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                : 'bg-red-600 hover:bg-red-600/80 text-white'
+                        ]"
+                        :title="gameState.isGameStarted ? 'Impossible de supprimer le compte pendant une partie' : 'Supprimer le compte'"
                     >
                         <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
                         SUPPRIMER LE COMPTE
@@ -253,6 +260,10 @@ const props = defineProps({
     visible: {
         type: Boolean,
         default: false
+    },
+    gameState: {
+        type: Object,
+        default: () => ({})
     }
 });
 
@@ -267,8 +278,17 @@ const handleClose = () => {
     emit('close');
 };
 
+// Fonction pour gérer le clic sur supprimer le compte
+const handleDeleteAccountClick = () => {
+    if (gameState.isGameStarted) {
+        showWarning('Impossible de supprimer le compte pendant une partie active. Terminez d\'abord la partie.');
+        return;
+    }
+    openDeleteAccount();
+};
+
 const { user, updateProfile, changePassword, deleteAccount, getUserStats } = useAuth();
-const { showSuccess, showError } = useToast();
+const { showSuccess, showError, showWarning } = useToast();
 
 // État des formulaires
 const showEditProfile = ref(false);
