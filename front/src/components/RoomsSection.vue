@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ unlockedRooms.length }} / 4
+                            {{ completedRooms.length }} / 4
                         </span>
                     </div>
                     <div
@@ -28,15 +28,15 @@
                     >
                         <div
                             class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
-                            :style="`width: ${(unlockedRooms.length / 4) * 100}%`"
+                            :style="`width: ${(completedRooms.length / 4) * 100}%`"
                         >
                             <span
-                                v-if="unlockedRooms.length > 0"
+                                v-if="completedRooms.length > 0"
                                 class="text-xs font-bold text-black"
                             >
                                 {{
                                     Math.round(
-                                        (unlockedRooms.length / 4) * 100,
+                                        (completedRooms.length / 4) * 100,
                                     )
                                 }}%
                             </span>
@@ -387,6 +387,10 @@ import { onMounted } from "vue";
 
 const props = defineProps({
     unlockedRooms: {
+        type: Array,
+        default: () => [],
+    },
+    completedRooms: {
         type: Array,
         default: () => [],
     },
