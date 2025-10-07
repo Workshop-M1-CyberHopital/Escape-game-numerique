@@ -74,6 +74,13 @@
                             <option value="hex">Hexadécimal</option>
                             <option value="base64">Base64</option>
                             <option value="binary">Binaire</option>
+                            <option value="morse">Morse</option>
+                            <option value="ascii">ASCII (décimal)</option>
+                            <option value="reverse">Inversé</option>
+                            <option value="vigenere">Vigenère</option>
+                            <option value="railfence">Rail Fence</option>
+                            <option value="url">URL Encoding</option>
+                            <option value="unicode">Unicode (décimal)</option>
                         </select>
                     </div>
 
@@ -252,11 +259,10 @@
                     <!-- Indices pour le décodage -->
                     <div v-if="!puzzleDecoded">
                         <div v-if="hintsShown >= 1" class="fade-in">
-                            💡 Le message est encodé en Base64
+                            💡 Le message est encodé avec un algorithme de chiffrement standard
                         </div>
                         <div v-if="hintsShown >= 2" class="fade-in">
-                            💡 Utilisez un décodeur Base64 en ligne ou votre
-                            navigateur
+                            💡 Essayez différents types d'encodage : Base64, Hexadécimal, Binaire, Morse, ASCII...
                         </div>
                         <div v-if="hintsShown >= 3" class="fade-in">
                             💡 Le message décodé est :
@@ -407,6 +413,87 @@ const decodeMessage = () => {
                 decoded = binaryArray
                     .map((bin) => String.fromCharCode(parseInt(bin, 2)))
                     .join("");
+                break;
+
+            case "morse":
+                // Code Morse vers texte
+                const morseCode = {
+                    '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E',
+                    '..-.': 'F', '--.': 'G', '....': 'H', '..': 'I', '.---': 'J',
+                    '-.-': 'K', '.-..': 'L', '--': 'M', '-.': 'N', '---': 'O',
+                    '.--.': 'P', '--.-': 'Q', '.-.': 'R', '...': 'S', '-': 'T',
+                    '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X', '-.--': 'Y',
+                    '--..': 'Z', '-----': '0', '.----': '1', '..---': '2',
+                    '...--': '3', '....-': '4', '.....': '5', '-....': '6',
+                    '--...': '7', '---..': '8', '----.': '9', '/': ' '
+                };
+                decoded = messageToDecode.value
+                    .split(' ')
+                    .map(code => morseCode[code] || code)
+                    .join('');
+                break;
+
+            case "ascii":
+                // ASCII décimal vers texte
+                const asciiNumbers = messageToDecode.value.match(/\d+/g) || [];
+                decoded = asciiNumbers
+                    .map(num => String.fromCharCode(parseInt(num)))
+                    .join('');
+                break;
+
+            case "reverse":
+                // Inverser le texte
+                decoded = messageToDecode.value.split('').reverse().join('');
+                break;
+
+            case "vigenere":
+                // Vigenère (clé: "CYBER")
+                const key = "CYBER";
+                let keyIndex = 0;
+                decoded = messageToDecode.value.replace(/[a-zA-Z]/g, function(char) {
+                    const base = char <= 'Z' ? 65 : 97;
+                    const keyChar = key[keyIndex % key.length].toUpperCase();
+                    const keyOffset = keyChar.charCodeAt(0) - 65;
+                    const charOffset = char.charCodeAt(0) - base;
+                    const decodedChar = String.fromCharCode(((charOffset - keyOffset + 26) % 26) + base);
+                    keyIndex++;
+                    return decodedChar;
+                });
+                break;
+
+            case "railfence":
+                // Rail Fence Cipher (3 rails)
+                const rails = 3;
+                const railLength = Math.ceil(messageToDecode.value.length / (2 * rails - 2));
+                const rail1 = [];
+                const rail2 = [];
+                const rail3 = [];
+                
+                for (let i = 0; i < messageToDecode.value.length; i++) {
+                    const pos = i % (2 * rails - 2);
+                    if (pos < rails) {
+                        if (pos === 0) rail1.push(messageToDecode.value[i]);
+                        else if (pos === 1) rail2.push(messageToDecode.value[i]);
+                        else if (pos === 2) rail3.push(messageToDecode.value[i]);
+                    } else {
+                        if (pos === 3) rail2.push(messageToDecode.value[i]);
+                        else if (pos === 4) rail1.push(messageToDecode.value[i]);
+                    }
+                }
+                decoded = rail1.join('') + rail2.join('') + rail3.join('');
+                break;
+
+            case "url":
+                // URL Decoding
+                decoded = decodeURIComponent(messageToDecode.value);
+                break;
+
+            case "unicode":
+                // Unicode décimal vers texte
+                const unicodeNumbers = messageToDecode.value.match(/\d+/g) || [];
+                decoded = unicodeNumbers
+                    .map(num => String.fromCharCode(parseInt(num)))
+                    .join('');
                 break;
 
             default:
