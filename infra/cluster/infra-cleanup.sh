@@ -26,11 +26,11 @@ clear
 echo "==============================================="
 echo "MENU NETTOYAGE — Workshop EISI 2025–2026"
 echo "==============================================="
-echo "1️⃣  Supprimer uniquement les ressources Kubernetes"
-echo "2️⃣  Supprimer uniquement le cluster AKS"
-echo "3️⃣  Supprimer le cluster AKS + Azure Files"
-echo "4️⃣  Supprimer tout le Resource Group Azure"
-echo "5️⃣  Quitter"
+echo "1.  Supprimer uniquement les ressources Kubernetes"
+echo "2.  Supprimer uniquement le cluster AKS"
+echo "3.  Supprimer le cluster AKS + Azure Files"
+echo "4.  Supprimer tout le Resource Group Azure"
+echo "5.  Quitter"
 echo "==============================================="
 read -rp "Choisis une option (1-5) : " CHOICE
 
