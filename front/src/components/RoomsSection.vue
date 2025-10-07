@@ -10,6 +10,47 @@
                 <p class="text-gray-400 font-tech text-lg">
                     Réparez les systèmes vitaux en résolvant les énigmes
                 </p>
+
+                <!-- Barre de progression -->
+                <div class="mt-8 max-w-2xl mx-auto">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-tech text-sm text-gray-400">
+                            PROGRESSION
+                        </span>
+                        <span
+                            class="font-cyber text-lg text-cyber-blue font-bold"
+                        >
+                            {{ unlockedRooms.length }} / 4
+                        </span>
+                    </div>
+                    <div
+                        class="w-full bg-gray-800 rounded-full h-4 border-2 border-gray-700 overflow-hidden"
+                    >
+                        <div
+                            class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
+                            :style="`width: ${(unlockedRooms.length / 4) * 100}%`"
+                        >
+                            <span
+                                v-if="unlockedRooms.length > 0"
+                                class="text-xs font-bold text-black"
+                            >
+                                {{
+                                    Math.round(
+                                        (unlockedRooms.length / 4) * 100,
+                                    )
+                                }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div
+                        class="flex justify-between mt-2 text-xs font-tech text-gray-500"
+                    >
+                        <span>SERVEUR</span>
+                        <span>LAB ADN</span>
+                        <span>IMAGERIE</span>
+                        <span>CŒUR</span>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
