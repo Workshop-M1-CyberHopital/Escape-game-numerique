@@ -4,9 +4,9 @@
 # Infrastructure Escape Game sur AKS (Azure Kubernetes Service)
 # ===============================================
 # Options :
-# 1️⃣ Déployer avec création du Resource Group Azure
-# 2️⃣ Déployer sans création du Resource Group (réutiliser un existant)
-# 3️⃣ Quitter
+# 1. Déployer avec création du Resource Group Azure
+# 2. Déployer sans création du Resource Group (réutiliser un existant)
+# 3. Quitter
 # ===============================================
 
 set -Eeuo pipefail  # Stoppe le script si une commande échoue
@@ -177,9 +177,9 @@ clear
 echo "==============================================="
 echo "MENU DÉPLOIEMENT — Workshop EISI 2025–2026"
 echo "==============================================="
-echo "1️⃣  Déployer avec création du Resource Group"
-echo "2️⃣  Déployer sans création du Resource Group"
-echo "3️⃣  Quitter"
+echo "1.  Déployer avec création du Resource Group"
+echo "2.  Déployer sans création du Resource Group"
+echo "3.  Quitter"
 echo "==============================================="
 read -rp "Choisis une option (1-3) : " CHOICE
 

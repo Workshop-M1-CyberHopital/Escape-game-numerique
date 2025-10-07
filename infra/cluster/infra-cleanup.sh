@@ -3,11 +3,11 @@
 # Script de nettoyage — Workshop M1 EISI 2025–2026
 # ===============================================
 # Options :
-# 1️⃣ Supprimer uniquement les ressources Kubernetes
-# 2️⃣ Supprimer uniquement le cluster AKS
-# 3️⃣ Supprimer le cluster AKS + Azure Files
-# 4️⃣ Supprimer tout le Resource Group (total)
-# 5️⃣ Quitter
+# 1.  Supprimer uniquement les ressources Kubernetes
+# 2. Supprimer uniquement le cluster AKS
+# 3. Supprimer le cluster AKS + Azure Files
+# 4. Supprimer tout le Resource Group (total)
+# 5. Quitter
 # ===============================================
 
 set -Eeuo pipefail
