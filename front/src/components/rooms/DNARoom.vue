@@ -167,32 +167,6 @@
             </div>
         </div>
 
-        <!-- Message de succès -->
-        <div v-if="isCompleted" class="mt-8">
-            <div
-                class="bg-cyber-green/20 backdrop-blur-md border-2 border-cyber-green rounded-lg p-6 text-center"
-            >
-                <div class="flex items-center justify-center gap-2 mb-4">
-                    <i
-                        data-lucide="check-circle"
-                        class="w-8 h-8 text-cyber-green"
-                    ></i>
-                    <h3 class="text-2xl font-cyber font-bold text-cyber-green">
-                        SALLE TERMINÉE !
-                    </h3>
-                </div>
-                <p class="text-gray-300 mb-4">
-                    Parfait ! Vous avez reconstitué la séquence ADN. Les données
-                    biomédicales sont restaurées.
-                </p>
-                <button
-                    @click="$emit('room-completed', 'dna')"
-                    class="px-8 py-3 bg-cyber-green hover:bg-cyber-green/80 text-black font-cyber font-bold rounded-lg transition-all"
-                >
-                    CONTINUER VERS LA PROCHAINE SALLE
-                </button>
-            </div>
-        </div>
     </GameRoom>
 </template>
 
@@ -200,8 +174,10 @@
 import { ref } from "vue";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
+import { useToast } from "../../composables/useToast";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
+const { showSuccess, showError } = useToast();
 
 const roomData = {
     title: "LABORATOIRE ADN",
@@ -257,10 +233,18 @@ const checkSequence = () => {
         puzzleSolved.value = true;
         isCompleted.value = true;
         createFireworks(3000);
+
+        showSuccess(
+            "RÉPONSE CORRECTE",
+            "La séquence est correcte. Vous avez réussi à reconstituer le brin complémentaire.",
+        )
+        
+        // Émettre directement l'événement room-completed comme ServerRoom
+        emit("room-completed", "dna-lab");
     } else {
-        alert(
+        showError(
             "La séquence n'est pas correcte. Vérifiez les règles d'appariement !",
-        );
+        )
     }
 };
 

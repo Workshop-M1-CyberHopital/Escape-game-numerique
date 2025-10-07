@@ -329,8 +329,10 @@
 import { ref, computed } from "vue";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
+import { useToast } from "../../composables/useToast";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
+const { showSuccess, showError } = useToast();
 
 // Données de la salle
 const roomData = {
@@ -422,8 +424,17 @@ const checkDecoding = () => {
         puzzleDecoded.value = true;
         decodedPuzzle.value = decodedMessage.value;
         hintsShown.value = 0; // Réinitialiser les indices pour l'étape suivante
+        
+        // Message de succès cyberpunk (durée prolongée pour la lecture)
+        showSuccess(
+            "DÉCODAGE RÉUSSI",
+            "Excellent ! Vous avez percé le pare-feu. Le système commence à se stabiliser. Continuez votre mission pour restaurer l'intégrité des données médicales.",
+            8000
+        );
     } else {
-        alert("Message décodé incorrect. Essayez encore !");
+        showError(
+            "Message décodé incorrect. Essayez encore !",
+        )
     }
 };
 
@@ -442,9 +453,18 @@ const checkPuzzleAnswer = () => {
         puzzleSolved.value = true;
         isCompleted.value = true;
         createFireworks(3000);
+
+        showSuccess(
+            "RÉPONSE CORRECTE",
+            "Excellent ! Vous avez réussi à décoder le mot de passe et à restaurer le pare-feu. La sécurité des données de santé est maintenant protégée.",
+            8000
+        );
+
         emit("room-completed", "server");
     } else {
-        alert("Réponse incorrecte. Essayez encore !");
+        showError(
+            "Réponse incorrecte. Essayez encore !",
+        )
     }
 };
 </script>

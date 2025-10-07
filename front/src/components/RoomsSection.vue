@@ -16,8 +16,8 @@
         <div 
           @click="handleRoomClick('server')"
           :class="[
-            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all',
-            isUnlocked('server') ? 'border-cyber-red cursor-pointer hover:scale-105' : 'border-gray-600 opacity-60 cursor-not-allowed'
+            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+            isUnlocked('server') ? 'border-cyber-red cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-red/20 hover:border-cyber-red/80' : 'border-gray-600 opacity-60 cursor-not-allowed'
           ]"
         >
           <div class="absolute top-4 right-4">
@@ -53,8 +53,8 @@
         <div 
           @click="handleRoomClick('dna-lab')"
           :class="[
-            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all',
-            isUnlocked('dna-lab') ? 'border-cyber-blue cursor-pointer hover:scale-105' : 'border-gray-600 opacity-60 cursor-not-allowed'
+            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+            isUnlocked('dna-lab') ? 'border-cyber-blue cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-blue/20 hover:border-cyber-blue/80' : 'border-gray-600 opacity-60 cursor-not-allowed'
           ]"
         >
           <div class="absolute top-4 right-4">
@@ -90,8 +90,8 @@
         <div 
           @click="handleRoomClick('imaging')"
           :class="[
-            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all',
-            isUnlocked('imaging') ? 'border-cyber-green cursor-pointer hover:scale-105' : 'border-gray-600 opacity-60 cursor-not-allowed'
+            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+            isUnlocked('imaging') ? 'border-cyber-green cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-green/20 hover:border-cyber-green/80' : 'border-gray-600 opacity-60 cursor-not-allowed'
           ]"
         >
           <div class="absolute top-4 right-4">
@@ -127,8 +127,8 @@
         <div 
           @click="handleRoomClick('heart')"
           :class="[
-            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all',
-            isUnlocked('heart') ? 'border-cyber-purple cursor-pointer hover:scale-105' : 'border-gray-600 opacity-60 cursor-not-allowed'
+            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+            isUnlocked('heart') ? 'border-cyber-purple cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-purple/20 hover:border-cyber-purple/80' : 'border-gray-600 opacity-60 cursor-not-allowed'
           ]"
         >
           <div class="absolute top-4 right-4">
@@ -196,9 +196,9 @@ const isUnlocked = (roomId) => {
 }
 
 const handleRoomClick = (roomId) => {
-  if (isUnlocked(roomId)) {
-    emit('enter-room', roomId)
-  }
+  // Toujours émettre l'événement, même si la salle est verrouillée
+  // Le composant parent gérera l'affichage du toast d'erreur
+  emit('enter-room', roomId)
 }
 
 onMounted(() => {
