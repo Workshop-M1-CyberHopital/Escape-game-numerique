@@ -367,7 +367,6 @@
                 </button>
             </div>
         </div>
-
     </GameRoom>
 </template>
 
@@ -441,7 +440,7 @@ const checkOrder = () => {
             "RÉPONSE CORRECTE",
             "L'ordre est correct. Vous avez réussi à restaurer l'imagerie médicale.",
         )
-        
+
         // Émettre directement l'événement room-completed comme ServerRoom et DNARoom
         emit("room-completed", "imaging");
     } else {

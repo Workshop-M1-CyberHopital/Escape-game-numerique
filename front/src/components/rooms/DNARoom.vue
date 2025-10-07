@@ -166,7 +166,6 @@
                 </button>
             </div>
         </div>
-
     </GameRoom>
 </template>
 
@@ -237,8 +236,8 @@ const checkSequence = () => {
         showSuccess(
             "RÉPONSE CORRECTE",
             "La séquence est correcte. Vous avez réussi à reconstituer le brin complémentaire.",
-        )
-        
+        );
+
         // Émettre directement l'événement room-completed comme ServerRoom
         emit("room-completed", "dna-lab");
     } else {
