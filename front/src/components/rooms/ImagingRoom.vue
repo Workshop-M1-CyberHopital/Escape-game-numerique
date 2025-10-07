@@ -436,6 +436,11 @@ const checkOrder = () => {
         puzzleSolved.value = true;
         isCompleted.value = true;
         createFireworks(3000);
+
+        showSucess(
+            "RÉPONSE CORRECTE",
+            "L'ordre est correct. Vous avez réussi à restaurer l'imagerie médicale.",
+        )
         
         // Émettre directement l'événement room-completed comme ServerRoom et DNARoom
         emit("room-completed", "imaging");

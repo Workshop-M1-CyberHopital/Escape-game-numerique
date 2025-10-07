@@ -332,7 +332,7 @@ import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
-const { showSuccess } = useToast();
+const { showSuccess, showError } = useToast();
 
 // Données de la salle
 const roomData = {
@@ -432,7 +432,9 @@ const checkDecoding = () => {
             8000
         );
     } else {
-        alert("Message décodé incorrect. Essayez encore !");
+        showError(
+            "Message décodé incorrect. Essayez encore !",
+        )
     }
 };
 
@@ -460,7 +462,9 @@ const checkPuzzleAnswer = () => {
 
         emit("room-completed", "server");
     } else {
-        alert("Réponse incorrecte. Essayez encore !");
+        showError(
+            "Réponse incorrecte. Essayez encore !",
+        )
     }
 };
 </script>

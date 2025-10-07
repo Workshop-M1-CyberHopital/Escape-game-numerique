@@ -231,6 +231,11 @@ const checkSequence = () => {
         puzzleSolved.value = true;
         isCompleted.value = true;
         createFireworks(3000);
+
+        showSucess(
+            "RÉPONSE CORRECTE",
+            "La séquence est correcte. Vous avez réussi à reconstituer le brin complémentaire.",
+        )
         
         // Émettre directement l'événement room-completed comme ServerRoom
         emit("room-completed", "dna-lab");
