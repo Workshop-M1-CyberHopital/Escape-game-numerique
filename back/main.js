@@ -7,6 +7,14 @@ const rateLimit = require('express-rate-limit');
 // Charger la configuration
 require('dotenv').config({ path: './config.env' });
 
+// Initialiser les données au démarrage
+const { execSync } = require('child_process');
+try {
+    execSync('node scripts/init-data.js', { stdio: 'inherit' });
+} catch (error) {
+    console.log('⚠️  Initialisation des données ignorée (déjà fait)');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 

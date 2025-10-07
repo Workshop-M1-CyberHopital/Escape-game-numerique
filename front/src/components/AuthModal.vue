@@ -153,6 +153,11 @@ const toggleMode = () => {
 
 // Soumettre le formulaire
 const handleSubmit = async () => {
+    // Protection contre les appels multiples
+    if (isLoading.value) {
+        return;
+    }
+    
     isLoading.value = true;
     error.value = '';
 

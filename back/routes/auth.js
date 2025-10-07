@@ -2,11 +2,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const router = express.Router();
+const dataStore = require('../storage/dataStore');
 
-// Stockage en mémoire des utilisateurs (en production, utiliser une base de données)
-const users = new Map();
-const sessions = new Map();
+const router = express.Router();
 
 // Configuration JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'escape-game-super-secret-key';
@@ -44,7 +42,7 @@ router.post('/register', async (req, res) => {
         }
 
         // Vérifier si l'utilisateur existe déjà
-        const existingUser = Array.from(users.values()).find(user => 
+        const existingUser = dataStore.getAllUsers().find(user => 
             user.email === email || user.username === username
         );
         
@@ -74,7 +72,7 @@ router.post('/register', async (req, res) => {
             totalScore: 0
         };
 
-        users.set(userId, user);
+        dataStore.setUser(userId, user);
 
         // Générer le token JWT
         const token = jwt.sign(
@@ -113,7 +111,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Trouver l'utilisateur
-        const user = Array.from(users.values()).find(u => 
+        const user = dataStore.getAllUsers().find(u => 
             u.email === email.toLowerCase().trim() && u.isActive
         );
         
@@ -134,7 +132,7 @@ router.post('/login', async (req, res) => {
 
         // Mettre à jour la dernière connexion
         user.lastLogin = new Date();
-        users.set(user.id, user);
+        dataStore.setUser(user.id, user);
 
         // Générer le token JWT
         const token = jwt.sign(
@@ -145,7 +143,7 @@ router.post('/login', async (req, res) => {
 
         // Créer une session
         const sessionId = uuidv4();
-        sessions.set(sessionId, {
+        dataStore.setSession(sessionId, {
             id: sessionId,
             userId: user.id,
             createdAt: new Date(),
@@ -191,7 +189,7 @@ router.post('/logout', authenticateToken, (req, res) => {
 // Vérifier le token
 router.get('/verify', authenticateToken, (req, res) => {
     try {
-        const user = users.get(req.user.userId);
+        const user = dataStore.getUser(req.user.userId);
         
         if (!user || !user.isActive) {
             return res.status(401).json({ error: 'Utilisateur non trouvé ou inactif' });
@@ -227,7 +225,7 @@ router.put('/change-password', authenticateToken, async (req, res) => {
             });
         }
 
-        const user = users.get(req.user.userId);
+        const user = dataStore.getUser(req.user.userId);
         if (!user) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
@@ -241,7 +239,7 @@ router.put('/change-password', authenticateToken, async (req, res) => {
         // Hacher le nouveau mot de passe
         const hashedNewPassword = await bcrypt.hash(newPassword, 12);
         user.password = hashedNewPassword;
-        users.set(user.id, user);
+        dataStore.setUser(user.id, user);
 
         res.json({
             success: true,
@@ -262,7 +260,7 @@ router.delete('/account', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Mot de passe requis pour supprimer le compte' });
         }
 
-        const user = users.get(req.user.userId);
+        const user = dataStore.getUser(req.user.userId);
         if (!user) {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
@@ -275,7 +273,7 @@ router.delete('/account', authenticateToken, async (req, res) => {
 
         // Désactiver l'utilisateur au lieu de le supprimer
         user.isActive = false;
-        users.set(user.id, user);
+        dataStore.setUser(user.id, user);
 
         res.json({
             success: true,

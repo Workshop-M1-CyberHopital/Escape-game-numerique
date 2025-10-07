@@ -880,7 +880,7 @@ const handleRestartGame = () => {
 // Gestion de l'authentification
 const handleAuthSuccess = () => {
     showAuthModal.value = false;
-    showSuccess("CONNEXION RÉUSSIE", "Bienvenue dans l'escape game !");
+    // Le message de succès est déjà affiché par AuthModal
 };
 
 // Gestion de la soumission des scores

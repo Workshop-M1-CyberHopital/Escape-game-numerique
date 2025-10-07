@@ -1,5 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const dataStore = require('../storage/dataStore');
 const router = express.Router();
 
 // Middleware d'authentification
@@ -23,9 +24,7 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// Stockage en mémoire des scores (en production, utiliser une base de données)
-const scores = new Map();
-const users = new Map(); // Référence vers le stockage des utilisateurs
+// Le stockage est maintenant géré par dataStore
 
 // Soumettre un score
 router.post('/submit', authenticateToken, (req, res) => {
@@ -65,10 +64,10 @@ router.post('/submit', authenticateToken, (req, res) => {
             rank: 0 // Sera calculé plus tard
         };
 
-        scores.set(scoreId, scoreRecord);
+        dataStore.setScore(scoreId, scoreRecord);
 
         // Mettre à jour les statistiques de l'utilisateur
-        const user = users.get(req.user.userId);
+        const user = dataStore.getUser(req.user.userId);
         if (user) {
             user.gamesPlayed++;
             user.totalScore += score;
@@ -77,11 +76,11 @@ router.post('/submit', authenticateToken, (req, res) => {
                 user.bestScore = score;
             }
             
-            users.set(user.id, user);
+            dataStore.setUser(user.id, user);
         }
 
         // Calculer le rang
-        const allScores = Array.from(scores.values())
+        const allScores = dataStore.getAllScores()
             .sort((a, b) => b.score - a.score);
         
         const rank = allScores.findIndex(s => s.id === scoreId) + 1;
@@ -110,7 +109,7 @@ router.get('/user/:userId', (req, res) => {
         const { userId } = req.params;
         const { limit = 10, offset = 0 } = req.query;
         
-        const userScores = Array.from(scores.values())
+        const userScores = dataStore.getAllScores()
             .filter(score => score.userId === userId)
             .sort((a, b) => b.submittedAt - a.submittedAt)
             .slice(parseInt(offset), parseInt(offset) + parseInt(limit));
@@ -249,7 +248,7 @@ router.get('/leaderboard', (req, res) => {
 // Récupérer les statistiques globales des scores
 router.get('/stats', (req, res) => {
     try {
-        const allScores = Array.from(scores.values());
+        const allScores = dataStore.getAllScores();
         
         if (allScores.length === 0) {
             return res.json({
@@ -336,7 +335,7 @@ router.get('/best', (req, res) => {
 router.delete('/:scoreId', authenticateToken, (req, res) => {
     try {
         const { scoreId } = req.params;
-        const score = scores.get(scoreId);
+        const score = dataStore.getScore(scoreId);
         
         if (!score) {
             return res.status(404).json({ error: 'Score non trouvé' });
@@ -346,7 +345,7 @@ router.delete('/:scoreId', authenticateToken, (req, res) => {
             return res.status(403).json({ error: 'Non autorisé à supprimer ce score' });
         }
 
-        scores.delete(scoreId);
+        dataStore.deleteScore(scoreId);
 
         res.json({
             success: true,
