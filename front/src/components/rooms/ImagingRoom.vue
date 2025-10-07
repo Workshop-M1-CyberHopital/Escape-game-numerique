@@ -375,8 +375,10 @@
 import { ref, computed } from "vue";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
+import { useToast } from "../../composables/useToast";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
+const { showError } = useToast();
 
 const roomData = {
     title: "SALLE D'IMAGERIE",
@@ -438,9 +440,9 @@ const checkOrder = () => {
         // Émettre directement l'événement room-completed comme ServerRoom et DNARoom
         emit("room-completed", "imaging");
     } else {
-        alert(
+        showError(
             "L'ordre n'est pas correct. Réessayez ! (Indice : du plus petit au plus large)",
-        );
+        )
     }
 };
 
