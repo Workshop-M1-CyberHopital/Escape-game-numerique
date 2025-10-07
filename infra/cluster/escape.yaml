@@ -4,12 +4,12 @@
 # ===============================================
 # Contenu :
 #  - Namespace "workshop"
-#  - Redis (cache + volume persistant Azure Files)
-#  - MariaDB (base locale dans le cluster)
-#  - Application Escape Game (connexion Redis + Azure Database for MariaDB)
+#  - Redis (cache + volume persistant via Azure Files)
+#  - MariaDB (base de données locale dans le cluster)
+#  - Application Escape Game (connexion à Redis et MariaDB)
 # ===============================================
 
-# Deployment of Redis (cache)
+# --- Déploiement de Redis (cache) ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -56,17 +56,18 @@ spec:
           name: redis
 
 ---
-# Service for Redis (Cluster IP)
+# --- Service Redis (accès interne au cluster) ---
 apiVersion: v1
 kind: Service
 metadata:
   name: redis-service
   namespace: workshop
-spec: # Par default le type est ClusterIP, il n'y a aucun raison de le spécifier (type: ClusterIP)
+spec:
   ports:
   - port: 6379
   selector:
     app: redis
+
 ---
 # --- MariaDB (base de données locale) ---
 apiVersion: apps/v1
@@ -88,6 +89,13 @@ spec:
       containers:
       - name: mariadb
         image: mariadb:11.4
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
         env:
         - name: MARIADB_ROOT_PASSWORD
           valueFrom:
@@ -114,17 +122,18 @@ spec:
         volumeMounts:
         - name: mariadb-storage
           mountPath: /var/lib/mysql
-  volumeClaimTemplates:
-  - metadata:
-      name: mariadb-storage
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: azurefile-csi
-      resources:
-        requests:
-          storage: 5Gi
+    volumeClaimTemplates:
+    - metadata:
+        name: mariadb-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: azurefile-csi
+        resources:
+          requests:
+            storage: 5Gi
+
 ---
-# Service for MariaDB
+# --- Service MariaDB (accès interne) ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -136,12 +145,14 @@ spec:
   ports:
     - port: 3306
       targetPort: 3306
+
 ---
-# Deployment of Escape Game app
+# --- Déploiement de l'application Escape Game ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: escape-app
+  namespace: workshop
 spec:
   replicas: 2
   selector:
@@ -156,7 +167,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: escape
-        image: gaetandev/espace-workshop:latest # nom de l'image sur docker gaetandev/espace-workshop
+        image: gaetandev/espace-workshop:latest # Image Docker de l'application
         resources:
           requests:
             cpu: 100m
@@ -174,8 +185,9 @@ spec:
             secretKeyRef:
               name: redis-secret-traefik
               key: password
+
 ---
-# App Service
+# --- Service de l'application (exposition à Traefik) ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -186,18 +198,15 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  # - name: http
-  #   port: 80
-  #   protocol: TCP
-  #   targetPort: 80
   - name: https
     port: 443
     protocol: TCP
     targetPort: 80
   selector:
     app: escape-app
+
 ---
-# Redis PV Claim creation (Azure files)
+# --- Volume persistant pour Redis (Azure Files) ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
