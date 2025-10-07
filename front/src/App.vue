@@ -170,6 +170,7 @@
         <!-- User Profile Modal -->
         <UserProfile
             :visible="showUserProfile"
+            :game-state="gameState"
             @close="showUserProfile = false"
         />
 
