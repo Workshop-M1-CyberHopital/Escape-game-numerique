@@ -50,8 +50,15 @@
                                 Profil
                             </button>
                             <button
-                                @click="logout"
-                                class="px-3 py-1 font-tech text-sm rounded transition-all bg-red-600 hover:bg-red-700 text-white"
+                                @click="handleLogout"
+                                :disabled="gameState.isGameStarted"
+                                :class="[
+                                    'px-3 py-1 font-tech text-sm rounded transition-all',
+                                    gameState.isGameStarted
+                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                ]"
+                                :title="gameState.isGameStarted ? 'Impossible de se déconnecter pendant une partie' : 'Se déconnecter'"
                             >
                                 Déconnexion
                             </button>
@@ -894,6 +901,25 @@ const handleRestartGame = () => {
 const handleAuthSuccess = () => {
     showAuthModal.value = false;
     // Le message de succès est déjà affiché par AuthModal
+};
+
+// Gestion de la déconnexion avec blocage pendant la partie
+const handleLogout = async () => {
+    if (gameState.isGameStarted) {
+        showWarning(
+            "DÉCONNEXION BLOQUÉE", 
+            "Impossible de se déconnecter pendant une partie en cours. Terminez d'abord votre mission ou réinitialisez le jeu."
+        );
+        return;
+    }
+    
+    try {
+        await logout();
+        showSuccess("DÉCONNEXION", "Vous avez été déconnecté avec succès");
+    } catch (error) {
+        showError("ERREUR", "Erreur lors de la déconnexion");
+        console.error("Erreur déconnexion:", error);
+    }
 };
 
 
