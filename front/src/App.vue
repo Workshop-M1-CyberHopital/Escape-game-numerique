@@ -19,16 +19,6 @@
 
                     <!-- Navigation -->
                     <div class="flex items-center space-x-4">
-                        <!-- Bouton Quitter la partie (seulement pendant le jeu) -->
-                        <button
-                            v-if="gameState.isGameStarted"
-                            @click="showQuitGameModal = true"
-                            class="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-cyber font-bold rounded-lg transition-all border border-red-600/30"
-                            title="Quitter la partie en cours"
-                        >
-                            <i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i>
-                            QUITTER LA PARTIE
-                        </button>
                         
                         <!-- Bouton Scores -->
                         <button
@@ -60,15 +50,8 @@
                                 Profil
                             </button>
                             <button
-                                @click="handleLogout"
-                                :disabled="gameState.isGameStarted"
-                                :class="[
-                                    'px-3 py-1 font-tech text-sm rounded transition-all',
-                                    gameState.isGameStarted
-                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                        : 'bg-red-600 hover:bg-red-700 text-white'
-                                ]"
-                                :title="gameState.isGameStarted ? 'Impossible de se déconnecter pendant une partie' : 'Se déconnecter'"
+                                @click="logout"
+                                class="px-3 py-1 font-tech text-sm rounded transition-all bg-red-600 hover:bg-red-700 text-white"
                             >
                                 Déconnexion
                             </button>
@@ -180,74 +163,6 @@
             @close="showScoresModal = false"
         />
 
-        <!-- Quit Game Modal -->
-        <div v-if="showQuitGameModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-            <div class="bg-gray-900/95 border-2 border-red-500 rounded-lg max-w-md w-full relative overflow-hidden quit-modal">
-                <!-- Scanlines effect -->
-                <div class="absolute inset-0 scanline opacity-20 pointer-events-none"></div>
-                
-                <!-- Header -->
-                <div class="border-b border-red-500/50 p-6">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500">
-                                <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-red-500 font-tech">
-                                    QUITTER LA PARTIE
-                                </h3>
-                                <p class="text-sm text-gray-300 font-tech">
-                                    Confirmation requise
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <!-- Close Button -->
-                        <button
-                            @click="showQuitGameModal = false"
-                            class="w-8 h-8 bg-red-500/20 border border-red-500/50 rounded-full flex items-center justify-center hover:bg-red-500/30 transition-all duration-300 hover:scale-110"
-                        >
-                            <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Content -->
-                <div class="p-6">
-                    <div class="bg-red-900/20 border border-red-500/50 rounded-lg p-4 mb-6">
-                        <div class="text-red-400 font-bold text-sm mb-2">⚠️ ATTENTION</div>
-                        <div class="text-gray-300 text-sm">
-                            Vous êtes sur le point de quitter la partie en cours. Toute votre progression sera perdue et vous devrez recommencer depuis le début.
-                        </div>
-                    </div>
-                    
-                    <div class="text-center text-gray-300 text-sm mb-6">
-                        <p><strong>Équipe:</strong> {{ gameState.teamName }}</p>
-                        <p><strong>Temps écoulé:</strong> {{ formatTime(gameState.timer) }}</p>
-                        <p><strong>Salles complétées:</strong> {{ gameState.completedRooms.length }}/3</p>
-                    </div>
-                </div>
-                
-                <!-- Footer -->
-                <div class="border-t border-red-500/50 p-6">
-                    <div class="flex gap-4 justify-end">
-                        <button
-                            @click="showQuitGameModal = false"
-                            class="px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white font-tech rounded-lg transition-all"
-                        >
-                            ANNULER
-                        </button>
-                        <button
-                            @click.prevent.stop="handleQuitGame"
-                            class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-tech rounded-lg transition-all"
-                        >
-                            QUITTER LA PARTIE
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- DevTools -->
         <DevTools
@@ -389,7 +304,6 @@ const {
     isGameComplete,
     markBriefingAsShown,
     isBriefingShown,
-    clearGameState,
 } = useGameState();
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
@@ -416,7 +330,6 @@ const showFinishImagingRoomBriefing = ref(false);
 const hasPlayedFinishImagingRoomAudio = ref(false);
 const showFinalScore = ref(false);
 const finalScoreData = ref(null);
-const showQuitGameModal = ref(false);
 
 // État des modales d'authentification
 const showAuthModal = ref(false);
@@ -983,45 +896,6 @@ const handleAuthSuccess = () => {
     // Le message de succès est déjà affiché par AuthModal
 };
 
-// Gestion de la déconnexion
-const handleLogout = async () => {
-    if (gameState.isGameStarted) {
-        showWarning(
-            "DÉCONNEXION BLOQUÉE", 
-            "Impossible de se déconnecter pendant une partie en cours. Terminez d'abord votre mission ou réinitialisez le jeu."
-        );
-        return;
-    }
-    
-    try {
-        await logout();
-        showSuccess("DÉCONNEXION", "Vous avez été déconnecté avec succès");
-    } catch (error) {
-        showError("ERREUR", "Erreur lors de la déconnexion");
-        console.error("Erreur déconnexion:", error);
-    }
-};
-
-// Gestion de quitter la partie
-const handleQuitGame = () => {
-    console.log('🔄 handleQuitGame appelé');
-    
-    // Fermer la modal
-    showQuitGameModal.value = false;
-    console.log('✅ Modal fermée');
-    
-    // Réinitialiser le jeu
-    resetGame();
-    console.log('✅ Jeu réinitialisé');
-    
-    // Afficher un message de confirmation
-    showInfo("PARTIE QUITTÉE", "Vous avez quitté la partie. Votre progression a été perdue.");
-    console.log('✅ Message affiché');
-    
-    // Scroll vers le haut pour montrer la page d'accueil
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    console.log('✅ Scroll effectué');
-};
 
 // Gestion de la soumission des scores
 const handleScoreSubmission = async (gameData) => {
