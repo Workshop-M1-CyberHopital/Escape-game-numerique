@@ -90,18 +90,34 @@
                 :key="index"
                 class="flex items-center gap-3"
               >
-                <input
-                  v-model="players[index]"
-                  type="text"
-                  :placeholder="`Joueur ${index + 1}...`"
-                  class="flex-1 px-3 py-2 bg-gray-900 border border-cyber-red/50 rounded text-white font-tech text-sm focus:border-cyber-red focus:outline-none transition-all"
-                />
+                <!-- Premier joueur (connecté) - bloqué -->
+                <div v-if="index === 0 && connectedPlayerName" class="flex-1 relative">
+                  <input
+                    v-model="players[index]"
+                    type="text"
+                    :placeholder="`Joueur ${index + 1}...`"
+                    readonly
+                    class="w-full px-3 py-2 bg-gray-800 border border-cyber-green/50 rounded text-cyber-green font-tech text-sm cursor-not-allowed"
+                  />
+                  <div class="absolute -top-1 -right-1 w-3 h-3 bg-cyber-green rounded-full border border-gray-900 animate-pulse"></div>
+                  <div class="absolute top-1 right-1 text-xs text-cyber-green font-bold">CONNECTÉ</div>
+                </div>
+                <!-- Autres joueurs - éditables -->
+                <div v-else class="flex-1">
+                  <input
+                    v-model="players[index]"
+                    type="text"
+                    :placeholder="`Joueur ${index + 1}...`"
+                    class="w-full px-3 py-2 bg-gray-900 border border-cyber-red/50 rounded text-white font-tech text-sm focus:border-cyber-red focus:outline-none transition-all"
+                  />
+                </div>
+                
                 <button
                   @click="removePlayer(index)"
-                  :disabled="players.length <= 1"
+                  :disabled="players.length <= 1 || (index === 0 && connectedPlayerName)"
                   :class="[
                     'w-8 h-8 border rounded flex items-center justify-center transition-all',
-                    players.length <= 1 
+                    (players.length <= 1 || (index === 0 && connectedPlayerName))
                       ? 'bg-gray-600/20 border-gray-500 text-gray-400 cursor-not-allowed'
                       : 'bg-red-600/20 border-red-500 text-red-400 hover:bg-red-600/30'
                   ]"
@@ -117,8 +133,11 @@
           <!-- Instructions -->
           <div class="bg-red-900/20 border border-red-500/50 rounded p-4 mb-6">
             <div class="text-red-400 font-bold text-sm mb-2">⚠️ INSTRUCTIONS</div>
-            <div class="text-gray-300 text-sm">
+            <div class="text-gray-300 text-sm mb-2">
               Configurez votre équipe de cybersécurité. Chaque membre aura un rôle crucial dans la mission de restauration des systèmes hospitaliers.
+            </div>
+            <div v-if="connectedPlayerName" class="text-cyber-green text-sm font-tech">
+              🔒 Le joueur 1 est verrouillé avec votre pseudo connecté : <span class="font-bold">{{ connectedPlayerName }}</span>
             </div>
           </div>
         </div>
@@ -152,19 +171,30 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   visible: {
     type: Boolean,
     default: false
+  },
+  connectedPlayerName: {
+    type: String,
+    default: ''
   }
 })
 
 const emit = defineEmits(['close', 'start-game'])
 
 const teamName = ref('')
-const players = ref([''])
+const players = ref([props.connectedPlayerName || ''])
+
+// Watcher pour mettre à jour le premier joueur quand le pseudo connecté change
+watch(() => props.connectedPlayerName, (newName) => {
+  if (newName && players.value.length > 0) {
+    players.value[0] = newName
+  }
+}, { immediate: true })
 
 const canStart = computed(() => {
   return teamName.value.trim() !== '' && 
