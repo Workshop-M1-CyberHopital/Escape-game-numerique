@@ -1,0 +1,253 @@
+# escape.yaml
+# ===============================================
+# Déploiement de l'application Escape Game - Workshop EISI 2025–2026
+# ===============================================
+# Contenu :
+#  - Namespace "workshop"
+#  - StorageClass personnalisé pour Azure Files
+#  - Redis (cache + volume persistant)
+#  - MariaDB (base locale avec persistance)
+#  - Application Escape Game (connexion Redis + MariaDB)
+# ===============================================
+
+# --- StorageClass Azure Files personnalisé (sécurisé) ---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: azurefile-csi-workshop
+provisioner: file.csi.azure.com
+parameters:
+  skuName: Standard_LRS          # Type de réplication
+  location: francecentral        # Région du cluster
+  storageAccount: ""             # Laisse vide -> compte géré automatiquement
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=0
+  - gid=0
+  - mfsymlinks
+  - cache=strict
+  - nosharesock
+  - nobrl
+reclaimPolicy: Retain            # ⚠️ Ne pas supprimer automatiquement le FileShare
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
+
+---
+
+# --- Redis (cache avec volume persistant) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: workshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      volumes:
+        - name: redis-vol
+          persistentVolumeClaim:
+            claimName: redis-pvc
+      containers:
+      - name: redis
+        image: redis:latest
+        args: ["--requirepass", "$(REDIS_PWD)"]
+        volumeMounts:
+        - name: redis-vol
+          mountPath: /data
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "no"
+        - name: REDIS_PWD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret-traefik
+              key: password
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 6379
+          name: redis
+
+---
+
+# --- Service Redis (accès interne) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: workshop
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+
+---
+
+# --- MariaDB (base de données locale) ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb
+  namespace: workshop
+spec:
+  serviceName: mariadb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:11.4
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: root_password
+        - name: MARIADB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: database
+        - name: MARIADB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: user
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: password
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mariadb-storage
+          mountPath: /var/lib/mysql
+    volumeClaimTemplates:
+    - metadata:
+        name: mariadb-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: azurefile-csi-workshop
+        resources:
+          requests:
+            storage: 5Gi
+
+---
+
+# --- Service MariaDB ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+  namespace: workshop
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+---
+
+# --- Application Escape Game ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: escape-app
+  namespace: workshop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: escape-app
+  template:
+    metadata:
+      labels:
+        app: escape-app
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: escape
+        image: gaetandev/espace-workshop:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "redis-service"
+        - name: REDIS_PWD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret-traefik
+              key: password
+
+---
+
+# --- Service Escape Game ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: escape-service
+  namespace: workshop
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+spec:
+  type: ClusterIP
+  ports:
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: escape-app
+
+---
+
+# --- Volume persistant Redis ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: workshop
+spec:
+  storageClassName: azurefile-csi-workshop
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 3Gi
