@@ -583,6 +583,18 @@ const handleEnterRoom = async (roomId) => {
 
     enterRoom(roomId);
 
+    // Scroll vers le haut de la page après que le DOM soit mis à jour
+    await nextTick();
+    setTimeout(() => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        // Méthode alternative pour assurer le scroll
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }, 50);
+
     // Jouer le son spécifique à la salle si c'est la première fois
     console.log("🔍 Debug handleEnterRoom:", {
         roomId,
