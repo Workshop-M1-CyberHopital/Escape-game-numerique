@@ -10,6 +10,7 @@ spec:
   ipWhiteList:
     sourceRange:
       - 147.161.180.123 # Adresse IP autorisée 
+      - 147.161.180.92
       - 192.168.0.48/24 # Sous-réseau local autorisé
       - 10.60.60.0/22
 ---
