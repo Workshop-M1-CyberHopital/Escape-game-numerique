@@ -222,10 +222,13 @@ router.get('/leaderboard', (req, res) => {
 
         const leaderboard = allScores
             .slice(parseInt(offset), parseInt(offset) + parseInt(limit))
-            .map((score, index) => ({
-                rank: parseInt(offset) + index + 1,
-                ...score
-            }));
+            .map((score, index) => {
+                const { rank, ...scoreWithoutRank } = score;
+                return {
+                    rank: parseInt(offset) + index + 1,
+                    ...scoreWithoutRank
+                };
+            });
 
         res.json({
             success: true,
