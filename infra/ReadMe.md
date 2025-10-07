@@ -69,6 +69,12 @@ L’objectif est de permettre :
 | `traefik-config.yaml` | Traefik : dashboard, authentification et whitelist IP |
 | `README.md`           | Documentation complète (ce fichier)                   |
 
+🧩 Justification de l’utilisation de MariaDB et Redis
+
+L’infrastructure de l’application repose sur deux systèmes complémentaires de gestion des données : Redis et MariaDB.
+Redis est utilisé comme cache en mémoire pour accélérer les échanges et stocker les informations temporaires (sessions de jeu, scores en cours, etc.), tandis que MariaDB agit comme base de données relationnelle persistante, garantissant la sauvegarde durable des données critiques telles que les joueurs, les scores finaux et la configuration du jeu.
+Cette séparation des rôles permet de combiner performance et fiabilité, en optimisant à la fois la rapidité d’exécution et la cohérence des données à long terme.
+
 🚀 Étapes de déploiement
 🔧 1. Prérequis
 
@@ -158,3 +164,7 @@ az group delete -n workshop-EISI --yes --no-wait
 ✅ Redis + Azure Files pour la persistance des données
 ✅ Base MariaDB managée Azure, haute disponibilité garantie
 ✅ Script de déploiement automatisé et commenté
+
+
+Topologies :
+

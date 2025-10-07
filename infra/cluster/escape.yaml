@@ -5,23 +5,25 @@
 # Contenu :
 #  - Namespace "workshop"
 #  - Redis (cache + volume persistant Azure Files)
+#  - MariaDB (base locale dans le cluster)
 #  - Application Escape Game (connexion Redis + Azure Database for MariaDB)
 # ===============================================
 
-# Deployment of Redis
+# Deployment of Redis (cache)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: az-redis
+  name: redis
+  namespace: workshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis-azure
+      app: redis
   template:
     metadata:
       labels:
-        app: redis-azure
+        app: redis
     spec:
       volumes:
         - name: redis-vol
@@ -59,33 +61,102 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-service
+  namespace: workshop
 spec: # Par default le type est ClusterIP, il n'y a aucun raison de le spécifier (type: ClusterIP)
   ports:
   - port: 6379
   selector:
-    app: redis-azure
-
+    app: redis
+---
+# --- MariaDB (base de données locale) ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb
+  namespace: workshop
+spec:
+  serviceName: mariadb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11.4
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: root_password
+            - name: MARIADB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: database
+            - name: MARIADB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: user
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: password
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mariadb-storage
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mariadb-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: azurefile-csi
+        resources:
+          requests:
+            storage: 5Gi
+---
+# Service for MariaDB
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+  namespace: workshop
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - port: 3306
+      targetPort: 3306
 ---
 # Deployment of Escape Game app
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: alfred-votingapp
+  name: escape-app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: az-votingapp
+      app: escape-app
   template:
     metadata:
       labels:
-        app: az-votingapp
+        app: escape-app
     spec:
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
-      - name: alfred-voting
-        image: dunvael/custom-voting-app:latest # nom de l'image sur docker
+      - name: escape
+        image: monrepo/escape-game:latest # nom de l'image sur docker
         resources:
           requests:
             cpu: 100m
@@ -103,46 +174,35 @@ spec:
             secretKeyRef:
               name: redis-secret-traefik
               key: password
-        # - name: BASIC_AUTH_USER
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: basicauth-traefik-secret
-        #       key: username
-        # - name: BASIC_AUTH_PASS
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: basicauth-traefik-secret
-        #       key: password
-
 ---
 # App Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: vote-service
+  name: escape-service
+  namespace: workshop
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 80
-    protocol: TCP
-    targetPort: 80
+  # - name: http
+  #   port: 80
+  #   protocol: TCP
+  #   targetPort: 80
   - name: https
     port: 443
     protocol: TCP
     targetPort: 80
   selector:
-    app: az-votingapp
-
-
+    app: escape-app
 ---
-# PV Claim creation
+# Redis PV Claim creation (Azure files)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: redis-pvc
+  namespace: workshop
 spec:
   storageClassName: azurefile-csi
   accessModes:
@@ -150,36 +210,3 @@ spec:
   resources:
     requests:
       storage: 3Gi
-
----
-# # Autoscale Voteapp
-# apiVersion: autoscaling/v2
-# kind: HorizontalPodAutoscaler
-# metadata:
-#  name: scale-vote
-# spec:
-#  scaleTargetRef:
-#    apiVersion: apps/v1
-#    kind: Deployment
-#    name: alfred-votingapp
-#  minReplicas: 2
-#  maxReplicas: 8
-#  metrics:
-#  - type: Resource
-#    resource:
-#      name: cpu
-#      target:
-#        type: Utilization
-#        averageUtilization: 70
-# status:
-#  observedGeneration: 1
-#  lastScaleTime: 
-#  currentReplicas: 1
-#  desiredReplicas: 1
-#  currentMetrics:
-#  - type: Resource
-#    resource:
-#      name: cpu
-#      current:
-#        averageUtilization: 0
-#        averageValue: 0
