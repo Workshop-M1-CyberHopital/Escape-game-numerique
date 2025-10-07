@@ -31,9 +31,6 @@
                 @room-completed="handleRoomCompleted"
             />
 
-            <!-- Game Stats (always visible in rooms) -->
-            <GameStats v-if="gameState.currentRoom" />
-
             <!-- Final Score Modal -->
             <FinalScore
                 v-if="showFinalScore"
@@ -199,7 +196,6 @@ import FinishImagingRoomBriefing from "./components/briefing/FinishImagingRoomBr
 import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
 import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
 import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
-import GameStats from "./components/GameStats.vue";
 import FinalScore from "./components/FinalScore.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
