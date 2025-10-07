@@ -378,7 +378,7 @@ import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
-const { showError } = useToast();
+const { showSuccess, showError } = useToast();
 
 const roomData = {
     title: "SALLE D'IMAGERIE",
@@ -437,7 +437,7 @@ const checkOrder = () => {
         isCompleted.value = true;
         createFireworks(3000);
 
-        showSucess(
+        showSuccess(
             "RÉPONSE CORRECTE",
             "L'ordre est correct. Vous avez réussi à restaurer l'imagerie médicale.",
         )
