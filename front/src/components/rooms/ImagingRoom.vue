@@ -375,9 +375,11 @@ import { ref, computed } from "vue";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
+import { useGameState } from "../../composables/useGameState";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
 const { showSuccess, showError } = useToast();
+const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
 
 const roomData = {
     title: "SALLE D'IMAGERIE",
@@ -439,14 +441,17 @@ const checkOrder = () => {
         showSuccess(
             "RÉPONSE CORRECTE",
             "L'ordre est correct. Vous avez réussi à restaurer l'imagerie médicale.",
-        )
+        );
 
+        completeRoom("imaging");
         // Émettre directement l'événement room-completed comme ServerRoom et DNARoom
         emit("room-completed", "imaging");
     } else {
+        addError("imaging");
         showError(
-            "L'ordre n'est pas correct. Réessayez ! (Indice : du plus petit au plus large)",
-        )
+            "ORDRE INCORRECT",
+            `L'ordre n'est pas correct. Réessayez ! (Indice : du plus petit au plus large) +${PENALTY_PER_ERROR}s de pénalité`,
+        );
     }
 };
 
@@ -457,6 +462,7 @@ const getCurrentPosition = () => {
 
 const showHint = () => {
     hintsShown.value++;
+    addHint("imaging");
 };
 </script>
 

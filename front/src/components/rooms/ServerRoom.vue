@@ -330,9 +330,11 @@ import { ref, computed } from "vue";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
+import { useGameState } from "../../composables/useGameState";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
 const { showSuccess, showError } = useToast();
+const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
 
 // Données de la salle
 const roomData = {
@@ -363,6 +365,7 @@ const decodedPuzzle = ref("");
 
 const showHint = () => {
     hintsShown.value++;
+    addHint("server");
 };
 
 const fillEncodedMessage = () => {
@@ -432,9 +435,11 @@ const checkDecoding = () => {
             8000,
         );
     } else {
+        addError("server");
         showError(
-            "Message décodé incorrect. Essayez encore !",
-        )
+            "MESSAGE DÉCODÉ INCORRECT",
+            `Message décodé incorrect. Essayez encore ! +${PENALTY_PER_ERROR}s de pénalité`,
+        );
     }
 };
 
@@ -460,11 +465,14 @@ const checkPuzzleAnswer = () => {
             8000,
         );
 
+        completeRoom("server");
         emit("room-completed", "server");
     } else {
+        addError("server");
         showError(
-            "Réponse incorrecte. Essayez encore !",
-        )
+            "RÉPONSE INCORRECTE",
+            `Réponse incorrecte. Essayez encore ! +${PENALTY_PER_ERROR}s de pénalité`,
+        );
     }
 };
 </script>

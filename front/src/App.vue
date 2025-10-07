@@ -30,6 +30,17 @@
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
+
+            <!-- Game Stats (always visible in rooms) -->
+            <GameStats v-if="gameState.currentRoom" />
+
+            <!-- Final Score Modal -->
+            <FinalScore
+                v-if="showFinalScore"
+                :score-data="finalScoreData"
+                @close="handleCloseFinalScore"
+                @restart="handleRestartGame"
+            />
         </div>
 
         <!-- Game Not Started: Show Landing Page -->
@@ -188,6 +199,8 @@ import FinishImagingRoomBriefing from "./components/briefing/FinishImagingRoomBr
 import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
 import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
 import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
+import GameStats from "./components/GameStats.vue";
+import FinalScore from "./components/FinalScore.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
 import { useAudio } from "./composables/useAudio";
@@ -201,6 +214,8 @@ const {
     unlockRoom,
     unlockAllRooms,
     resetGame,
+    calculateFinalScore,
+    isGameComplete,
 } = useGameState();
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
@@ -223,6 +238,8 @@ const showImagingRoomBriefing = ref(false);
 const hasPlayedImagingRoomAudio = ref(false);
 const showFinishImagingRoomBriefing = ref(false);
 const hasPlayedFinishImagingRoomAudio = ref(false);
+const showFinalScore = ref(false);
+const finalScoreData = ref(null);
 
 // Fonction pour jouer le son de sélection des salles
 const playRoomSelectionAudio = async () => {
@@ -642,7 +659,32 @@ const handleRoomCompleted = async (roomId) => {
     } else if (roomId === "imaging") {
         unlockRoom("heart");
     }
-    exitRoom();
+
+    // Vérifier si le jeu est terminé
+    if (isGameComplete()) {
+        setTimeout(() => {
+            const score = calculateFinalScore();
+            finalScoreData.value = {
+                score: score,
+                teamName: gameState.teamName,
+                timeScore: Math.max(
+                    0,
+                    8 - (gameState.timer + gameState.penaltyTime) / 120,
+                ),
+                errorScore: Math.max(0, 7 - gameState.errors * 0.5),
+                hintScore: Math.max(0, 5 - gameState.hintsUsed * 1),
+                totalTime: gameState.timer + gameState.penaltyTime,
+                errors: gameState.errors,
+                hints: gameState.hintsUsed,
+                roomTimes: gameState.roomTimes,
+                roomErrors: gameState.roomErrors,
+                roomHints: gameState.roomHints,
+            };
+            showFinalScore.value = true;
+        }, 2000); // Délai de 2 secondes après la dernière salle
+    } else {
+        exitRoom();
+    }
 
     // Si c'est la salle ServerRoom, jouer l'audio de félicitations
     if (
@@ -703,6 +745,17 @@ const handleRoomCompleted = async (roomId) => {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
     }, 50);
+};
+
+// Gestion du score final
+const handleCloseFinalScore = () => {
+    showFinalScore.value = false;
+};
+
+const handleRestartGame = () => {
+    showFinalScore.value = false;
+    resetGame();
+    showInfo("NOUVELLE PARTIE", "Le jeu a été réinitialisé");
 };
 
 // Fonctions pour DevTools

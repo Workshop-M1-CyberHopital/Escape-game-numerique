@@ -174,9 +174,11 @@ import { ref } from "vue";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
+import { useGameState } from "../../composables/useGameState";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
 const { showSuccess, showError } = useToast();
+const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
 
 const roomData = {
     title: "LABORATOIRE ADN",
@@ -238,16 +240,20 @@ const checkSequence = () => {
             "La séquence est correcte. Vous avez réussi à reconstituer le brin complémentaire.",
         );
 
+        completeRoom("dna-lab");
         // Émettre directement l'événement room-completed comme ServerRoom
         emit("room-completed", "dna-lab");
     } else {
+        addError("dna-lab");
         showError(
-            "La séquence n'est pas correcte. Vérifiez les règles d'appariement !",
-        )
+            "SÉQUENCE INCORRECTE",
+            `La séquence n'est pas correcte. Vérifiez les règles d'appariement ! +${PENALTY_PER_ERROR}s de pénalité`,
+        );
     }
 };
 
 const showHint = () => {
     hintsShown.value++;
+    addHint("dna-lab");
 };
 </script>
