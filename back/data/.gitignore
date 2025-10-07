@@ -1,0 +1,5 @@
+# Fichiers de données JSON
+*.json
+
+# Garder le dossier mais ignorer les fichiers
+!.gitignore

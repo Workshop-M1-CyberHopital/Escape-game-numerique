@@ -3,6 +3,66 @@
         <!-- Animated Background Canvas -->
         <canvas id="animated-bg"></canvas>
 
+        <!-- Header avec authentification -->
+        <header class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-cyber-blue/30">
+            <div class="max-w-7xl mx-auto px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <!-- Logo/Titre -->
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-xl font-cyber font-bold text-cyber-blue">
+                            CYBER-HÔPITAL
+                        </h1>
+                        <span class="text-gray-400 font-tech text-sm">
+                            Mission Résilience
+                        </span>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Bouton Scores -->
+                        <button
+                            @click="showScoresModal = true"
+                            class="px-4 py-2 bg-cyber-green/20 hover:bg-cyber-green/30 text-cyber-green font-cyber font-bold rounded-lg transition-all"
+                        >
+                            SCORES
+                        </button>
+
+                        <!-- Authentification -->
+                        <div v-if="!isAuthenticated" class="flex items-center space-x-2">
+                            <button
+                                @click="showAuthModal = true"
+                                class="px-4 py-2 bg-cyber-blue hover:bg-cyber-blue/80 text-black font-cyber font-bold rounded-lg transition-all"
+                            >
+                                CONNEXION
+                            </button>
+                        </div>
+
+                        <!-- Utilisateur connecté -->
+                        <div v-else class="flex items-center space-x-2">
+                            <span class="text-gray-300 font-tech text-sm">
+                                {{ user?.username }}
+                            </span>
+                            <button
+                                @click="showUserProfile = true"
+                                class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white font-tech text-sm rounded transition-all"
+                            >
+                                Profil
+                            </button>
+                            <button
+                                @click="logout"
+                                class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-tech text-sm rounded transition-all"
+                            >
+                                Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Espace pour le header fixe -->
+        <div class="h-16"></div>
+
         <!-- Game Started: Show Rooms -->
         <div v-if="gameState.isGameStarted">
             <!-- Rooms Section - Only show when not in a room -->
@@ -80,6 +140,25 @@
 
         <!-- Audio Controls -->
         <AudioControls />
+
+        <!-- Auth Modal -->
+        <AuthModal
+            :visible="showAuthModal"
+            @close="showAuthModal = false"
+            @success="handleAuthSuccess"
+        />
+
+        <!-- User Profile Modal -->
+        <UserProfile
+            :visible="showUserProfile"
+            @close="showUserProfile = false"
+        />
+
+        <!-- Scores Modal -->
+        <ScoresModal
+            :visible="showScoresModal"
+            @close="showScoresModal = false"
+        />
 
         <!-- DevTools -->
         <DevTools
@@ -201,7 +280,12 @@ import FinalScore from "./components/FinalScore.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
 import { useAudio } from "./composables/useAudio";
+import { useAuth } from "./composables/useAuth";
+import { useScores } from "./composables/useScores";
 import { initAnimations } from "./utils/animations";
+import AuthModal from "./components/AuthModal.vue";
+import UserProfile from "./components/UserProfile.vue";
+import ScoresModal from "./components/ScoresModal.vue";
 
 const {
     gameState,
@@ -216,6 +300,8 @@ const {
 } = useGameState();
 const { showError, showSuccess, showWarning, showInfo } = useToast();
 const { audioState, requestAudioPermission, playSound, stopSound } = useAudio();
+const { user, isAuthenticated, logout } = useAuth();
+const { submitScore, calculateScore } = useScores();
 const showTeamSetup = ref(false);
 const showLoadingScreen = ref(false);
 const loadingTeamName = ref("");
@@ -237,6 +323,11 @@ const showFinishImagingRoomBriefing = ref(false);
 const hasPlayedFinishImagingRoomAudio = ref(false);
 const showFinalScore = ref(false);
 const finalScoreData = ref(null);
+
+// État des modales d'authentification
+const showAuthModal = ref(false);
+const showUserProfile = ref(false);
+const showScoresModal = ref(false);
 
 // Fonction pour jouer le son de sélection des salles
 const playRoomSelectionAudio = async () => {
@@ -682,10 +773,15 @@ const handleRoomCompleted = async (roomId) => {
 
     // Vérifier si le jeu est terminé
     if (isGameComplete()) {
-        setTimeout(() => {
+        setTimeout(async () => {
             const score = calculateFinalScore();
-            finalScoreData.value = {
+            const gameData = {
                 score: score,
+                duration: gameState.timer + gameState.penaltyTime,
+                roomsCompleted: gameState.completedRooms.length,
+                errors: gameState.errors,
+                hints: gameState.hintsUsed,
+                completed: true,
                 teamName: gameState.teamName,
                 timeScore: Math.max(
                     0,
@@ -694,13 +790,16 @@ const handleRoomCompleted = async (roomId) => {
                 errorScore: Math.max(0, 7 - gameState.errors * 0.5),
                 hintScore: Math.max(0, 5 - gameState.hintsUsed * 1),
                 totalTime: gameState.timer + gameState.penaltyTime,
-                errors: gameState.errors,
-                hints: gameState.hintsUsed,
                 roomTimes: gameState.roomTimes,
                 roomErrors: gameState.roomErrors,
                 roomHints: gameState.roomHints,
             };
+            
+            finalScoreData.value = gameData;
             showFinalScore.value = true;
+            
+            // Soumettre le score si l'utilisateur est connecté
+            await handleScoreSubmission(gameData);
         }, 2000); // Délai de 2 secondes après la dernière salle
     } else {
         exitRoom();
@@ -778,6 +877,37 @@ const handleRestartGame = () => {
     showInfo("NOUVELLE PARTIE", "Le jeu a été réinitialisé");
 };
 
+// Gestion de l'authentification
+const handleAuthSuccess = () => {
+    showAuthModal.value = false;
+    // Le message de succès est déjà affiché par AuthModal
+};
+
+// Gestion de la soumission des scores
+const handleScoreSubmission = async (gameData) => {
+    if (!isAuthenticated.value) {
+        showWarning("CONNEXION REQUISE", "Vous devez être connecté pour sauvegarder votre score");
+        return;
+    }
+
+    try {
+        const score = calculateScore(gameData);
+        await submitScore({
+            score,
+            duration: gameData.duration || 0,
+            roomsCompleted: gameData.roomsCompleted || 0,
+            errors: gameData.errors || 0,
+            hints: gameData.hints || 0,
+            completed: gameData.completed || false,
+            gameData: gameData
+        });
+        showSuccess("SCORE SAUVEGARDÉ", `Votre score de ${score.toLocaleString('fr-FR')} points a été enregistré !`);
+    } catch (error) {
+        showError("ERREUR", "Impossible de sauvegarder le score");
+        console.error("Erreur sauvegarde score:", error);
+    }
+};
+
 // Fonctions pour DevTools
 const handleUnlockAllRooms = () => {
     unlockAllRooms();
@@ -846,6 +976,22 @@ watch(
 
 onMounted(async () => {
     initAnimations();
+
+    // Vérifier la connectivité API
+    console.log("🔍 Vérification de la connectivité API...");
+    try {
+        const { checkApiHealth } = await import('./composables/useApi');
+        const isApiHealthy = await checkApiHealth();
+        if (isApiHealthy) {
+            console.log("✅ API backend accessible");
+        } else {
+            console.error("❌ API backend non accessible");
+            showError("ERREUR CONNEXION", "Le serveur backend n'est pas accessible. Vérifiez qu'il est démarré sur le port 3001.");
+        }
+    } catch (error) {
+        console.error("❌ Erreur de vérification API:", error);
+        showError("ERREUR CONNEXION", "Impossible de se connecter au serveur backend.");
+    }
 
     // Test direct du fichier audio
     console.log("🎵 Test direct du fichier audio...");
