@@ -1,32 +1,60 @@
-# traefik-middlewares.yaml
-
-# Traefik BasicAuth Middleware
+# traefik-config.yaml => Dashboard + Auth + Whitelist IP
+---
+# Traefik Middleware : IP Whitelisting
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: basicauth-traefik
-spec:
-  basicAuth:
-    secret: basicauth-secret
-    removeHeader: false
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basicauth-secret
-data:
-  users:
-    dGVzdDokYXByMSRZMFVGYXA3UiRRZ0hCS0s3a3hCSFhPTXIuSWlLUUIxCgo=
-
----
-# Traefik IP Whitelisting
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: whitelist
+  name: workshop-whitelist
+  namespace: workshop
 spec:
   ipWhiteList:
     sourceRange:
       - 78.202.15.42
       - 192.168.0.48/24
+---
+# Secret + Middleware : BasicAuth pour le dashboard
+apiVersion: v1
+kind: Secret
+metadata:
+  name: traefik-dashboard-auth
+  namespace: workshop
+data:
+  users: |
+    YWRtaW46JDJ5JDA1JFZ0M29BYkNqSjFQcExaMHk5blprWnVxaFEuLi4= # admin:motdepasse
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: traefik-dashboard-auth
+  namespace: workshop
+spec:
+  basicAuth:
+    secret: traefik-dashboard-auth
+---
+# Ingress : Dashboard sécurisé
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard
+  namespace: workshop
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd,traefik-dashboard-auth@kubernetescrd
+    cert-manager.io/issuer: letsencrypt
+spec:
+  rules:
+    - host: traefik.eisi-dune.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik
+                port:
+                  number: 9000
+  tls:
+    - hosts:
+        - traefik.eisi-dune.eu
+      secretName: traefik-tls

@@ -1,0 +1,137 @@
+# ===============================================
+# Déploiement de l'application Escape Game - Workshop EISI 2025–2026
+# ===============================================
+# Contenu :
+#  - Namespace "workshop"
+#  - Redis (cache + volume persistant Azure Files)
+#  - Application Escape Game (connexion Redis + Azure Database for MariaDB)
+# ===============================================
+
+# --- Namespace (sécurité) ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workshop
+---
+# --- Redis ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: workshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+      containers:
+        - name: redis
+          image: redis:latest
+          args: ["--requirepass", "$(REDIS_PWD)"]
+          env:
+            - name: REDIS_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret-traefik
+                  key: password
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: workshop
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+# --- Application Escape Game ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: escape-app
+  namespace: workshop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: escape-app
+  template:
+    metadata:
+      labels:
+        app: escape-app
+    spec:
+      containers:
+        - name: escape
+          image: monrepo/escape-game:latest
+          ports:
+            - containerPort: 80
+          env:
+            # --- Connexion à Redis ---
+            - name: REDIS
+              value: "redis-service"
+            - name: REDIS_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret-traefik
+                  key: password
+
+            # --- Connexion à la base Azure ---
+            - name: DB_HOST
+              value: "escape-db.mysql.database.azure.com"   # Nom DNS de ta base Azure
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "escape_db"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: azure-db-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: azure-db-secret
+                  key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: escape-service
+  namespace: workshop
+spec:
+  selector:
+    app: escape-app
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# --- Redis Persistent Volume Claim (Azure Files) ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: workshop
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: azurefile-csi
+  resources:
+    requests:
+      storage: 3Gi

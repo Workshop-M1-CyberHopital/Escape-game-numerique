@@ -1,4 +1,12 @@
 # escape.yaml
+# ===============================================
+# Déploiement de l'application Escape Game - Workshop EISI 2025–2026
+# ===============================================
+# Contenu :
+#  - Namespace "workshop"
+#  - Redis (cache + volume persistant Azure Files)
+#  - Application Escape Game (connexion Redis + Azure Database for MariaDB)
+# ===============================================
 
 # Deployment of Redis
 apiVersion: apps/v1
