@@ -9,6 +9,7 @@
             <RoomsSection
                 v-if="!gameState.currentRoom"
                 :unlocked-rooms="gameState.unlockedRooms"
+                :completed-rooms="gameState.completedRooms"
                 @enter-room="handleEnterRoom"
             />
 
