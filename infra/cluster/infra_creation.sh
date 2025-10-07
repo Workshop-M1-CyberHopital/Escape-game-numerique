@@ -18,7 +18,7 @@ set -Eeuo pipefail  # Stop le script si une commande échoue
 rgname="workshop-EISI"          # Nom du resource group Azure
 aksname="AKSClusterWorkshop"    # Nom du cluster AKS
 rgloc="francecentral"           # Région Azure
-apitoken="TON_TOKEN_GANDI_ICI"  # ⚠️ À remplacer par ton vrai token Gandi
+apitoken="ubVqfAcvE7507ZwuTWamvCJe"
 redpass="password_redis_519"    # Mot de passe Redis
 azdb_host="escape-db.mysql.database.azure.com"  # ⚠️ Nom DNS Azure Database
 azdb_user="escapeadmin@escape-db"
