@@ -9,8 +9,9 @@ metadata:
 spec:
   ipWhiteList:
     sourceRange:
-      - 78.202.15.42
-      - 192.168.0.48/24
+      - 78.202.15.42 # Adresse IP autorisée 
+      - 192.168.0.48/24 # Sous-réseau local autorisé
+      - 10.60.60.0/22
 ---
 # Secret + Middleware : BasicAuth pour le dashboard
 apiVersion: v1
@@ -22,6 +23,7 @@ data:
   users: |
     YWRtaW46JDJ5JDA1JFZ0M29BYkNqSjFQcExaMHk5blprWnVxaFEuLi4= # admin:motdepasse
 ---
+# Middleware : authentification basique (BasicAuth)
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
