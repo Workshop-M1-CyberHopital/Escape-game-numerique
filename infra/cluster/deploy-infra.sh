@@ -134,7 +134,7 @@ sleep 120
 
 # --- Vérifications finales ---
 echo ""
-echo "🔍 Vérification des ressources dans le namespace 'workshop'..."
+echo "Vérification des ressources dans le namespace 'workshop'..."
 kubectl get pods -n workshop
 kubectl get svc -n workshop
 kubectl get ingress -n workshop

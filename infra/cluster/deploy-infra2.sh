@@ -9,24 +9,35 @@
 # 3️⃣ Quitter
 # ===============================================
 
-set -Eeuo pipefail
+set -Eeuo pipefail  # Stoppe le script si une commande échoue
 
 # --- Variables principales ---
-rgname="workshop-EISI"
-aksname="AKSClusterWorkshop"
-rgloc="francecentral"
+rgname="workshop-EISI"          # Nom du resource group Azure
+aksname="AKSClusterWorkshop"    # Nom du cluster AKS
+rgloc="francecentral"           # Région Azure
 apitoken="ubVqfAcvE7507ZwuTWamvCJe"
-redpass="password_redis_519"
+redpass="password_redis_519"    # Mot de passe Redis
+
+# --- Petite fonction visuelle ---
+separator() {
+  echo "-----------------------------------------------"
+}
 
 # --- Fonction : déploiement complet ---
 deploy_workshop() {
-  echo "🔑 Récupération des identifiants du cluster..."
+  separator
+# --- Récupération des credentials du cluster ---
+  echo "Récupération des identifiants du cluster..."
   az aks get-credentials --resource-group "$rgname" --name "$aksname" --overwrite-existing
 
-  echo "📁 Création du namespace 'workshop'..."
+  separator
+# --- Création du namespace ---
+  echo "Création du namespace 'workshop'..."
   kubectl create namespace workshop || true
 
-  echo "🔐 Création des secrets Redis, MariaDB et Gandi..."
+  separator
+# --- Création des secrets nécessaires ---
+  echo "Création des secrets Redis, MariaDB et Gandi..."
   kubectl -n workshop create secret generic redis-secret-traefik \
     --from-literal=password="$redpass" --dry-run=client -o yaml | kubectl apply -f -
 
@@ -41,97 +52,190 @@ deploy_workshop() {
     --from-literal=api-token="$apitoken" \
     --dry-run=client -o yaml | kubectl apply -f -
 
-  echo "🚀 Déploiement de Redis, MariaDB et de l’application Escape Game..."
+
+  separator
+# --- Déploiement de l'application, Redis, MariaDB ---
+  echo "Déploiement de Redis, MariaDB et de l’application Escape Game..."
   kubectl apply -f escape.yaml
 
-  echo "⚙️ Installation du contrôleur d’entrée Traefik..."
+# --- Attente pour laisser les pods se créer correctement ---
+  echo "Attente de 15 secondes pour la création initiale des pods..."
+  sleep 15
+
+  separator
+# --- Installation de Traefik ---
+  echo "Installation du contrôleur d’entrée Traefik..."
   helm repo add traefik https://helm.traefik.io/traefik
   helm repo update
-  helm install traefik traefik/traefik -n workshop
 
-  echo "⏳ Attente 45 secondes pour laisser Traefik s’initialiser..."
+  if helm status traefik -n workshop &>/dev/null; then
+    echo "Traefik déjà installé, on passe à la suite."
+  else
+    helm install traefik traefik/traefik -n workshop
+  fi
+
+# --- Pause pour laisser Traefik démarrer ---
+  echo ""
+  echo "Attente de 45 secondes pour laisser Traefik s’initialiser..."
   sleep 45
 
-  echo "🌍 Récupération de l’adresse IP publique du LoadBalancer..."
-  WorkshopIngIP=$(kubectl get svc traefik -n workshop -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  echo "📡 IP publique : $WorkshopIngIP"
+  separator
+# --- Récupération de l’adresse IP publique ---
+  echo "Attente de l'attribution d'une IP publique pour Traefik..."
+  until kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null | grep -qE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'; do
+    printf '.'
+    sleep 5
+  done
+  echo ""
+  WorkshopIngIP=$(kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo "IP publique : $WorkshopIngIP"
 
   echo ""
-  echo "🧭 Étape DNS : configure ton domaine sur Gandi"
-  echo "👉 Crée deux enregistrements A pointant vers : $WorkshopIngIP"
+# --- Pause utilisateur pour configuration DNS ---
+  echo "Étape DNS : configure ton domaine sur Gandi"
+  echo "Crée deux enregistrements A pointant vers : $WorkshopIngIP"
   echo "   - escape.eisi-dune.eu"
   echo "   - traefik.eisi-dune.eu"
   echo ""
-  read -n1 -r -p "✅ Appuie sur [Y] quand c'est fait, ou [N] pour arrêter : " key
+  read -n1 -r -p "Appuie sur [Y] quand c'est fait, ou [N] pour arrêter : " key
   echo
   if [[ "$key" =~ ^[Nn]$ ]]; then
-    echo "❌ Arrêt du script — configure d’abord les DNS sur Gandi."
+    echo "Arrêt du script — configure d’abord les DNS sur Gandi."
     exit 1
   fi
 
-  echo "🧩 Application des configurations Traefik et HTTPS..."
+  separator
+# --- Configuration des middlewares et dashboard Traefik ---
+  echo "Application des configurations Traefik et HTTPS..."
   kubectl apply -f traefik-config.yaml -n workshop
-  helm repo add jetstack https://charts.jetstack.io
-  helm repo update
-  helm install cert-manager jetstack/cert-manager \
-    --namespace cert-manager \
-    --create-namespace \
-    --set installCRDs=true \
-    --version v1.10.1
 
-  helm install cert-manager-webhook-gandi \
-    --repo https://bwolf.github.io/cert-manager-webhook-gandi \
-    --version v0.2.0 \
-    --namespace cert-manager
+  separator
+# --- Installation de cert-manager ---
+  if helm status cert-manager -n cert-manager &>/dev/null; then
+    echo "cert-manager déjà installé."
+    echo "Mises à jour de cert-manager (pour certificats HTTPS)..."
+    helm repo update
+    echo "on passe à la suite"
+  else
+    echo "Installation de cert-manager (pour certificats HTTPS)..."
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo update
+    helm install cert-manager jetstack/cert-manager \
+      --namespace cert-manager \
+      --create-namespace \
+      --set installCRDs=true \
+      --version v1.10.1
+  fi
 
+  separator
+# --- Installation du webhook Gandi ---
+  echo "Installation du webhook Gandi..."
+  if helm status cert-manager-webhook-gandi -n cert-manager &>/dev/null; then
+    echo "Webhook déjà installé, on passe à la suite."
+  else
+    helm install cert-manager-webhook-gandi \
+      --repo https://bwolf.github.io/cert-manager-webhook-gandi \
+      --version v0.2.0 \
+      --namespace cert-manager
+  fi
+
+  separator
+# --- Configuration de Let's Encrypt ---
+  echo "Application de la configuration Let's Encrypt (Issuer)..."
   kubectl apply -f issuer.yaml -n workshop
+
+  separator
+# --- Application des règles d’accès (Ingress) ---
+  echo "Application des règles d’accès (Ingress)..."
   kubectl apply -f ingress.yaml -n workshop
 
-  echo "⏳ Attente 2 minutes pour la génération du certificat..."
+  echo ""
+# --- Attente de génération des certificats ---
+  echo "Attente de 2 minutes pour la génération des certificats Let's Encrypt..."
   sleep 120
 
-  echo "✅ Déploiement terminé avec succès !"
-  echo "🌐 Application : https://escape.eisi-dune.eu"
-  echo "📊 Dashboard : https://traefik.eisi-dune.eu"
-  echo "💡 Commande de supervision : kubectl get all -n workshop"
+  separator
+# --- Vérifications finales ---
+  echo "Vérification des ressources dans le namespace 'workshop'..."
+  kubectl get pods -n workshop
+  kubectl get svc -n workshop
+  kubectl get ingress -n workshop
+  kubectl get certificate -A | grep True || true
+
+  separator
+# --- Résumé final ---
+  echo "Déploiement terminé avec succès !"
+  echo "Application : https://escape.eisi-dune.eu"
+  echo "Dashboard Traefik : https://traefik.eisi-dune.eu"
+  echo ""
+  echo "Commande de supervision : kubectl get all -n workshop"
+  echo "Pour supprimer l’infra : ./infra-cleanup.sh"
 }
 
-# --- Menu ---
+# --- Menu principal ---
 clear
 echo "==============================================="
-echo "🚀 MENU DÉPLOIEMENT — Workshop EISI 2025–2026"
+echo "MENU DÉPLOIEMENT — Workshop EISI 2025–2026"
 echo "==============================================="
 echo "1️⃣  Déployer avec création du Resource Group"
 echo "2️⃣  Déployer sans création du Resource Group"
 echo "3️⃣  Quitter"
 echo "==============================================="
-read -rp "👉 Choisis une option (1-3) : " CHOICE
+read -rp "Choisis une option (1-3) : " CHOICE
 
+# --- Choix 1 : création complète ---
 if [[ "$CHOICE" == "1" ]]; then
+# --- Connexion Azure ---
+  echo "===== Connexion à Azure ====="
   az account show > /dev/null 2>&1 || az login --use-device-code
-  echo "📦 Création du Resource Group $rgname..."
+
+  separator
+# --- Création du groupe de ressources ---
+  echo "Création du Resource Group $rgname..."
   az group create --location "$rgloc" --name "$rgname"
 
-  echo "☸️ Création du cluster AKS ($aksname)..."
-  az aks create \
-    -g "$rgname" -n "$aksname" \
-    --enable-managed-identity \
-    --node-count 2 \
-    --enable-addons monitoring \
-    --generate-ssh-keys
+  separator
+# --- Création du cluster AKS ---
+  echo "Vérification ou création du cluster AKS ($aksname)..."
+  if az aks show -g "$rgname" -n "$aksname" &>/dev/null; then
+    echo "Le cluster $aksname existe déjà."
+  else
+    echo "Création du cluster AKS ($aksname) dans le RG existant $rgname..."
+    az aks create \
+      -g "$rgname" -n "$aksname" \
+      --enable-managed-identity \
+      --node-count 2 \
+      --enable-addons monitoring \
+      --generate-ssh-keys
+  fi
 
   deploy_workshop
+
+# --- Choix 2 : sans création de Resource Group ---
 elif [[ "$CHOICE" == "2" ]]; then
+# --- Connexion Azure ---
+  echo "===== Connexion à Azure ====="
   az account show > /dev/null 2>&1 || az login --use-device-code
-  echo "☸️ Création du cluster AKS ($aksname) dans le RG existant $rgname..."
-  az aks create \
-    -g "$rgname" -n "$aksname" \
-    --enable-managed-identity \
-    --node-count 2 \
-    --enable-addons monitoring \
-    --generate-ssh-keys
+
+  separator
+# --- Création du cluster AKS ---
+  echo "Vérification ou création du cluster AKS ($aksname) dans le RG $rgname..."
+  if az aks show -g "$rgname" -n "$aksname" &>/dev/null; then
+    echo "Le cluster $aksname existe déjà."
+  else
+    echo "Création du cluster AKS ($aksname) dans le RG existant $rgname..."
+    az aks create \
+      -g "$rgname" -n "$aksname" \
+      --enable-managed-identity \
+      --node-count 2 \
+      --enable-addons monitoring \
+      --generate-ssh-keys
+  fi
 
   deploy_workshop
+
+# --- Choix 3 : quitter ---
 else
-  echo "👋 Fermeture du script. Rien n’a été modifié."
+  echo "Fermeture du script. Rien n’a été modifié."
+  exit 0
 fi
