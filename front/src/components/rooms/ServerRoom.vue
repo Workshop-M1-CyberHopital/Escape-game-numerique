@@ -330,9 +330,11 @@ import { ref, computed } from "vue";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
+import { useGameState } from "../../composables/useGameState";
 
 const emit = defineEmits(["exit-room", "room-completed"]);
 const { showSuccess, showError } = useToast();
+const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
 
 // Données de la salle
 const roomData = {
@@ -363,6 +365,7 @@ const decodedPuzzle = ref("");
 
 const showHint = () => {
     hintsShown.value++;
+    addHint("server");
 };
 
 const fillEncodedMessage = () => {
@@ -424,17 +427,19 @@ const checkDecoding = () => {
         puzzleDecoded.value = true;
         decodedPuzzle.value = decodedMessage.value;
         hintsShown.value = 0; // Réinitialiser les indices pour l'étape suivante
-        
+
         // Message de succès cyberpunk (durée prolongée pour la lecture)
         showSuccess(
             "DÉCODAGE RÉUSSI",
             "Excellent ! Vous avez percé le pare-feu. Le système commence à se stabiliser. Continuez votre mission pour restaurer l'intégrité des données médicales.",
-            8000
+            8000,
         );
     } else {
+        addError("server");
         showError(
-            "Message décodé incorrect. Essayez encore !",
-        )
+            "MESSAGE DÉCODÉ INCORRECT",
+            `Message décodé incorrect. Essayez encore ! +${PENALTY_PER_ERROR}s de pénalité`,
+        );
     }
 };
 
@@ -457,14 +462,17 @@ const checkPuzzleAnswer = () => {
         showSuccess(
             "RÉPONSE CORRECTE",
             "Excellent ! Vous avez réussi à décoder le mot de passe et à restaurer le pare-feu. La sécurité des données de santé est maintenant protégée.",
-            8000
+            8000,
         );
 
+        completeRoom("server");
         emit("room-completed", "server");
     } else {
+        addError("server");
         showError(
-            "Réponse incorrecte. Essayez encore !",
-        )
+            "RÉPONSE INCORRECTE",
+            `Réponse incorrecte. Essayez encore ! +${PENALTY_PER_ERROR}s de pénalité`,
+        );
     }
 };
 </script>
