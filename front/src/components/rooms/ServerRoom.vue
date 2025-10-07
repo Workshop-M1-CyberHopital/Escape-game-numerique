@@ -72,12 +72,12 @@
                             </option>
                             <option value="caesar">César (ROT13)</option>
                             <option value="hex">Hexadécimal</option>
-                            <option value="base64">Base64</option>
                             <option value="binary">Binaire</option>
                             <option value="morse">Morse</option>
                             <option value="ascii">ASCII (décimal)</option>
                             <option value="reverse">Inversé</option>
                             <option value="vigenere">Vigenère</option>
+                            <option value="base64">Base64</option>
                             <option value="railfence">Rail Fence</option>
                             <option value="url">URL Encoding</option>
                             <option value="unicode">Unicode (décimal)</option>
