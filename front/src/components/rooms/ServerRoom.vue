@@ -126,12 +126,22 @@
 
                         <!-- Résultat du décodage -->
                         <div v-if="decodedResult" class="mt-3">
-                            <label
-                                class="block text-xs font-tech text-gray-400 mb-1"
-                                >Résultat décodé</label
-                            >
+                            <div class="flex items-center justify-between mb-1">
+                                <label
+                                    class="block text-xs font-tech text-gray-400"
+                                    >Résultat décodé</label
+                                >
+                                <button
+                                    @click="copyDecodedResult"
+                                    class="text-xs text-cyber-blue hover:text-cyber-blue/80 font-tech flex items-center gap-1 transition-all"
+                                    title="Copier le résultat"
+                                >
+                                    <i data-lucide="copy" class="w-3 h-3"></i>
+                                    Copier
+                                </button>
+                            </div>
                             <div
-                                class="w-full px-3 py-2 bg-green-900/30 border border-green-500/50 rounded text-green-400 font-tech text-sm"
+                                class="w-full px-3 py-2 bg-green-900/30 border border-green-500/50 rounded text-green-400 font-tech text-sm break-words overflow-wrap-anywhere"
                             >
                                 {{ decodedResult }}
                             </div>
@@ -376,6 +386,22 @@ const showHint = () => {
 
 const fillEncodedMessage = () => {
     messageToDecode.value = encryptedPuzzle;
+};
+
+const copyDecodedResult = async () => {
+    try {
+        await navigator.clipboard.writeText(decodedResult.value);
+        showSuccess("COPIÉ", "Résultat copié dans le presse-papiers");
+    } catch (error) {
+        // Fallback pour les navigateurs qui ne supportent pas l'API Clipboard
+        const textArea = document.createElement('textarea');
+        textArea.value = decodedResult.value;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSuccess("COPIÉ", "Résultat copié dans le presse-papiers");
+    }
 };
 
 const decodeMessage = () => {
