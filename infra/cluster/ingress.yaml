@@ -3,7 +3,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: escape-ingress
-  namespace: workshop
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
@@ -12,7 +11,7 @@ metadata:
     # cert-manager.io/issuer-kind: Issuer
     # cert-manager.io/issuer-group: cert-manager.io
 spec:
-  ingressClassName: traefik   # Nouvelle méthode officielle
+  ingressClassName: traefik # Nouvelle méthode officielle
   rules:
     - host: escape.eisi-dune.eu
       http:
@@ -24,7 +23,7 @@ spec:
                 name: escape-service
                 port:
                   number: 80
-  tls: # placing a host in the TLS config will determine what ends up in the cert's subjectAlt
+  tls:
     - hosts:
         - escape.eisi-dune.eu
-      secretName: escape-tls # cert-manager will store the created certificate in this secret
+      secretName: escape-tls

@@ -13,7 +13,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: workshop
 spec:
   replicas: 1
   selector:
@@ -61,7 +60,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-service
-  namespace: workshop
 spec:
   ports:
   - port: 6379
@@ -75,7 +73,6 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mariadb
-  namespace: workshop
 spec:
   serviceName: mariadb
   replicas: 1
@@ -123,12 +120,12 @@ spec:
         volumeMounts:
         - name: mariadb-storage
           mountPath: /var/lib/mysql
-  volumeClaimTemplates:   # au même niveau que template
+  volumeClaimTemplates:
   - metadata:
       name: mariadb-storage
     spec:
       accessModes: ["ReadWriteMany"]
-      storageClassName: azurefile-csi     # ✅ utilisation du StorageClass officiel Azure
+      storageClassName: azurefile-csi
       resources:
         requests:
           storage: 5Gi
@@ -140,7 +137,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mariadb
-  namespace: workshop
 spec:
   selector:
     app: mariadb
@@ -155,7 +151,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: escape-app
-  namespace: workshop
 spec:
   replicas: 2
   selector:
@@ -170,7 +165,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: escape
-        image: gaetandev/espace-workshop:latest   # Image Docker
+        image: gaetandev/espace-workshop:latest # image Docker
         resources:
           requests:
             cpu: 100m
@@ -213,7 +208,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: escape-service
-  namespace: workshop
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
 spec:
@@ -233,9 +227,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: redis-pvc
-  namespace: workshop
 spec:
-  storageClassName: azurefile-csi       # ✅ StorageClass officiel Azure (plus sûr)
+  storageClassName: azurefile-csi # StorageClass Azure plus sûr
   accessModes:
     - ReadWriteMany
   resources:
