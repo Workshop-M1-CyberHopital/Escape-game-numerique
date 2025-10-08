@@ -227,7 +227,7 @@
 
         <!-- DNA Room Briefing -->
         <DNARoomBriefing
-            :visible="showDNARoomBriefing"
+            :visible="showDNARoomBriefing && !isBriefingShown('dnaRoom')"
             @close="handleCloseDNARoomBriefing"
         />
 
@@ -242,7 +242,7 @@
         />
 
         <ImagingRoomBriefing
-            :visible="showImagingRoomBriefing"
+            :visible="showImagingRoomBriefing && !isBriefingShown('imagingRoom')"
             @close="handleCloseImagingRoomBriefing"
         />
 
@@ -252,7 +252,7 @@
         />
 
         <HeartRoomBriefing
-            :visible="showHeartRoomBriefing"
+            :visible="showHeartRoomBriefing && !isBriefingShown('heartRoom')"
             @close="handleCloseHeartRoomBriefing"
         />
 
@@ -608,6 +608,7 @@ const handleCloseServerRoomBriefing = () => {
 
 const handleCloseDNARoomBriefing = () => {
     showDNARoomBriefing.value = false;
+    markBriefingAsShown("dnaRoom");
     stopSound("dnaRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -618,6 +619,7 @@ const handleCloseDNARoomBriefing = () => {
 
 const handleCloseImagingRoomBriefing = () => {
     showImagingRoomBriefing.value = false;
+    markBriefingAsShown("imagingRoom");
     stopSound("imagingRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -718,6 +720,7 @@ const handleCloseFinishImagingRoomBriefing = () => {
 
 const handleCloseHeartRoomBriefing = () => {
     showHeartRoomBriefing.value = false;
+    markBriefingAsShown("heartRoom");
     stopSound("heartRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {
