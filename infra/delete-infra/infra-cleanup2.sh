@@ -43,11 +43,10 @@ read -p "Choisis une option [1-5] : " choice
 case $choice in
   1)
     echo ""
-    echo "Suppression de toutes les ressources du namespace 'workshop'..."
+    echo "Suppression de toutes les ressources Kubernetes..."
     sleep 5
-    kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all -n workshop || true
-    kubectl delete namespace workshop --ignore-not-found
-    echo "Namespace nettoyé. Le cluster AKS reste actif."
+    kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all || true
+    echo "Ressources Kubernetes supprimées. Le cluster AKS reste actif."
     ;;
   2)
     echo ""
@@ -65,10 +64,9 @@ case $choice in
     echo ""
     read -p "CONFIRMATION FINALE — Supprimer TOUT (Azure + Kubernetes) ? (y/N) : " confirm_all
     if [[ "$confirm_all" =~ ^[Yy]$ ]]; then
-      echo "Suppression du namespace 'workshop'..."
+      echo "Suppression des ressources Kubernetes..."
       sleep 5
-      kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all -n workshop || true
-      kubectl delete namespace workshop --ignore-not-found
+      kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all || true
       echo "Suppression du cluster et du groupe de ressources Azure..."
       sleep 5
       az group delete -n "$rgname" --yes --no-wait
@@ -85,10 +83,9 @@ case $choice in
     echo ""
     read -p "CONFIRMATION ULTIME — Supprimer TOUT (Azure + Kubernetes + Azure Files) ? (y/N) : " confirm_all
     if [[ "$confirm_all" =~ ^[Yy]$ ]]; then
-      echo "Suppression du namespace 'workshop'..."
+      echo "Suppression des ressources Kubernetes..."
       sleep 5
-      kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all -n workshop || true
-      kubectl delete namespace workshop --ignore-not-found
+      kubectl delete all,secrets,configmap,pvc,pv,ingress,certificate --all || true
 
       echo "Suppression du cluster et du groupe de ressources Azure..."
       sleep 5
