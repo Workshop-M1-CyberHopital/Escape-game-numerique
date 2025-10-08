@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  escape-game:
+    image: gaetandev/espace-workshop:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: escape-game-cyber-hospital
+    ports:
+      - "80:80"      # Frontend (Nginx)
+      - "3001:3001"  # Backend API (Node.js)
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_URL=http://localhost:80
+      - JWT_SECRET=escape-game-super-secret-key-change-in-production
+      - BCRYPT_ROUNDS=12
+    volumes:
+      # Persistance des données
+      - escape-game-data:/app/back/data
+      - escape-game-sessions:/app/back/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.escape-game.rule=Host(`escape-game.local`)"
+      - "traefik.http.routers.escape-game.entrypoints=web"
+      - "traefik.http.services.escape-game.loadbalancer.server.port=80"
+
+volumes:
+  escape-game-data:
+    driver: local
+  escape-game-sessions:
+    driver: local

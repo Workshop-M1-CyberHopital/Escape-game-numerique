@@ -1,7 +1,7 @@
 // Configuration de l'environnement
 export const ENV_CONFIG = {
     // URL de l'API Backend
-    API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+    API_URL: import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:3001/api`,
     
     // Mode de développement
     DEV_MODE: import.meta.env.VITE_DEV_MODE === 'true' || import.meta.env.DEV,

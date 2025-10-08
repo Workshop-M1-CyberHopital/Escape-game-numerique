@@ -1,7 +1,7 @@
 // Configuration de l'API
 export const API_CONFIG = {
     // URL de base de l'API
-    BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+    BASE_URL: import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:3001/api`,
     
     // Timeout des requêtes (en millisecondes)
     TIMEOUT: 10000,
