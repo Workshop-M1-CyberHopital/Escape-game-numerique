@@ -1,6 +1,17 @@
-# traefik-config.yaml => Dashboard + Auth + Whitelist IP
+# ==========================================================
+# Traefik Configuration - Workshop EISI 2025–2026
+# ----------------------------------------------------------
+# Contient :
+#  - Middleware de restriction d’accès IP
+#  - Secret BasicAuth sécurisé pour le Dashboard
+#  - Middleware d’authentification BasicAuth
+#  - Ingress Traefik (HTTPS + Auth + Whitelist)
+# ==========================================================
+
 ---
-# Traefik Middleware : IP Whitelisting
+# === Middleware : IP Whitelisting =========================
+# Autorise uniquement certaines adresses IP / sous-réseaux
+# ==========================================================
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -9,22 +20,30 @@ metadata:
 spec:
   ipWhiteList:
     sourceRange:
-      - 147.161.180.123 # Adresse IP autorisée 
-      - 147.161.180.92
-      - 192.168.0.48/24 # Sous-réseau local autorisé
-      - 10.60.60.0/22
+      - 147.161.180.123        # IP autorisée
+      - 147.161.180.92         # IP autorisée
+      - 192.168.0.48/24        # Sous-réseau local autorisé
+      - 10.60.60.0/22          # Sous-réseau de l'école
+
 ---
-# Secret + Middleware : BasicAuth pour le dashboard
+# === Secret : BasicAuth (sécurisé) =========================
+# Contient la paire utilisateur/mot de passe pour le Dashboard
+# L'entrée ci-dessous correspond à : admin:motdepasse (hashé bcrypt, puis encodé en base64)
+# Pour régénérer : htpasswd -nbB admin "motdepasse" | base64
+# ==========================================================
 apiVersion: v1
 kind: Secret
 metadata:
   name: traefik-dashboard-auth
   namespace: workshop
+type: Opaque
 data:
-  users: |
-    YWRtaW46JDJ5JDA1JFZ0M29BYkNqSjFQcExaMHk5blprWnVxaFEuLi4= # admin:motdepasse
+  users: YWRtaW46JDJ5JDA1JFZ0M29BYkNqSjFQcExaMHk5blprWnVxaFEuLi4=
+
 ---
-# Middleware : authentification basique (BasicAuth)
+# === Middleware : Authentification BasicAuth ===============
+# Lie le secret ci-dessus au Dashboard Traefik
+# ==========================================================
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -33,19 +52,23 @@ metadata:
 spec:
   basicAuth:
     secret: traefik-dashboard-auth
+
 ---
-# Ingress : Dashboard sécurisé
+# === Ingress : Accès au Dashboard Traefik ==================
+# - HTTPS via cert-manager (Let's Encrypt)
+# - Authentification + Whitelist IP
+# ==========================================================
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: traefik-dashboard
   namespace: workshop
   annotations:
-    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd,traefik-dashboard-auth@kubernetescrd
     cert-manager.io/issuer: letsencrypt
 spec:
+  ingressClassName: traefik
   rules:
     - host: traefik.eisi-dune.eu
       http:
