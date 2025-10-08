@@ -3,136 +3,282 @@ Escape-game-numerique/front/src/components/rooms/CPRRoom.vue
     <GameRoom :room-data="roomData" @exit-room="$emit('exit-room')">
         <!-- Instructions -->
         <div v-if="!puzzleSolved" class="space-y-8">
+            <!-- Moniteur cardiaque -->
             <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-red rounded-lg p-6 scanline"
+                class="bg-gray-900/80 backdrop-blur-md border-2 border-gray-600 rounded-lg p-6 scanline"
             >
-                <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="heart" class="w-5 h-5 text-cyber-red"></i>
-                    <h3 class="font-cyber font-bold text-cyber-red">
-                        SIMULATION DE MASSAGE CARDIAQUE
-                    </h3>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i
+                            data-lucide="monitor"
+                            class="w-5 h-5 text-cyber-blue"
+                        ></i>
+                        <h3 class="font-cyber font-bold text-cyber-blue">
+                            MONITEUR CARDIAQUE - DÉFIBRILLATEUR
+                        </h3>
+                    </div>
+                    <div class="text-xs text-gray-400 font-tech">
+                        ID: DEF-001 | CHARGE: 200J
+                    </div>
                 </div>
 
-                <div class="text-gray-300 space-y-2">
-                    <p class="font-tech text-sm">
-                        Un patient fait un arrêt cardiaque ! Vous devez
-                        effectuer un massage cardiaque en appuyant sur la touche
-                        <strong class="text-cyber-red">ESPACE</strong> en rythme
-                        avec la musique.
-                    </p>
+                <div class="space-y-6">
+                    <!-- ECG Display -->
                     <div
-                        class="bg-red-900/30 border border-red-500/50 rounded p-2"
+                        class="bg-black border-2 border-gray-600 rounded-lg p-4"
                     >
-                        <div class="text-cyber-red font-tech text-xs">
-                            <strong>RYTHME :</strong> 100 compressions par
-                            minute (rythme réaliste du massage cardiaque)
-                        </div>
-                    </div>
-                    <div class="text-sm">
-                        <strong>Objectif :</strong>
-                        {{ requiredCompressions }} compressions correctes ({{
-                            correctCompressions
-                        }}/{{ requiredCompressions }} terminées)
-                    </div>
-                </div>
-            </div>
-
-            <!-- Zone de jeu -->
-            <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-6 scanline"
-            >
-                <div class="flex items-center gap-2 mb-4">
-                    <i
-                        data-lucide="activity"
-                        class="w-5 h-5 text-cyber-blue"
-                    ></i>
-                    <h3 class="font-cyber font-bold text-cyber-blue">
-                        ZONE DE RÉANIMATION
-                    </h3>
-                </div>
-
-                <div class="text-center space-y-6">
-                    <!-- Cœur animé -->
-                    <div class="relative">
-                        <div
-                            class="w-32 h-32 mx-auto rounded-full border-4 border-cyber-red flex items-center justify-center transition-all duration-200"
-                            :class="{
-                                'bg-cyber-red/20 scale-110': isCompressing,
-                                'bg-gray-700/50': !isCompressing,
-                            }"
-                        >
-                            <i
-                                data-lucide="heart"
-                                class="w-16 h-16 text-cyber-red"
-                                :class="{ 'animate-pulse': isBeating }"
-                            ></i>
-                        </div>
-
-                        <!-- Indicateur de rythme -->
-                        <div class="mt-4">
-                            <div class="text-sm text-gray-400 mb-2">
-                                RYTHME DE LA MUSIQUE
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-xs text-green-400 font-tech">
+                                ECG LEAD II
                             </div>
-                            <div
-                                class="relative w-64 h-8 mx-auto bg-gray-700 rounded-full overflow-hidden"
-                            >
-                                <!-- Zone rouge de tolérance (fixe au centre) -->
+                            <div class="text-xs text-gray-400 font-tech">
+                                HR: --- BPM
+                            </div>
+                        </div>
+
+                        <!-- ECG Waveform -->
+                        <div
+                            class="relative h-20 bg-black border border-gray-700 rounded overflow-hidden"
+                        >
+                            <svg viewBox="0 0 400 60" class="w-full h-full">
+                                <!-- Grid lines -->
+                                <defs>
+                                    <pattern
+                                        id="grid"
+                                        width="20"
+                                        height="20"
+                                        patternUnits="userSpaceOnUse"
+                                    >
+                                        <path
+                                            d="M 20 0 L 0 0 0 20"
+                                            fill="none"
+                                            stroke="#374151"
+                                            stroke-width="0.5"
+                                        />
+                                    </pattern>
+                                </defs>
+                                <rect
+                                    width="400"
+                                    height="60"
+                                    fill="url(#grid)"
+                                />
+
+                                <!-- ECG Baseline -->
+                                <line
+                                    x1="0"
+                                    y1="30"
+                                    x2="400"
+                                    y2="30"
+                                    stroke="#10b981"
+                                    stroke-width="1"
+                                    opacity="0.7"
+                                />
+
+                                <!-- Animated ECG spikes (simplified) -->
+                                <g v-if="isBeating">
+                                    <path
+                                        d="M 50 30 L 50 25 L 55 45 L 60 10 L 65 30"
+                                        stroke="#10b981"
+                                        stroke-width="2"
+                                        fill="none"
+                                        opacity="0.8"
+                                    />
+                                    <path
+                                        d="M 150 30 L 150 25 L 155 45 L 160 10 L 165 30"
+                                        stroke="#10b981"
+                                        stroke-width="2"
+                                        fill="none"
+                                        opacity="0.8"
+                                    />
+                                    <path
+                                        d="M 250 30 L 250 25 L 255 45 L 260 10 L 265 30"
+                                        stroke="#10b981"
+                                        stroke-width="2"
+                                        fill="none"
+                                        opacity="0.8"
+                                    />
+                                    <path
+                                        d="M 350 30 L 350 25 L 355 45 L 360 10 L 365 30"
+                                        stroke="#10b981"
+                                        stroke-width="2"
+                                        fill="none"
+                                        opacity="0.8"
+                                    />
+                                </g>
+
+                                <!-- Flatline when not beating -->
+                                <line
+                                    v-else
+                                    x1="0"
+                                    y1="30"
+                                    x2="400"
+                                    y2="30"
+                                    stroke="#ef4444"
+                                    stroke-width="2"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Compression Monitor -->
+                    <div
+                        class="bg-gray-800/50 border border-gray-600 rounded-lg p-4"
+                    >
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-sm text-cyber-blue font-tech">
+                                PRESSION THORACIQUE
+                            </div>
+                            <div class="text-xs text-gray-400 font-tech">
+                                Temps restant:
+                                {{
+                                    Math.ceil(
+                                        (requiredCompressions -
+                                            correctCompressions) *
+                                            0.6,
+                                    )
+                                }}s
+                            </div>
+                        </div>
+
+                        <!-- Compression Indicator -->
+                        <div class="relative">
+                            <div class="flex justify-center mb-4">
                                 <div
-                                    class="absolute top-0 h-full bg-red-500/30 rounded-full"
-                                    style="
-                                        left: 50%;
-                                        width: 100px;
-                                        transform: translateX(-50px);
-                                    "
-                                ></div>
-                                <!-- Barre de progression bleue -->
-                                <div
-                                    class="absolute top-0 left-0 h-full bg-cyber-blue transition-all duration-300 ease-linear"
-                                    :style="{ width: `${beatProgress}%` }"
-                                ></div>
-                                <!-- Point indicateur -->
-                                <div
-                                    class="absolute inset-0 flex items-center justify-center"
+                                    class="w-24 h-24 rounded-full border-4 border-gray-600 flex items-center justify-center transition-all duration-200 relative"
+                                    :class="{
+                                        'border-cyber-red bg-cyber-red/20 scale-110':
+                                            isCompressing,
+                                        'border-gray-500 bg-gray-700/50':
+                                            !isCompressing,
+                                    }"
                                 >
-                                    <div
-                                        class="w-6 h-6 bg-cyber-red rounded-full transition-all duration-200 border-2 border-white shadow-lg"
+                                    <i
+                                        data-lucide="heart"
+                                        class="w-10 h-10 text-cyber-red transition-all duration-200"
                                         :class="{
-                                            'scale-125 bg-red-400':
-                                                isInBeatWindow,
-                                            'animate-pulse': isInBeatWindow,
+                                            'animate-pulse scale-110':
+                                                isBeating,
                                         }"
-                                    ></div>
+                                    ></i>
+
+                                    <!-- Compression depth indicator -->
+                                    <div
+                                        v-if="isCompressing"
+                                        class="absolute -bottom-2 left-1/2 transform -translate-x-1/2"
+                                    >
+                                        <div
+                                            class="w-1 h-4 bg-green-400 rounded-full animate-pulse"
+                                        ></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                Appuyez sur ESPACE quand le point rouge est dans
-                                la zone rouge
+
+                            <!-- Rhythm synchronizer -->
+                            <div
+                                class="bg-gray-900/50 border border-gray-600 rounded p-3"
+                            >
+                                <div
+                                    class="text-xs text-gray-400 font-tech mb-2 text-center"
+                                >
+                                    SYNCHRONISEUR RYTHMIQUE
+                                </div>
+                                <div
+                                    class="relative w-64 h-6 mx-auto bg-gray-700 rounded-full overflow-hidden border border-gray-600"
+                                >
+                                    <!-- Zone rouge de tolérance (fixe au centre) -->
+                                    <div
+                                        class="absolute top-0 h-full bg-red-500/40 rounded-full border border-red-400/50"
+                                        style="
+                                            left: 50%;
+                                            width: 80px;
+                                            transform: translateX(-40px);
+                                        "
+                                    ></div>
+                                    <!-- Barre de progression bleue -->
+                                    <div
+                                        class="absolute top-0 left-0 h-full bg-gradient-to-r from-cyber-blue to-blue-400 transition-all duration-300 ease-linear"
+                                        :style="{ width: `${beatProgress}%` }"
+                                    ></div>
+                                    <!-- Point indicateur -->
+                                    <div
+                                        class="absolute inset-0 flex items-center justify-center"
+                                    >
+                                        <div
+                                            class="w-4 h-4 bg-cyber-red rounded-full transition-all duration-200 border border-white shadow-md"
+                                            :class="{
+                                                'scale-150 bg-red-400 shadow-red-400/50 animate-ping':
+                                                    isInBeatWindow,
+                                            }"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="text-xs text-gray-500 mt-2 text-center font-tech"
+                                >
+                                    Appuyez sur
+                                    <span class="text-cyber-red font-bold"
+                                        >ESPACE</span
+                                    >
+                                    dans la zone rouge
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Contrôles -->
-                    <div class="flex gap-4 justify-center">
+                    <!-- Contrôles médicaux -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <button
                             @click="startSimulation"
                             v-if="!isRunning"
-                            class="px-6 py-3 bg-cyber-green hover:bg-cyber-green/80 text-black font-cyber font-bold rounded-lg transition-all"
+                            class="px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-cyber font-bold rounded-lg transition-all border border-green-500 shadow-lg hover:shadow-green-500/25"
                         >
-                            COMMENCER LE MASSAGE
+                            <i
+                                data-lucide="play"
+                                class="w-4 h-4 inline mr-2"
+                            ></i>
+                            DÉBUT RCP
                         </button>
                         <button
                             @click="stopSimulation"
                             v-if="isRunning"
-                            class="px-6 py-3 border border-cyber-red text-cyber-red hover:bg-cyber-red/10 font-cyber font-bold rounded-lg transition-all"
+                            class="px-4 py-3 bg-red-600 hover:bg-red-500 text-white font-cyber font-bold rounded-lg transition-all border border-red-500 shadow-lg hover:shadow-red-500/25"
                         >
-                            ARRÊTER
+                            <i
+                                data-lucide="square"
+                                class="w-4 h-4 inline mr-2"
+                            ></i>
+                            ARRÊT URGENT
                         </button>
                         <button
                             @click="resetSimulation"
-                            class="px-6 py-3 border border-gray-500 text-gray-400 hover:bg-gray-700 font-cyber rounded-lg transition-all"
+                            class="px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white font-cyber rounded-lg transition-all border border-gray-500 shadow-lg hover:shadow-gray-500/25"
                         >
-                            RÉINITIALISER
+                            <i
+                                data-lucide="rotate-ccw"
+                                class="w-4 h-4 inline mr-2"
+                            ></i>
+                            RESET
                         </button>
+                    </div>
+
+                    <!-- Système audio médical -->
+                    <div
+                        class="bg-gray-800/30 border border-gray-600 rounded p-3"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i
+                                    data-lucide="volume-2"
+                                    class="w-4 h-4 text-cyber-blue"
+                                ></i>
+                                <span class="text-xs text-gray-400 font-tech"
+                                    >AUDIO RCP</span
+                                >
+                            </div>
+                            <div class="text-xs text-green-400 font-tech">
+                                ACTIF
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Audio (caché) -->
