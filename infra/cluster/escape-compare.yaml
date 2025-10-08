@@ -128,7 +128,7 @@ spec:
       name: mariadb-storage
     spec:
       accessModes: ["ReadWriteMany"]
-      storageClassName: azurefile-csi
+      storageClassName: azurefile-csi     # ✅ utilisation du StorageClass officiel Azure
       resources:
         requests:
           storage: 5Gi
@@ -235,7 +235,7 @@ metadata:
   name: redis-pvc
   namespace: workshop
 spec:
-  storageClassName: azurefile-csi
+  storageClassName: azurefile-csi       # ✅ StorageClass officiel Azure (plus sûr)
   accessModes:
     - ReadWriteMany
   resources:
