@@ -166,7 +166,7 @@ deploy_workshop() {
   echo "   - escape.eisi-dune.eu"
   echo "   - traefik.eisi-dune.eu"
   echo ""
-  read -n1 -r -p "Appuie sur [Y] quand c'est fait, ou [N] pour arrêter : " key
+  read -r -p "Appuie sur [Y] quand c'est fait, ou [N] pour arrêter : " key
   echo
   if [[ "$key" =~ ^[Nn]$ ]]; then
     echo "Arrêt du script — configure d’abord les DNS sur Gandi."
