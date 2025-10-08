@@ -17,7 +17,7 @@ metadata:
 provisioner: file.csi.azure.com
 parameters:
   skuName: Standard_LRS          # Type de réplication
-  location: francecentral        # Région du cluster
+  location: germanywestcentral        # Région du cluster
   storageAccount: ""             # Laisse vide -> compte géré automatiquement
 mountOptions:
   - dir_mode=0777
