@@ -194,6 +194,29 @@ if [[ "$CHOICE" == "1" ]]; then
   echo "Création du Resource Group $rgname..."
   az group create --location "$rgloc" --name "$rgname"
 
+  # Provider
+  separator
+  echo "Vérification de l’enregistrement des providers Azure nécessaires..."
+
+  providers=("Microsoft.OperationalInsights" "Microsoft.Insights")
+
+  for provider in "${providers[@]}"; do
+    state=$(az provider show -n "$provider" --query "registrationState" -o tsv 2>/dev/null || echo "NotRegistered")
+    if [[ "$state" != "Registered" ]]; then
+      echo "➡ Le provider $provider n’est pas enregistré. Enregistrement en cours..."
+      az provider register --namespace "$provider" >/dev/null
+    else
+      echo "Le provider $provider est déjà enregistré."
+    fi
+  done
+
+  echo "Attente de l’enregistrement complet (cela peut prendre ~30 secondes)..."
+  sleep 30
+
+  for provider in "${providers[@]}"; do
+    az provider show -n "$provider" -o table | grep -E "RegistrationState|Registered" || true
+  done
+
   separator
 # --- Création du cluster AKS ---
   echo "Vérification ou création du cluster AKS ($aksname)..."
