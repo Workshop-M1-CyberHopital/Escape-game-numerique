@@ -12,6 +12,7 @@ metadata:
     # cert-manager.io/issuer-kind: Issuer
     # cert-manager.io/issuer-group: cert-manager.io
 spec:
+  ingressClassName: traefik   # Nouvelle méthode officielle
   rules:
     - host: escape.eisi-dune.eu
       http:

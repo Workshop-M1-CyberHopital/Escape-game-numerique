@@ -148,19 +148,29 @@ deploy_workshop() {
   echo "Attente de 45 secondes pour laisser Traefik s’initialiser..."
   sleep 45
 
-  separator
-  # --- Récupération de l’adresse IP publique ---
-  echo "Attente de l'attribution d'une IP publique pour Traefik..."
-  until kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null | grep -qE '^(20|40|51|52|104|168|191)\.'; do
-    echo "⏳ En attente d'une IP publique Azure valide..."
-    sleep 10
-  done
-  echo ""
-  WorkshopIngIP=$(kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  echo "IP publique : $WorkshopIngIP"
+ separator
+# --- Récupération de l’adresse IP publique ---
+echo "Attente de l'attribution d'une IP publique Azure pour Traefik..."
+
+# On attend qu'une IP IPv4 apparaisse (pas de filtrage par plage)
+for i in {1..24}; do  # 24 x 5s = 2 minutes max
+  WorkshopIngIP=$(kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+  if [[ $WorkshopIngIP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "IP publique détectée : $WorkshopIngIP"
+    break
+  fi
+  echo "⏳ En attente d'une IP publique (tentative $i/24)..."
+  sleep 5
+done
+
+if [[ -z "$WorkshopIngIP" ]]; then
+  echo "Aucune IP publique n’a été attribuée à Traefik après 2 minutes."
+  kubectl get svc traefik -n workshop
+  exit 1
+fi
 
   echo ""
-  # --- Pause utilisateur pour configuration DNS ---
+# --- Pause utilisateur pour configuration DNS ---
   echo "Étape DNS : configure ton domaine sur Gandi"
   echo "Crée deux enregistrements A pointant vers : $WorkshopIngIP"
   echo "   - escape.eisi-dune.eu"
