@@ -38,44 +38,79 @@
             </div>
           </div>
   
-          <!-- Types de messages expliqués simplement -->
-          <div
-            class="bg-gray-900/50 p-4 rounded border border-purple-500/30 mb-6"
-          >
-            <h4 class="font-bold text-purple-300 mb-3">
-              📚 Types de messages codés :
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
-                <div class="font-bold text-purple-300 text-sm mb-1">
-                  Base64 (Web)
-                </div>
-                <div class="text-xs text-gray-300 mb-2">
-                  Lettres, chiffres, +, /
-                </div>
-                <div class="text-xs font-mono text-green-400">SGVsbG8=</div>
-              </div>
-              <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
-                <div class="font-bold text-purple-300 text-sm mb-1">
-                  Hexadécimal
-                </div>
-                <div class="text-xs text-gray-300 mb-2">Seulement 0-9 et A-F</div>
-                <div class="text-xs font-mono text-green-400">48656C6C6F</div>
-              </div>
-              <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
-                <div class="font-bold text-purple-300 text-sm mb-1">Binaire</div>
-                <div class="text-xs text-gray-300 mb-2">Seulement des 0 et 1</div>
-                <div class="text-xs font-mono text-green-400">01001000</div>
-              </div>
-              <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
-                <div class="font-bold text-purple-300 text-sm mb-1">ASCII</div>
-                <div class="text-xs text-gray-300 mb-2">
-                  Chiffres séparés par espaces
-                </div>
-                <div class="text-xs font-mono text-green-400">72 101 108</div>
-              </div>
-            </div>
-          </div>
+           <!-- Types de messages expliqués simplement -->
+           <div
+             class="bg-gray-900/50 p-4 rounded border border-purple-500/30 mb-6"
+           >
+             <h4 class="font-bold text-purple-300 mb-3">
+               📚 Types de messages codés :
+             </h4>
+             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">
+                   Hexadécimal
+                 </div>
+                 <div class="text-xs text-gray-300 mb-2">Seulement 0-9 et A-F</div>
+                 <div class="text-xs font-mono text-green-400">48656C6C6F</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">Binaire</div>
+                 <div class="text-xs text-gray-300 mb-2">Seulement des 0 et 1</div>
+                 <div class="text-xs font-mono text-green-400">01001000</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">ASCII</div>
+                 <div class="text-xs text-gray-300 mb-2">
+                   Chiffres séparés par espaces
+                 </div>
+                 <div class="text-xs font-mono text-green-400">72 101 108</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">Morse</div>
+                 <div class="text-xs text-gray-300 mb-2">
+                   Points et tirets
+                 </div>
+                 <div class="text-xs font-mono text-green-400">.... . .-.. .-.. ---</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">
+                   Base64 (Web)
+                 </div>
+                 <div class="text-xs text-gray-300 mb-2">
+                   Lettres, chiffres, +, /
+                 </div>
+                 <div class="text-xs font-mono text-green-400">SGVsbG8=</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">César (ROT13)</div>
+                 <div class="text-xs text-gray-300 mb-2">
+                   Lettres décalées
+                 </div>
+                 <div class="text-xs font-mono text-green-400">Uryyb</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">Vigenère</div>
+                 <div class="text-xs text-gray-300 mb-2">
+                   Chiffrement par clé
+                 </div>
+                 <div class="text-xs font-mono text-green-400">Jgzzv</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">Rail Fence</div>
+                 <div class="text-xs text-gray-300 mb-2">
+                   Lettres réorganisées
+                 </div>
+                 <div class="text-xs font-mono text-green-400">Hloel</div>
+               </div>
+               <div class="bg-gray-800/50 p-3 rounded border border-purple-500/30">
+                 <div class="font-bold text-purple-300 text-sm mb-1">Inversé</div>
+                 <div class="text-xs text-gray-300 mb-2">
+                   Texte à l'envers
+                 </div>
+                 <div class="text-xs font-mono text-green-400">olleH</div>
+               </div>
+             </div>
+           </div>
   
           <!-- Question simple -->
           <div class="bg-gray-900/50 p-4 rounded border border-blue-500/30">
@@ -181,23 +216,21 @@
                 <label class="block text-sm font-tech text-gray-300 mb-2"
                   >Type d'encodage</label
                 >
-                <select
-                  v-model="selectedEncoding"
-                  class="w-full px-4 py-3 bg-black/50 border border-cyber-blue/30 rounded-lg text-white font-tech focus:outline-none focus:border-cyber-blue transition-all"
-                >
-                  <option value="">Sélectionnez le type d'encodage</option>
-                  <option value="caesar">César (ROT13)</option>
-                  <option value="hex">Hexadécimal</option>
-                  <option value="binary">Binaire</option>
-                  <option value="morse">Morse</option>
-                  <option value="ascii">ASCII (décimal)</option>
-                  <option value="reverse">Inversé</option>
-                  <option value="vigenere">Vigenère</option>
-                  <option value="base64">Base64</option>
-                  <option value="railfence">Rail Fence</option>
-                  <option value="url">URL Encoding</option>
-                  <option value="unicode">Unicode (décimal)</option>
-                </select>
+                 <select
+                   v-model="selectedEncoding"
+                   class="w-full px-4 py-3 bg-black/50 border border-cyber-blue/30 rounded-lg text-white font-tech focus:outline-none focus:border-cyber-blue transition-all"
+                 >
+                   <option value="">Sélectionnez le type d'encodage</option>
+                   <option value="hex">Hexadécimal</option>
+                   <option value="binary">Binaire</option>
+                   <option value="ascii">ASCII</option>
+                   <option value="morse">Morse</option>
+                   <option value="base64">Base64 (Web)</option>
+                   <option value="caesar">César (ROT13)</option>
+                   <option value="vigenere">Vigenère</option>
+                   <option value="railfence">Rail Fence</option>
+                   <option value="reverse">Inversé</option>
+                 </select>
               </div>
   
               <!-- Décodeur (apparaît pour tous les types) -->
@@ -476,13 +509,18 @@
   const selectedOption = ref("");
   const selectedSimpleOption = ref("");
   
-  // Options simplifiées pour les utilisateurs non-techniques
-  const simpleOptions = ref([
-      { value: "base64", label: "Base64 (Web)", description: "Utilisé sur internet, contient + et /" },
-      { value: "hex", label: "Hexadécimal", description: "Seulement des chiffres et lettres A-F" },
-      { value: "binary", label: "Binaire", description: "Seulement des 0 et 1" },
-      { value: "ascii", label: "ASCII", description: "Chiffres séparés par des espaces" }
-  ]);
+   // Options pour le quiz (9 types d'encodage)
+   const simpleOptions = ref([
+       { value: "hex", label: "Hexadécimal", description: "Seulement des chiffres et lettres A-F" },
+       { value: "binary", label: "Binaire", description: "Seulement des 0 et 1" },
+       { value: "ascii", label: "ASCII", description: "Chiffres séparés par des espaces" },
+       { value: "morse", label: "Morse", description: "Points et tirets" },
+       { value: "base64", label: "Base64 (Web)", description: "Utilisé sur internet, contient + et /" },
+       { value: "caesar", label: "César (ROT13)", description: "Lettres décalées" },
+       { value: "vigenere", label: "Vigenère", description: "Chiffrement par clé" },
+       { value: "railfence", label: "Rail Fence", description: "Lettres réorganisées" },
+       { value: "reverse", label: "Inversé", description: "Texte à l'envers" }
+   ]);
   
   // Énigme encodée (Base64 de "Quel est le poids minimum pour donner son sang ?")
   const encryptedPuzzle =
