@@ -32,13 +32,12 @@ const gameState = reactive({
     imagingRoom: false,
     finishServerRoom: false,
     finishDNARoom: false,
-    finishImagingRoom: false
-  }
+    finishImagingRoom: false,
+  },
 });
 
 // Timer
 let timerInterval = null;
-
 
 // Fonction pour démarrer le timer
 const startTimer = () => {
@@ -55,9 +54,7 @@ const stopTimer = () => {
   }
 };
 
-
 export function useGameState() {
-
   const startGame = (teamData) => {
     gameState.isGameStarted = true;
     gameState.teamName = teamData.name;
@@ -67,11 +64,10 @@ export function useGameState() {
 
     // Démarrer le timer
     startTimer();
-    
+
     // Sauvegarder l'état
     saveGameState();
   };
-
 
   const enterRoom = (roomId) => {
     gameState.currentRoom = roomId;
@@ -117,10 +113,9 @@ export function useGameState() {
       imagingRoom: false,
       finishServerRoom: false,
       finishDNARoom: false,
-      finishImagingRoom: false
+      finishImagingRoom: false,
     };
     stopTimer();
-    
   };
 
   const formatTime = (seconds) => {
@@ -186,9 +181,9 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 3 salles principales sont complétées
-    const mainRooms = ["server", "dna-lab", "imaging"];
-    return mainRooms.every((room) => gameState.completedRooms.includes(room));
+    // Vérifier si les 4 salles sont complétées
+    const allRooms = ["server", "dna-lab", "imaging", "heart"];
+    return allRooms.every((room) => gameState.completedRooms.includes(room));
   };
 
   // Fonctions pour gérer les briefings
