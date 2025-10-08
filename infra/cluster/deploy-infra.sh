@@ -124,22 +124,39 @@ deploy_workshop() {
   sleep 45
 
   separator
-  echo "Attente de l'attribution d'une IP publique Azure pour Traefik..."
-  for i in {1..24}; do
-    WorkshopIngIP=$(kubectl get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-    if [[ $WorkshopIngIP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-      echo "IP publique détectée : $WorkshopIngIP"
-      break
-    fi
-    echo "⏳ En attente d'une IP publique (tentative $i/24)..."
-    sleep 5
-  done
+  echo "Récupération de l'adresse IP publique Azure associée au cluster..."
+
+  # On cherche l'adresse IP publique la plus récente dans le resource group managé par AKS
+  WorkshopIngIP=$(az network public-ip list \
+    --resource-group "MC_${rgname}_${aksname}_${rgloc}" \
+    --query "sort_by([].{ip: ipAddress, t: timeCreated}, &t)[-1].ip" \
+    -o tsv)
 
   if [[ -z "$WorkshopIngIP" ]]; then
-    echo "Aucune IP publique n’a été attribuée après 2 minutes."
-    kubectl get svc traefik
+    echo "Impossible de trouver une adresse IP publique dans le groupe de ressources MC_${rgname}_${aksname}_${rgloc}"
+    echo "Vérifie dans le portail Azure si la ressource d'IP publique existe bien."
     exit 1
   fi
+
+  echo " IP publique détectée automatiquement : $WorkshopIngIP"
+
+  # echo "Attente de l'attribution d'une IP publique Azure pour Traefik..."
+  # for i in {1..24}; do
+  #   WorkshopIngIP=$(kubectl get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+  #   if [[ $WorkshopIngIP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  #     echo "IP publique détectée : $WorkshopIngIP"
+  #     break
+  #   fi
+  #   echo "En attente d'une IP publique (tentative $i/24)..."
+  #   sleep 5
+  # done
+
+  # if [[ -z "$WorkshopIngIP" ]]; then
+  #   echo "Aucune IP publique n’a été attribuée après 2 minutes."
+  #   kubectl get svc traefik
+  #   exit 1
+  # fi
+  
 
   echo ""
   echo "Étape DNS : configure ton domaine sur Gandi"
