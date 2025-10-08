@@ -277,7 +277,7 @@
                         🎵 ACTIVER L'AUDIO
                     </button>
                     <button
-                        @click="showAudioActivationButton = false"
+                        @click="continueWithoutAudio"
                         class="px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-all duration-300"
                     >
                         CONTINUER SANS AUDIO
@@ -409,6 +409,25 @@ const activateAudio = async () => {
         console.error("❌ Erreur lors de l'activation audio:", error);
         showError("Erreur audio", "Impossible d'activer l'audio. Vérifiez vos paramètres de navigateur.");
     }
+};
+
+// Fonction pour continuer sans audio mais avec le briefing
+const continueWithoutAudio = () => {
+    console.log("🎵 Continuation sans audio - Affichage du briefing seulement");
+    
+    // Masquer le bouton d'activation
+    showAudioActivationButton.value = false;
+    
+    // Marquer comme joué pour éviter la répétition
+    hasPlayedRoomSelectionAudio.value = true;
+    
+    // Afficher le briefing sans audio
+    showAudioBriefing.value = true;
+    
+    // Masquer le briefing après la durée normale (environ 60 secondes)
+    setTimeout(() => {
+        showAudioBriefing.value = false;
+    }, 60000);
 };
 
 // Fonction pour jouer le son de la Salle du Serveur
@@ -744,6 +763,13 @@ const handleEnterRoom = async (roomId) => {
         audioState.isEnabled
     ) {
         await playServerRoomAudio();
+    } else if (roomId === "server" && !hasPlayedServerRoomAudio.value) {
+        console.log("🎵 Audio désactivé - Affichage du briefing Server Room sans audio");
+        showServerRoomBriefing.value = true;
+        hasPlayedServerRoomAudio.value = true;
+        setTimeout(() => {
+            showServerRoomBriefing.value = false;
+        }, 55000);
     } else if (
         roomId === "dna-lab" &&
         !hasPlayedDNARoomAudio.value &&
@@ -1034,12 +1060,19 @@ watch(
             // Afficher le bouton d'activation audio
             showAudioActivationButton.value = true;
             console.log("🎵 Bouton d'activation audio affiché - Attente de l'action utilisateur");
+        } else if (isOnRoomSelection && hasPlayedRoomSelectionAudio.value) {
+            // Si l'audio a déjà été joué, afficher directement le briefing
+            console.log("🎵 Audio déjà joué - Affichage du briefing");
+            showAudioBriefing.value = true;
+            
+            // Masquer le briefing après la durée normale (environ 60 secondes)
+            setTimeout(() => {
+                showAudioBriefing.value = false;
+            }, 60000);
         } else {
             console.log("❌ CONDITIONS NON REMPLIES");
             if (!isOnRoomSelection)
                 console.log("  - Pas sur la sélection des salles");
-            if (hasPlayedRoomSelectionAudio.value)
-                console.log("  - Son déjà joué");
         }
     },
 );
