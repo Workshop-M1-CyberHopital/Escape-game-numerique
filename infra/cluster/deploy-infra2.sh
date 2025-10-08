@@ -151,9 +151,9 @@ deploy_workshop() {
   separator
   # --- Récupération de l’adresse IP publique ---
   echo "Attente de l'attribution d'une IP publique pour Traefik..."
-  until kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null | grep -qE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'; do
-    printf '.'
-    sleep 5
+  until kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null | grep -qE '^(20|40|51|52|104|168|191)\.'; do
+    echo "⏳ En attente d'une IP publique Azure valide..."
+    sleep 10
   done
   echo ""
   WorkshopIngIP=$(kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
