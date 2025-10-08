@@ -43,6 +43,17 @@
                     Le message semble être encodé. Trouvez la méthode de
                     décodage.
                 </div>
+
+                <!-- Aide pour identifier le type d'encodage -->
+                <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i data-lucide="lightbulb" class="w-4 h-4 text-blue-400"></i>
+                        <span class="text-sm font-bold text-blue-400">CONSEIL D'ANALYSE</span>
+                    </div>
+                    <div class="text-xs text-gray-300">
+                        💡 Analysez les caractères du message : contient-il des lettres, des chiffres, des symboles spéciaux ? Cela vous aidera à identifier le bon type d'encodage dans le décodeur.
+                    </div>
+                </div>
             </div>
 
             <!-- Interface de décodage -->
@@ -272,7 +283,7 @@
                             💡 Le message est encodé avec un algorithme de chiffrement standard
                         </div>
                         <div v-if="hintsShown >= 2" class="fade-in">
-                            💡 Essayez différents types d'encodage : Base64, Hexadécimal, Binaire, Morse, ASCII...
+                            💡 Un encodage très courant sur internet transforme du texte en lettres, chiffres, + et /
                         </div>
                         <div v-if="hintsShown >= 3" class="fade-in">
                             💡 Le message décodé est :
