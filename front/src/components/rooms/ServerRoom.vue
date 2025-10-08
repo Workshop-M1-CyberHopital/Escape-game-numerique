@@ -1,8 +1,130 @@
 <template>
     <GameRoom :room-data="roomData" @exit-room="$emit('exit-room')">
+        <!-- Étape 0: Apprentissage de l'encodage -->
+        <div
+            v-if="!encodingIdentified"
+            class="max-w-4xl mx-auto"
+        >
+            <div class="bg-gray-800/60 backdrop-blur-md border-2 border-blue-500 rounded-lg p-8 scanline">
+                <div class="text-center mb-6">
+                    <div class="flex items-center justify-center gap-3 mb-4">
+                        <i data-lucide="graduation-cap" class="w-8 h-8 text-blue-400"></i>
+                        <h2 class="text-2xl font-bold text-blue-400">ACADÉMIE DE CYBERSÉCURITÉ</h2>
+                    </div>
+                    <p class="text-gray-300">Avant de décoder le message, apprenez à identifier les types d'encodage !</p>
+                </div>
+
+                <!-- Laboratoire d'encodage -->
+                <div class="bg-gray-900/50 p-6 rounded border border-purple-500/30 mb-6">
+                    <h3 class="font-bold text-purple-300 mb-4 flex items-center gap-2">
+                        <i data-lucide="flask-conical" class="w-5 h-5"></i>
+                        🧪 Laboratoire d'encodage
+                    </h3>
+                    <p class="text-sm text-gray-300 mb-4">Testez différents encodages en temps réel !</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-purple-300 mb-2">Votre texte :</label>
+                            <input 
+                                v-model="labText"
+                                type="text" 
+                                placeholder="Tapez un mot (ex: Hello)"
+                                class="w-full px-3 py-2 bg-black/50 border border-purple-500/30 rounded text-white text-sm focus:outline-none focus:border-purple-400"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-purple-300 mb-2">Type d'encodage :</label>
+                            <select 
+                                v-model="labEncoding"
+                                class="w-full px-3 py-2 bg-black/50 border border-purple-500/30 rounded text-white text-sm focus:outline-none focus:border-purple-400"
+                            >
+                                <option value="base64">Base64</option>
+                                <option value="hex">Hexadécimal</option>
+                                <option value="binary">Binaire</option>
+                                <option value="ascii">ASCII</option>
+                                <option value="reverse">Inversé</option>
+                                <option value="caesar">César (ROT13)</option>
+                                <option value="vigenere">Vigenère</option>
+                                <option value="railfence">Rail Fence</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-black/30 rounded border border-purple-500/30">
+                        <div class="text-sm font-bold text-purple-300 mb-2">Résultat :</div>
+                        <div class="font-mono text-green-400 text-sm break-all">
+                            {{ labResult }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cartes d'identité des encodages -->
+                <div class="bg-gray-900/50 p-6 rounded border border-green-500/30 mb-6">
+                    <h3 class="font-bold text-green-300 mb-4 flex items-center gap-2">
+                        <i data-lucide="id-card" class="w-5 h-5"></i>
+                        🆔 Cartes d'identité des encodages
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div 
+                            v-for="encoding in encodingCards" 
+                            :key="encoding.name"
+                            class="bg-gray-800/50 p-4 rounded border border-green-500/30 hover:border-green-400/50 transition-all cursor-pointer"
+                            @click="selectCard(encoding.name)"
+                            :class="{ 'border-green-400 bg-green-500/10': selectedCard === encoding.name }"
+                        >
+                            <div class="font-bold text-green-300 mb-2">{{ encoding.name }}</div>
+                            <div class="text-xs text-gray-300 mb-2">{{ encoding.description }}</div>
+                            <div class="text-xs font-mono text-green-400 mb-2">{{ encoding.example }}</div>
+                            <div class="text-xs text-gray-400">{{ encoding.characters }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-black/30 p-4 rounded border border-green-500/30 mb-6">
+                    <div class="font-bold text-green-300 mb-2">Message à analyser :</div>
+                    <div class="font-mono text-green-400 text-sm break-all">
+                        {{ encryptedPuzzle }}
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2">Caractères observés : lettres, chiffres, +, /</div>
+                </div>
+
+                <div class="bg-gray-900/50 p-6 rounded border border-blue-500/30">
+                    <h3 class="font-bold text-blue-300 mb-4 text-center">🎯 Quiz : Quel type d'encodage ?</h3>
+                    <div class="space-y-3">
+                        <div class="text-sm text-gray-300 mb-4">Question : Quel encodage utilise des lettres, chiffres, + et / ?</div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button 
+                                v-for="option in quizOptions" 
+                                :key="option.value"
+                                @click="selectQuizOption(option.value)"
+                                :class="{
+                                    'bg-blue-500 text-white border-blue-400': selectedQuizOption === option.value,
+                                    'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600': selectedQuizOption !== option.value
+                                }"
+                                class="p-3 rounded border text-sm font-bold transition-all text-left"
+                            >
+                                <div class="font-bold">{{ option.label }}</div>
+                                <div class="text-xs opacity-80">{{ option.hint }}</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button 
+                            @click="checkQuizAnswer"
+                            :disabled="!selectedQuizOption"
+                            class="w-full px-6 py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded transition-all"
+                        >
+                            🚀 VALIDER ET CONTINUER
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Étape 1: Décodage de l'énigme -->
         <div
-            v-if="!puzzleDecoded"
+            v-if="encodingIdentified && !puzzleDecoded"
             class="grid grid-cols-1 lg:grid-cols-2 gap-8"
         >
             <!-- Log chiffré -->
@@ -40,19 +162,7 @@
                 </div>
 
                 <div class="text-xs text-gray-500 font-tech">
-                    Le message semble être encodé. Trouvez la méthode de
-                    décodage.
-                </div>
-
-                <!-- Aide pour identifier le type d'encodage -->
-                <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i data-lucide="lightbulb" class="w-4 h-4 text-blue-400"></i>
-                        <span class="text-sm font-bold text-blue-400">CONSEIL D'ANALYSE</span>
-                    </div>
-                    <div class="text-xs text-gray-300">
-                        💡 Analysez les caractères du message : contient-il des lettres, des chiffres, des symboles spéciaux ? Cela vous aidera à identifier le bon type d'encodage dans le décodeur.
-                    </div>
+                    Le message semble être encodé. Vous avez maintenant accès au décodeur !
                 </div>
             </div>
 
@@ -384,6 +494,80 @@ const puzzleAnswer = ref("");
 const puzzleSolved = ref(false);
 const hintsShown = ref(0);
 const isCompleted = ref(false);
+const encodingGuess = ref("");
+const encodingIdentified = ref(false);
+const selectedOption = ref("");
+const selectedQuizOption = ref("");
+const selectedCard = ref("");
+
+// Variables pour le laboratoire
+const labText = ref("Hello");
+const labEncoding = ref("base64");
+const labResult = ref("");
+
+// Cartes d'identité des encodages
+const encodingCards = ref([
+    {
+        name: "Base64",
+        description: "Encodage web standard",
+        example: "SGVsbG8=",
+        characters: "A-Z, a-z, 0-9, +, /"
+    },
+    {
+        name: "Hexadécimal",
+        description: "Code couleur et données",
+        example: "48656C6C6F",
+        characters: "0-9, A-F"
+    },
+    {
+        name: "Binaire",
+        description: "Langage des ordinateurs",
+        example: "01001000 01100101",
+        characters: "0, 1"
+    },
+    {
+        name: "ASCII",
+        description: "Codes numériques",
+        example: "72 101 108 108 111",
+        characters: "Chiffres 0-9"
+    },
+    {
+        name: "Inversé",
+        description: "Texte à l'envers",
+        example: "olleH",
+        characters: "Lettres inversées"
+    },
+    {
+        name: "César (ROT13)",
+        description: "Chiffrement par décalage",
+        example: "Uryyb",
+        characters: "Lettres décalées"
+    },
+    {
+        name: "Vigenère",
+        description: "Chiffrement par clé",
+        example: "Jgzzv",
+        characters: "Lettres avec clé"
+    },
+    {
+        name: "Rail Fence",
+        description: "Chiffrement en zigzag",
+        example: "Hloel",
+        characters: "Lettres réorganisées"
+    }
+]);
+
+// Options pour le quiz éducatif
+const quizOptions = ref([
+    { value: "base64", label: "Base64", hint: "Utilisé pour les emails et le web" },
+    { value: "hex", label: "Hexadécimal", hint: "Seulement 0-9 et A-F" },
+    { value: "binary", label: "Binaire", hint: "Seulement des 0 et 1" },
+    { value: "ascii", label: "ASCII", hint: "Chiffres séparés par espaces" },
+    { value: "reverse", label: "Inversé", hint: "Texte à l'envers" },
+    { value: "caesar", label: "César (ROT13)", hint: "Lettres décalées" },
+    { value: "vigenere", label: "Vigenère", hint: "Chiffrement par clé" },
+    { value: "railfence", label: "Rail Fence", hint: "Lettres réorganisées" }
+]);
 
 // Énigme encodée (Base64 de "Quel est le poids minimum pour donner son sang ?")
 const encryptedPuzzle =
@@ -394,6 +578,105 @@ const showHint = () => {
     hintsShown.value++;
     addHint("server");
 };
+
+// Fonctions pour le laboratoire
+const encodeText = (text, encoding) => {
+    try {
+        switch (encoding) {
+            case "base64":
+                return btoa(text);
+            case "hex":
+                return Array.from(text).map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+            case "binary":
+                return Array.from(text).map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+            case "ascii":
+                return Array.from(text).map(char => char.charCodeAt(0)).join(' ');
+            case "reverse":
+                return text.split('').reverse().join('');
+            case "caesar":
+                return text.split('').map(char => {
+                    if (char >= 'A' && char <= 'Z') {
+                        return String.fromCharCode(((char.charCodeAt(0) - 65 + 13) % 26) + 65);
+                    } else if (char >= 'a' && char <= 'z') {
+                        return String.fromCharCode(((char.charCodeAt(0) - 97 + 13) % 26) + 97);
+                    }
+                    return char;
+                }).join('');
+            case "vigenere":
+                const key = "KEY";
+                return text.split('').map((char, index) => {
+                    if (char >= 'A' && char <= 'Z') {
+                        const keyChar = key[index % key.length].toUpperCase();
+                        return String.fromCharCode(((char.charCodeAt(0) - 65 + keyChar.charCodeAt(0) - 65) % 26) + 65);
+                    } else if (char >= 'a' && char <= 'z') {
+                        const keyChar = key[index % key.length].toLowerCase();
+                        return String.fromCharCode(((char.charCodeAt(0) - 97 + keyChar.charCodeAt(0) - 97) % 26) + 97);
+                    }
+                    return char;
+                }).join('');
+            case "railfence":
+                if (text.length <= 2) return text;
+                const rails = [[], []];
+                let rail = 0;
+                let direction = 1;
+                for (let i = 0; i < text.length; i++) {
+                    rails[rail].push(text[i]);
+                    rail += direction;
+                    if (rail === 0 || rail === 1) direction *= -1;
+                }
+                return rails.flat().join('');
+            default:
+                return text;
+        }
+    } catch (error) {
+        return "Erreur d'encodage";
+    }
+};
+
+// Fonctions pour les cartes
+const selectCard = (cardName) => {
+    selectedCard.value = cardName;
+};
+
+// Fonctions pour le quiz avec effets visuels
+const selectQuizOption = (value) => {
+    selectedQuizOption.value = value;
+};
+
+const checkQuizAnswer = () => {
+    if (selectedQuizOption.value === "base64") {
+        encodingIdentified.value = true;
+        // Effet visuel de succès
+        document.body.style.animation = "successFlash 0.5s ease-in-out";
+        setTimeout(() => {
+            document.body.style.animation = "";
+        }, 500);
+        
+        showSuccess(
+            "🎓 EXCELLENT !",
+            "Bravo ! Vous avez appris à reconnaître Base64. C'est effectivement l'encodage utilisé pour les emails et le web. Le décodeur est maintenant débloqué !"
+        );
+    } else {
+        // Effet visuel d'erreur
+        document.body.style.animation = "errorShake 0.3s ease-in-out";
+        setTimeout(() => {
+            document.body.style.animation = "";
+        }, 300);
+        
+        addError("server");
+        const option = quizOptions.value.find(opt => opt.value === selectedQuizOption.value);
+        showError(
+            "📚 RÉPONSE INCORRECTE",
+            `${option?.label} ne correspond pas. Regardez les indices : Base64 utilise des lettres, chiffres, + et / pour encoder les données web. Réessayez ! +5s de pénalité`
+        );
+    }
+};
+
+// Watcher pour le laboratoire
+import { watch } from 'vue';
+watch([labText, labEncoding], () => {
+    labResult.value = encodeText(labText.value, labEncoding.value);
+}, { immediate: true });
 
 const fillEncodedMessage = () => {
     messageToDecode.value = encryptedPuzzle;
@@ -600,3 +883,27 @@ const checkPuzzleAnswer = () => {
     }
 };
 </script>
+
+<style scoped>
+/* Animations pour les effets visuels */
+@keyframes successFlash {
+    0%, 100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(34, 197, 94, 0.1);
+    }
+}
+
+@keyframes errorShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+</style>
