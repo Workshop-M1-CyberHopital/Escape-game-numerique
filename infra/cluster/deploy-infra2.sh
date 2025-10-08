@@ -206,12 +206,20 @@ for provider in "${providers[@]}"; do
     echo "➡ Le provider $provider n’est pas enregistré. Enregistrement en cours..."
     az provider register --namespace "$provider" >/dev/null
   else
-    echo "✅ Le provider $provider est déjà enregistré."
+    echo "Le provider $provider est déjà enregistré."
   fi
 done
 
-echo "Attente de l’enregistrement complet (cela peut prendre ~45 secondes)..."
-sleep 45
+echo "Attente que tous les providers soient enregistrés..."
+for i in {1..10}; do
+  all_registered=true
+  for provider in "${providers[@]}"; do
+    state=$(az provider show -n "$provider" --query "registrationState" -o tsv)
+    [[ "$state" != "Registered" ]] && all_registered=false
+  done
+  $all_registered && break
+  sleep 10
+done
 
 for provider in "${providers[@]}"; do
   az provider show -n "$provider" -o table | grep -E "RegistrationState|Registered" || true
@@ -253,12 +261,20 @@ for provider in "${providers[@]}"; do
     echo "➡ Le provider $provider n’est pas enregistré. Enregistrement en cours..."
     az provider register --namespace "$provider" >/dev/null
   else
-    echo "✅ Le provider $provider est déjà enregistré."
+    echo "Le provider $provider est déjà enregistré."
   fi
 done
 
-echo "Attente de l’enregistrement complet (cela peut prendre ~45 secondes)..."
-sleep 45
+echo "Attente que tous les providers soient enregistrés..."
+for i in {1..10}; do
+  all_registered=true
+  for provider in "${providers[@]}"; do
+    state=$(az provider show -n "$provider" --query "registrationState" -o tsv)
+    [[ "$state" != "Registered" ]] && all_registered=false
+  done
+  $all_registered && break
+  sleep 10
+done
 
 for provider in "${providers[@]}"; do
   az provider show -n "$provider" -o table | grep -E "RegistrationState|Registered" || true
