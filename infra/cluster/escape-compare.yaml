@@ -3,35 +3,10 @@
 # Déploiement de l'application Escape Game - Workshop EISI 2025–2026
 # ===============================================
 # Contenu :
-#  - StorageClass personnalisé (Azure Files)
 #  - Redis (cache + volume persistant)
 #  - MariaDB (base locale avec persistance)
 #  - Application Escape Game (connexion Redis + MariaDB)
 # ===============================================
-
-# --- StorageClass Azure Files personnalisé ---
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: azurefile-csi-workshop
-provisioner: file.csi.azure.com
-parameters:
-  skuName: Standard_LRS
-  location: germanywestcentral     # aligné avec le cluster
-mountOptions:
-  - dir_mode=0777
-  - file_mode=0777
-  - uid=0
-  - gid=0
-  - mfsymlinks
-  - cache=strict
-  - nosharesock
-  - nobrl
-reclaimPolicy: Retain
-allowVolumeExpansion: true
-volumeBindingMode: Immediate
-
----
 
 # --- Redis (cache avec volume persistant) ---
 apiVersion: apps/v1
@@ -152,8 +127,8 @@ spec:
   - metadata:
       name: mariadb-storage
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: azurefile-csi-workshop
+      accessModes: ["ReadWriteMany"]
+      storageClassName: azurefile-csi
       resources:
         requests:
           storage: 5Gi
@@ -213,6 +188,23 @@ spec:
             secretKeyRef:
               name: redis-secret-traefik
               key: password
+        - name: MARIADB_HOST
+          value: "mariadb"
+        - name: MARIADB_DB
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: database
+        - name: MARIADB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: user
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: password
 
 ---
 
@@ -243,7 +235,7 @@ metadata:
   name: redis-pvc
   namespace: workshop
 spec:
-  storageClassName: azurefile-csi-workshop
+  storageClassName: azurefile-csi
   accessModes:
     - ReadWriteMany
   resources:
