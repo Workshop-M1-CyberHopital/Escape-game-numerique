@@ -207,7 +207,7 @@ deploy_workshop() {
   kubectl get certificate -A | grep True || true
 
   separator
-  echo "🔍 Vérification des volumes persistants..."
+  echo "Vérification des volumes persistants..."
   kubectl get pvc
   echo ""
   echo "Si un PVC est toujours en Pending, vérifie le driver CSI avec :"
