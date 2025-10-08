@@ -165,7 +165,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: escape
-        image: gaetandev/espace-workshop:latest # image Docker
+        image: produn/escape-workshop:latest # image Docker
         resources:
           requests:
             cpu: 100m
