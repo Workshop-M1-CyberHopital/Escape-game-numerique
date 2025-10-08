@@ -228,7 +228,7 @@ if [[ "$CHOICE" == "1" ]]; then
       -g "$rgname" -n "$aksname" \
       --enable-managed-identity \
       --node-count 2 \
-      --enable-addons monitoring \
+    #  --enable-addons monitoring \
       --generate-ssh-keys
   fi
 
