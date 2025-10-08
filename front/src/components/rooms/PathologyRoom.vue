@@ -392,12 +392,6 @@ onMounted(() => {
     
     // Mélanger les guérisons au démarrage
     shuffledCures.value = [...cures.value].sort(() => Math.random() - 0.5)
-    
-    // Toast d'information au démarrage
-    showInfo(
-        "DIAGNOSTIC MÉDICAL",
-        "Glissez chaque pathologie vers sa guérison correspondante. Une erreur vous obligera à recommencer !"
-    )
 })
 </script>
 

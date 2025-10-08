@@ -1,35 +1,36 @@
 <template>
     <GameRoom :room-data="roomData" @exit-room="$emit('exit-room')">
-        <!-- Instructions simplifiées -->
-        <div
-            class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-8 scanline text-center"
-        >
-            <div class="flex items-center justify-center gap-3 mb-6">
-                <i data-lucide="volume-2" class="w-8 h-8 text-cyber-purple"></i>
-                <h3 class="font-cyber font-bold text-cyber-purple text-2xl">
-                    RÉPARATION AUDIO SIMPLE
-                </h3>
+        <div class="space-y-6">
+            <!-- Instructions simplifiées -->
+            <div
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-8 scanline text-center"
+            >
+                <div class="flex items-center justify-center gap-3 mb-6">
+                    <i data-lucide="volume-2" class="w-8 h-8 text-cyber-purple"></i>
+                    <h3 class="font-cyber font-bold text-cyber-purple text-2xl">
+                        RÉPARATION AUDIO SIMPLE
+                    </h3>
+                </div>
+                <p class="text-gray-300 mb-8 text-lg">
+                    Écoutez le son et ajustez le volume pour le restaurer !
+                </p>
+                
+                <!-- Activation audio simple -->
+                <div v-if="!audioContext" class="bg-cyber-purple/20 border border-cyber-purple/50 rounded-lg p-6 mb-8">
+                    <button
+                        @click="activateAudio"
+                        class="bg-cyber-purple hover:bg-cyber-purple/80 text-white px-10 py-5 rounded-lg font-bold text-xl transition-colors duration-300 flex items-center gap-4 mx-auto"
+                    >
+                        <i data-lucide="volume-2" class="w-8 h-8"></i>
+                        ACTIVER L'AUDIO
+                    </button>
+                </div>
             </div>
-            <p class="text-gray-300 mb-8 text-lg">
-                Écoutez le son et ajustez le volume pour le restaurer !
-            </p>
-            
-            <!-- Activation audio simple -->
-            <div v-if="!audioContext" class="bg-cyber-purple/20 border border-cyber-purple/50 rounded-lg p-6 mb-8">
-                <button
-                    @click="activateAudio"
-                    class="bg-cyber-purple hover:bg-cyber-purple/80 text-white px-10 py-5 rounded-lg font-bold text-xl transition-colors duration-300 flex items-center gap-4 mx-auto"
-                >
-                    <i data-lucide="volume-2" class="w-8 h-8"></i>
-                    ACTIVER L'AUDIO
-                </button>
-            </div>
-        </div>
 
-        <!-- Contrôle audio simple -->
-        <div
-            class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-8 scanline"
-        >
+            <!-- Contrôle audio simple -->
+            <div
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-8 scanline"
+            >
             <div class="text-center mb-8">
                 <h3 class="text-cyber-purple font-bold text-2xl mb-6">
                     VOLUME AUDIO
@@ -74,18 +75,50 @@
             </div>
         </div>
 
-        <!-- Progression -->
-        <div
-            class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-yellow rounded-lg p-6 scanline"
-        >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="target" class="w-5 h-5 text-cyber-yellow"></i>
-                    <span class="text-cyber-yellow font-bold">PROGRESSION</span>
+            <!-- Progression -->
+            <div
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-yellow rounded-lg p-6 scanline"
+            >
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="target" class="w-5 h-5 text-cyber-yellow"></i>
+                        <span class="text-cyber-yellow font-bold">PROGRESSION</span>
+                    </div>
+                    <div class="text-cyber-yellow font-bold">
+                        {{ audioVolume }}% / 100%
+                    </div>
                 </div>
-                <div class="text-cyber-yellow font-bold">
-                    {{ audioVolume }}% / 100%
+            </div>
+
+            <!-- Indices -->
+            <div
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-yellow-500 rounded-lg p-6 scanline"
+            >
+                <div class="flex items-center gap-2 mb-4">
+                    <i data-lucide="lightbulb" class="w-5 h-5 text-yellow-500"></i>
+                    <h4 class="font-cyber font-bold text-yellow-500">INDICES</h4>
                 </div>
+
+                <div class="space-y-2 text-sm text-gray-300">
+                    <div v-if="hintsShown >= 1" class="fade-in">
+                        💡 Le volume doit être ajusté pour être audible mais pas trop fort.
+                    </div>
+                    <div v-if="hintsShown >= 2" class="fade-in">
+                        💡 Le volume optimal se situe dans une plage spécifique.
+                    </div>
+                    <div v-if="hintsShown >= 3" class="fade-in">
+                        💡 Réponse : Ajustez le volume entre 
+                        <span class="text-cyber-green font-bold">80% et 100%</span> pour réussir !
+                    </div>
+                </div>
+
+                <button
+                    @click="showHint"
+                    v-if="hintsShown < 3"
+                    class="mt-4 px-4 py-2 border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 font-tech text-sm rounded transition-all"
+                >
+                    AFFICHER UN INDICE
+                </button>
             </div>
         </div>
     </GameRoom>
@@ -98,7 +131,7 @@ import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
 
 const emit = defineEmits(['exit-room', 'room-completed'])
-const { completeRoom, addError } = useGameState()
+const { completeRoom, addError, addHint } = useGameState()
 const { showSuccess, showError, showWarning, showInfo } = useToast()
 
 const roomData = {
@@ -116,6 +149,7 @@ const audioVolume = ref(50)
 const audioContext = ref(null)
 const isCompleted = ref(false)
 const errors = ref(0)
+const hintsShown = ref(0)
 
 // AudioContext et oscillateurs
 let oscillators = {}
@@ -174,11 +208,6 @@ const playTestSound = async () => {
         
         oscillator.start()
         oscillator.stop(audioContext.value.currentTime + 1) // 1 seconde
-        
-        showInfo(
-            "SON JOUÉ",
-            `Volume: ${audioVolume.value}%. Ajustez le volume pour trouver le bon niveau.`
-        )
     } catch (error) {
         console.error('Erreur audio:', error)
         showError(
@@ -276,10 +305,16 @@ const resetAudio = () => {
     )
 }
 
+// Fonction pour afficher un indice
+const showHint = () => {
+    hintsShown.value++
+    addHint("audition")
+}
+
 onMounted(() => {
     showInfo(
         "RÉPARATION AUDIO SIMPLE",
-        "Ajustez le volume entre 80% et 100% pour restaurer l'audio. Une erreur vous obligera à recommencer !"
+        "Ajustez le volume pour restaurer l'audio. Une erreur vous obligera à recommencer !"
     )
 })
 
@@ -346,5 +381,20 @@ onUnmounted(() => {
 .slider::-moz-range-thumb:hover {
     background: #7c3aed;
     transform: scale(1.1);
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>
