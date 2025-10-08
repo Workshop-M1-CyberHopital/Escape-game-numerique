@@ -65,40 +65,10 @@ export function useGameState() {
     // Démarrer le timer
     startTimer();
 
-    // Sauvegarder l'état
-    saveGameState();
-
-    // Forcer le scroll vers le haut de la page avec vérification
-    const scrollToTop = () => {
-      console.log("🔄 [useGameState] Tentative de scroll vers le haut...");
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: "instant"
-      });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-      document.documentElement.scrollLeft = 0;
-      document.body.scrollLeft = 0;
-      
-      // Vérifier si le scroll a fonctionné
-      setTimeout(() => {
-        const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-        console.log("📍 [useGameState] Position actuelle:", currentScroll);
-        if (currentScroll > 0) {
-          console.log("⚠️ [useGameState] Scroll non réussi, nouvelle tentative...");
-          scrollToTop();
-        } else {
-          console.log("✅ [useGameState] Scroll réussi vers le haut");
-        }
-      }, 50);
-    };
-
-    // Tentatives de scroll avec différents délais
-    setTimeout(scrollToTop, 50);
-    setTimeout(scrollToTop, 200);
-    setTimeout(scrollToTop, 500);
+    // Pas de sauvegarde - le jeu repart de zéro à chaque refresh
   };
+
+  // Fonction supprimée - pas de chargement d'état sauvegardé
 
   const enterRoom = (roomId) => {
     gameState.currentRoom = roomId;
@@ -116,7 +86,13 @@ export function useGameState() {
   };
 
   const unlockAllRooms = () => {
-    gameState.unlockedRooms = ["server", "dna-lab", "imaging", "heart"];
+    gameState.unlockedRooms = [
+      "server",
+      "dna-lab",
+      "imaging",
+      "prosthesis",
+      "heart",
+    ];
   };
 
   const resetGame = () => {
@@ -212,8 +188,8 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 4 salles sont complétées
-    const allRooms = ["server", "dna-lab", "imaging", "heart"];
+    // Vérifier si les 5 salles sont complétées
+    const allRooms = ["server", "dna-lab", "imaging", "prosthesis", "heart"];
     return allRooms.every((room) => gameState.completedRooms.includes(room));
   };
 

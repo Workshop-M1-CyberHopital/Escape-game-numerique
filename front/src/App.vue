@@ -115,6 +115,12 @@
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
+
+            <ProsthesisRoom
+                v-if="gameState.currentRoom === 'prosthesis'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
         </div>
 
         <!-- Game Not Started: Show Landing Page -->
@@ -298,6 +304,7 @@ import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
 import ImagingRoom from "./components/rooms/ImagingRoom.vue";
 import HeartRoom from "./components/rooms/HeartRoom.vue";
+import ProsthesisRoom from "./components/rooms/ProsthesisRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
 import DevTools from "./components/DevTools.vue";
@@ -881,6 +888,8 @@ const handleRoomCompleted = async (roomId) => {
         unlockRoom("imaging");
     } else if (roomId === "imaging") {
         unlockRoom("heart");
+    } else if (roomId === "heart") {
+        unlockRoom("prosthesis");
     }
 
     // Vérifier si le jeu est terminé
@@ -1117,6 +1126,9 @@ watch(
 
 onMounted(async () => {
     initAnimations();
+    
+    // S'assurer que le jeu repart de zéro à chaque refresh
+    resetGame();
 
     // Vérifier la connectivité API
     console.log("🔍 Vérification de la connectivité API...");
