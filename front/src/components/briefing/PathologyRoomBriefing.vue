@@ -40,7 +40,7 @@
           <!-- Close Button -->
           <button
             @click="handleClose"
-            class="w-8 h-8 bg-cyber-red/20 border border-cyber-red/50 rounded-full flex items-center justify-center hover:bg-cyber-red/30 transition-all duration-300 hover:scale-110"
+            class="w-8 h-8 bg-red-500/20 border border-red-500/50 rounded-full flex items-center justify-center hover:bg-red-500/30 transition-all duration-300 hover:scale-110"
             title="Fermer et couper l'audio"
           >
             <svg class="w-4 h-4 text-cyber-red" fill="currentColor" viewBox="0 0 24 24">
