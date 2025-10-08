@@ -65,9 +65,10 @@ export function useGameState() {
     // Démarrer le timer
     startTimer();
 
-    // Sauvegarder l'état
-    saveGameState();
+    // Pas de sauvegarde - le jeu repart de zéro à chaque refresh
   };
+
+  // Fonction supprimée - pas de chargement d'état sauvegardé
 
   const enterRoom = (roomId) => {
     gameState.currentRoom = roomId;

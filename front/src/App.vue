@@ -870,9 +870,9 @@ const handleRoomCompleted = async (roomId) => {
     } else if (roomId === "dna-lab") {
         unlockRoom("imaging");
     } else if (roomId === "imaging") {
-        unlockRoom("prosthesis");
-    } else if (roomId === "prosthesis") {
         unlockRoom("heart");
+    } else if (roomId === "heart") {
+        unlockRoom("prosthesis");
     }
 
     // Vérifier si le jeu est terminé
@@ -1109,6 +1109,9 @@ watch(
 
 onMounted(async () => {
     initAnimations();
+    
+    // S'assurer que le jeu repart de zéro à chaque refresh
+    resetGame();
 
     // Vérifier la connectivité API
     console.log("🔍 Vérification de la connectivité API...");
