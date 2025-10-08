@@ -37,7 +37,9 @@ app.use(cors({
         'http://localhost:3000',
         'http://127.0.0.1:3000',
         'http://localhost:5173', // Vite dev server
-        'http://127.0.0.1:5173'
+        'http://127.0.0.1:5173',
+        'https://escape-game-numerique.vercel.app', // Production Vercel
+        /^https:\/\/.*\.vercel\.app$/ // Tous les sous-domaines Vercel
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -63,7 +65,20 @@ app.use('/api/', limiter);
 
 // Middleware pour gérer les requêtes OPTIONS (preflight)
 app.options('*', (req, res) => {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'https://escape-game-numerique.vercel.app'
+    ];
+    
+    // Vérifier si l'origine est autorisée
+    const isAllowedOrigin = allowedOrigins.includes(origin) || 
+                           (origin && origin.includes('.vercel.app'));
+    
+    res.header('Access-Control-Allow-Origin', isAllowedOrigin ? origin : '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -125,11 +140,11 @@ app.use((err, req, res, next) => {
 });
 
 // Démarrage du serveur
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveur Escape Game démarré sur le port ${PORT}`);
     console.log(`📊 Environnement: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🌐 URL: http://localhost:${PORT}`);
-    console.log(`📋 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`🌐 URL: http://0.0.0.0:${PORT}`);
+    console.log(`📋 Health check: http://0.0.0.0:${PORT}/api/health`);
 });
 
 // Gestion gracieuse de l'arrêt
