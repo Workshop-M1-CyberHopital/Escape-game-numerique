@@ -54,7 +54,7 @@ deploy_workshop() {
       ./get_helm.sh
       rm -f get_helm.sh
 
-    elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OS" == "Windows_NT" || "$WINDIR" != "" ]]; then
+    elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* || "$OS" == "Windows_NT" || -n "$WINDIR" ]]; then
       echo "➡ Environnement Windows détecté."
 
       if command -v winget &>/dev/null; then
@@ -194,6 +194,9 @@ deploy_workshop() {
       --create-namespace \
       --set installCRDs=true \
       --version v1.10.1
+
+    echo "Attente du démarrage de cert-manager..."
+    kubectl rollout status deployment/cert-manager -n cert-manager --timeout=120s || true
   fi
 
   separator
@@ -202,10 +205,12 @@ deploy_workshop() {
   if helm status cert-manager-webhook-gandi -n cert-manager &>/dev/null; then
     echo "Webhook déjà installé, on passe à la suite."
   else
+    helm repo add cert-manager-webhook-gandi https://bwolf.github.io/cert-manager-webhook-gandi
+    helm repo update
     helm install cert-manager-webhook-gandi \
-      --repo https://bwolf.github.io/cert-manager-webhook-gandi \
-      --version v0.2.0 \
-      --namespace cert-manager
+      cert-manager-webhook-gandi/cert-manager-webhook-gandi \
+      --namespace cert-manager \
+      --version v0.2.0
   fi
 
   separator
