@@ -3,22 +3,21 @@
 # Déploiement de l'application Escape Game - Workshop EISI 2025–2026
 # ===============================================
 # Contenu :
-#  - StorageClass personnalisé pour Azure Files
+#  - StorageClass personnalisé (Azure Files)
 #  - Redis (cache + volume persistant)
 #  - MariaDB (base locale avec persistance)
 #  - Application Escape Game (connexion Redis + MariaDB)
 # ===============================================
 
-# --- StorageClass Azure Files personnalisé (sécurisé) ---
+# --- StorageClass Azure Files personnalisé ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: azurefile-csi-workshop
 provisioner: file.csi.azure.com
 parameters:
-  skuName: Standard_LRS          # Type de réplication
-  location: germanywestcentral        # Région du cluster
-  storageAccount: ""             # Laisse vide -> compte géré automatiquement
+  skuName: Standard_LRS
+  location: germanywestcentral     # aligné avec le cluster
 mountOptions:
   - dir_mode=0777
   - file_mode=0777
@@ -28,7 +27,7 @@ mountOptions:
   - cache=strict
   - nosharesock
   - nobrl
-reclaimPolicy: Retain            # ⚠️ Ne pas supprimer automatiquement le FileShare
+reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
 
@@ -96,7 +95,7 @@ spec:
 
 ---
 
-# --- MariaDB (base de données locale) ---
+# --- MariaDB (base de données locale avec persistance) ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -149,15 +148,15 @@ spec:
         volumeMounts:
         - name: mariadb-storage
           mountPath: /var/lib/mysql
-    volumeClaimTemplates:
-    - metadata:
-        name: mariadb-storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: azurefile-csi-workshop
-        resources:
-          requests:
-            storage: 5Gi
+  volumeClaimTemplates:   # au même niveau que template
+  - metadata:
+      name: mariadb-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: azurefile-csi-workshop
+      resources:
+        requests:
+          storage: 5Gi
 
 ---
 
@@ -196,7 +195,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: escape
-        image: gaetandev/espace-workshop:latest # Image Docker de l'application
+        image: gaetandev/espace-workshop:latest   # Image Docker
         resources:
           requests:
             cpu: 100m
@@ -217,7 +216,7 @@ spec:
 
 ---
 
-# --- Service Escape Game (exposition à Traefik) ---
+# --- Service Escape Game (pour Traefik) ---
 apiVersion: v1
 kind: Service
 metadata:
