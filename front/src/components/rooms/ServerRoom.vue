@@ -411,13 +411,10 @@
               </div>
               <div v-if="hintsShown >= 2" class="fade-in">
                 💡 Un encodage très courant sur internet transforme du texte en
-                lettres, chiffres, + et /
+                lettres, chiffres, symboles
               </div>
               <div v-if="hintsShown >= 3" class="fade-in">
-                💡 Le message décodé est :
-                <span class="text-cyber-green font-bold"
-                  >Quel est le poids minimum pour donner son sang ?</span
-                >
+                💡 Le message est encodé avec Base64 (Web)
               </div>
             </div>
   
