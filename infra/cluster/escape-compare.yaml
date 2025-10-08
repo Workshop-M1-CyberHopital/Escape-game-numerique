@@ -3,7 +3,6 @@
 # Déploiement de l'application Escape Game - Workshop EISI 2025–2026
 # ===============================================
 # Contenu :
-#  - Namespace "workshop"
 #  - StorageClass personnalisé pour Azure Files
 #  - Redis (cache + volume persistant)
 #  - MariaDB (base locale avec persistance)
@@ -83,7 +82,7 @@ spec:
 
 ---
 
-# --- Service Redis (accès interne) ---
+# --- Service Redis ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -197,7 +196,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: escape
-        image: gaetandev/espace-workshop:latest
+        image: gaetandev/espace-workshop:latest # Image Docker de l'application
         resources:
           requests:
             cpu: 100m
@@ -218,7 +217,7 @@ spec:
 
 ---
 
-# --- Service Escape Game ---
+# --- Service Escape Game (exposition à Traefik) ---
 apiVersion: v1
 kind: Service
 metadata:
