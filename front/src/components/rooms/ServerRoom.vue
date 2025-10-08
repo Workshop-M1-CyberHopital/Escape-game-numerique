@@ -25,7 +25,7 @@
             </h4>
             <div class="bg-black/30 p-3 rounded border border-green-500/30 mb-3">
               <div class="font-mono text-green-400 text-sm break-all">
-                {{ encryptedPuzzle }}
+                Vm91cyBhbGxleiBiaWVuID8/
               </div>
             </div>
             <div class="text-sm text-gray-300">
@@ -33,7 +33,7 @@
               <ul class="list-disc list-inside space-y-1 text-xs">
                 <li>Des lettres (A-Z, a-z)</li>
                 <li>Des chiffres (0-9)</li>
-                <li>Des symboles (+ et /)</li>
+                <li>Un symbole (/)</li>
               </ul>
             </div>
           </div>
@@ -77,7 +77,7 @@
                    Base64 (Web)
                  </div>
                  <div class="text-xs text-gray-300 mb-2">
-                   Lettres, chiffres, +, /
+                   Lettres, chiffres, symboles
                  </div>
                  <div class="text-xs font-mono text-green-400">SGVsbG8=</div>
                </div>
@@ -118,7 +118,7 @@
               ❓ Quel type de message est-ce ?
             </h4>
             <div class="text-sm text-gray-300 mb-4">
-              Le message contient des lettres, chiffres, + et /. Quel type
+              Le message contient des lettres, chiffres, symbole. Quel type
               correspond ?
             </div>
             <div class="grid grid-cols-1 gap-2">
@@ -515,7 +515,7 @@
        { value: "binary", label: "Binaire", description: "Seulement des 0 et 1" },
        { value: "ascii", label: "ASCII", description: "Chiffres séparés par des espaces" },
        { value: "morse", label: "Morse", description: "Points et tirets" },
-       { value: "base64", label: "Base64 (Web)", description: "Utilisé sur internet, contient + et /" },
+       { value: "base64", label: "Base64 (Web)", description: "Utilisé sur internet, contient lettres, chiffres, symboles" },
        { value: "caesar", label: "César (ROT13)", description: "Lettres décalées" },
        { value: "vigenere", label: "Vigenère", description: "Chiffrement par clé" },
        { value: "railfence", label: "Rail Fence", description: "Lettres réorganisées" },
