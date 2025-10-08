@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ completedRooms.length }} / 6
+                            {{ completedRooms.length }} / 7
                         </span>
                     </div>
                     <div
@@ -28,7 +28,7 @@
                     >
                         <div
                             class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
-                            :style="`width: ${(completedRooms.length / 6) * 100}%`"
+                            :style="`width: ${(completedRooms.length / 7) * 100}%`"
                         >
                             <span
                                 v-if="completedRooms.length > 0"
@@ -36,7 +36,7 @@
                             >
                                 {{
                                     Math.round(
-                                        (completedRooms.length / 6) * 100,
+                                        (completedRooms.length / 7) * 100,
                                     )
                                 }}%
                             </span>
@@ -512,6 +512,82 @@
                         style="background-color: #ff0055"
                     ></div>
                 </div>
+
+                <!-- Room 7: Audition -->
+                <div
+                    @click="handleRoomClick('audition')"
+                    :class="[
+                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+                        isUnlocked('audition')
+                            ? 'border-cyber-purple cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-purple/20 hover:border-cyber-purple/80'
+                            : 'border-gray-600 opacity-60 cursor-not-allowed',
+                    ]"
+                >
+                    <div class="absolute top-4 right-4">
+                        <i
+                            :data-lucide="
+                                isUnlocked('audition') ? 'unlock' : 'lock'
+                            "
+                            :class="
+                                isUnlocked('audition')
+                                    ? 'w-6 h-6 text-green-400'
+                                    : 'w-6 h-6 text-gray-500'
+                            "
+                        >
+                        </i>
+                    </div>
+                    <div class="p-0">
+                        <div
+                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
+                            style="
+                                background-color: rgba(139, 92, 246, 0.2);
+                                border: 2px solid #8b5cf6;
+                            "
+                        >
+                            <i
+                                data-lucide="volume-2"
+                                class="w-8 h-8"
+                                style="color: #8b5cf6"
+                            ></i>
+                        </div>
+                        <h3
+                            class="text-2xl font-cyber font-bold mb-2"
+                            style="color: #8b5cf6"
+                        >
+                            SALLE DE L'AUDITION
+                        </h3>
+                        <p class="text-sm font-tech text-gray-400 mb-3">
+                            Réparation audiométrique
+                        </p>
+                        <p class="text-sm text-gray-300 mb-4">
+                            Ajustez l'égaliseur audio pour restaurer les fréquences sonores
+                        </p>
+                        <div class="space-y-2">
+                            <span
+                                class="inline-block px-3 py-1 border font-tech text-xs rounded"
+                                style="border-color: #8b5cf6; color: #8b5cf6"
+                            >
+                                OBJECTIF
+                            </span>
+                            <p class="text-xs text-gray-400">
+                                Sensibiliser aux troubles auditifs et à l'audiométrie
+                            </p>
+                        </div>
+                        <div
+                            v-if="!isUnlocked('audition')"
+                            class="mt-4 pt-4 border-t border-gray-700"
+                        >
+                            <p class="text-xs font-tech text-yellow-500">
+                                🔒 Complétez la salle des pathologies pour débloquer
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        v-if="isUnlocked('audition')"
+                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
+                        style="background-color: #8b5cf6"
+                    ></div>
+                </div>
             </div>
 
             <!-- Final Message -->
@@ -554,6 +630,10 @@ const emit = defineEmits(["enter-room"]);
 
 const isUnlocked = (roomId) => {
     return props.unlockedRooms.includes(roomId);
+};
+
+const isCompleted = (roomId) => {
+    return props.completedRooms.includes(roomId);
 };
 
 const handleRoomClick = (roomId) => {

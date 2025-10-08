@@ -101,6 +101,19 @@
                 </button>
 
                 <button
+                    @click="goToRoom('audition')"
+                    :disabled="!gameState.isGameStarted"
+                    :class="[
+                        'px-3 py-1 font-tech text-xs rounded transition-all',
+                        gameState.isGameStarted
+                            ? 'bg-purple-500 text-white hover:bg-purple-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
+                    ]"
+                >
+                    Salle 7: Audition
+                </button>
+
+                <button
                     @click="resetGame"
                     class="px-3 py-1 bg-gray-700 text-white font-tech text-xs rounded hover:bg-gray-800 transition-all"
                 >

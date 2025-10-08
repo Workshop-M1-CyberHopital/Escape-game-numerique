@@ -488,13 +488,13 @@ const { showSuccess, showError } = useToast();
 const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
 
 const roomData = {
-    title: "SALLE DE RÉANIMATION",
+    title: "SALLE DU CŒUR",
     subtitle: "Arrêt cardiaque simulé",
     description:
         "Un patient fait un arrêt cardiaque ! Vous devez effectuer un massage cardiaque d'urgence en respectant le rythme correct de 100 compressions par minute.",
     objective: "Apprendre les gestes de premiers secours",
     icon: "heart",
-    color: "#dc2626",
+    color: "#ff00ff",
 };
 
 const requiredCompressions = 30;
