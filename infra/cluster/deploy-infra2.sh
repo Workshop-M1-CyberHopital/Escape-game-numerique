@@ -207,6 +207,14 @@ deploy_workshop() {
   kubectl get certificate -A | grep True || true
 
   separator
+  echo "🔍 Vérification des volumes persistants..."
+  kubectl get pvc
+  echo ""
+  echo "Si un PVC est toujours en Pending, vérifie le driver CSI avec :"
+  echo "  az aks show -g \"$rgname\" -n \"$aksname\" --query \"storageProfile.fileCsiDriver\" -o table"
+  echo ""
+  
+  separator
   echo "Déploiement terminé avec succès !"
   echo "Application : https://escape.eisi-dune.eu"
   echo "Dashboard Traefik : https://traefik.eisi-dune.eu"
