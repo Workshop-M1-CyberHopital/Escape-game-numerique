@@ -4,12 +4,16 @@
         <canvas id="animated-bg"></canvas>
 
         <!-- Header avec authentification -->
-        <header class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-cyber-blue/30">
+        <header
+            class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-cyber-blue/30"
+        >
             <div class="max-w-7xl mx-auto px-4 py-3">
                 <div class="flex items-center justify-between">
                     <!-- Logo/Titre -->
                     <div class="flex items-center space-x-4">
-                        <h1 class="text-xl font-cyber font-bold text-cyber-blue">
+                        <h1
+                            class="text-xl font-cyber font-bold text-cyber-blue"
+                        >
                             CYBER-HÔPITAL
                         </h1>
                         <span class="text-gray-400 font-tech text-sm">
@@ -19,7 +23,6 @@
 
                     <!-- Navigation -->
                     <div class="flex items-center space-x-4">
-                        
                         <!-- Bouton Scores -->
                         <button
                             @click="showScoresModal = true"
@@ -29,7 +32,10 @@
                         </button>
 
                         <!-- Authentification -->
-                        <div v-if="!isAuthenticated" class="flex items-center space-x-2">
+                        <div
+                            v-if="!isAuthenticated"
+                            class="flex items-center space-x-2"
+                        >
                             <button
                                 @click="showAuthModal = true"
                                 class="px-4 py-2 bg-cyber-blue hover:bg-cyber-blue/80 text-black font-cyber font-bold rounded-lg transition-all"
@@ -56,9 +62,13 @@
                                     'px-3 py-1 font-tech text-sm rounded transition-all',
                                     gameState.isGameStarted
                                         ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                        : 'bg-red-600 hover:bg-red-700 text-white',
                                 ]"
-                                :title="gameState.isGameStarted ? 'Impossible de se déconnecter pendant une partie' : 'Se déconnecter'"
+                                :title="
+                                    gameState.isGameStarted
+                                        ? 'Impossible de se déconnecter pendant une partie'
+                                        : 'Se déconnecter'
+                                "
                             >
                                 Déconnexion
                             </button>
@@ -100,12 +110,10 @@
                 @room-completed="handleRoomCompleted"
             />
 
-            <!-- Final Score Modal -->
-            <FinalScore
-                v-if="showFinalScore"
-                :score-data="finalScoreData"
-                @close="handleCloseFinalScore"
-                @restart="handleRestartGame"
+            <HeartRoom
+                v-if="gameState.currentRoom === 'heart'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
             />
         </div>
 
@@ -144,6 +152,14 @@
             </footer>
         </div>
 
+        <!-- Final Score Modal -->
+        <FinalScore
+            v-if="showFinalScore"
+            :score-data="finalScoreData"
+            @close="handleCloseFinalScore"
+            @restart="handleRestartGame"
+        />
+
         <!-- Toast Container -->
         <ToastContainer />
 
@@ -169,7 +185,6 @@
             :visible="showScoresModal"
             @close="showScoresModal = false"
         />
-
 
         <!-- DevTools -->
         <DevTools
@@ -216,6 +231,11 @@
         <FinishImagingRoomBriefing
             :visible="showFinishImagingRoomBriefing"
             @close="handleCloseFinishImagingRoomBriefing"
+        />
+
+        <HeartRoomBriefing
+            :visible="showHeartRoomBriefing"
+            @close="handleCloseHeartRoomBriefing"
         />
 
         <!-- Audio Activation Button -->
@@ -277,6 +297,7 @@ import RoomsSection from "./components/RoomsSection.vue";
 import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
 import ImagingRoom from "./components/rooms/ImagingRoom.vue";
+import HeartRoom from "./components/rooms/HeartRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
 import DevTools from "./components/DevTools.vue";
@@ -287,6 +308,7 @@ import FinishImagingRoomBriefing from "./components/briefing/FinishImagingRoomBr
 import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
 import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
 import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
+import HeartRoomBriefing from "./components/briefing/HeartRoomBriefing.vue";
 import FinalScore from "./components/FinalScore.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
@@ -335,6 +357,8 @@ const showImagingRoomBriefing = ref(false);
 const hasPlayedImagingRoomAudio = ref(false);
 const showFinishImagingRoomBriefing = ref(false);
 const hasPlayedFinishImagingRoomAudio = ref(false);
+const showHeartRoomBriefing = ref(false);
+const hasPlayedHeartRoomAudio = ref(false);
 const showFinalScore = ref(false);
 const finalScoreData = ref(null);
 
@@ -493,10 +517,35 @@ const playImagingRoomAudio = async () => {
     }
 };
 
+// Fonction pour jouer le son de la Salle du Cœur
+const playHeartRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son de la Salle du Cœur...");
+
+        // Afficher le briefing pendant la lecture
+        showHeartRoomBriefing.value = true;
+
+        await playSound("heartRoom");
+        hasPlayedHeartRoomAudio.value = true;
+        console.log("✅ Son de la Salle du Cœur joué avec succès");
+
+        // Masquer le briefing après la lecture (environ 45 secondes)
+        setTimeout(() => {
+            showHeartRoomBriefing.value = false;
+        }, 45000);
+    } catch (error) {
+        console.error(
+            "❌ Erreur lors de la lecture du son de la Salle du Cœur:",
+            error,
+        );
+        showHeartRoomBriefing.value = false;
+    }
+};
+
 // Fonctions de fermeture des popups avec arrêt audio
 const handleCloseAudioBriefing = () => {
     showAudioBriefing.value = false;
-    markBriefingAsShown('audio');
+    markBriefingAsShown("audio");
     stopSound("roomSelection");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -507,7 +556,7 @@ const handleCloseAudioBriefing = () => {
 
 const handleCloseServerRoomBriefing = () => {
     showServerRoomBriefing.value = false;
-    markBriefingAsShown('serverRoom');
+    markBriefingAsShown("serverRoom");
     stopSound("serverRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -626,6 +675,16 @@ const handleCloseFinishImagingRoomBriefing = () => {
     console.log("🎵 Finish ImagingRoom briefing fermé et son arrêté");
 };
 
+const handleCloseHeartRoomBriefing = () => {
+    showHeartRoomBriefing.value = false;
+    stopSound("heartRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("heartRoom");
+    }, 100);
+    console.log("🎵 Heart Room briefing fermé et son arrêté");
+};
+
 const handleStartMission = () => {
     showTeamSetup.value = true;
 };
@@ -636,7 +695,7 @@ const handleStartGame = async (teamData) => {
 
     // Détecter si c'est un démarrage depuis DevTool (équipe "Équipe DEV")
     const isDevToolStart = teamData.name === "Équipe DEV";
-    
+
     if (isDevToolStart) {
         // Démarrage direct sans loading screen pour DevTool
         startGame({
@@ -695,7 +754,7 @@ const handleEnterRoom = async (roomId) => {
     setTimeout(() => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth'
+            behavior: "smooth",
         });
         // Méthode alternative pour assurer le scroll
         document.documentElement.scrollTop = 0;
@@ -742,6 +801,26 @@ const handleEnterRoom = async (roomId) => {
     ) {
         console.log("🎵 Tentative de lecture du son Imaging Room...");
         await playImagingRoomAudio();
+    } else if (
+        roomId === "heart" &&
+        !hasPlayedHeartRoomAudio.value &&
+        audioState.isEnabled
+    ) {
+        console.log("🎵 Tentative de lecture du son Heart Room...");
+        await playHeartRoomAudio();
+    } else if (roomId === "heart") {
+        console.log("❌ Conditions Heart Room non remplies:", {
+            hasPlayedHeartRoomAudio: hasPlayedHeartRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+            unlockedRooms: gameState.unlockedRooms,
+        });
+
+        // Test: forcer l'affichage du popup Heart pour debug
+        console.log("🧪 Test: Affichage forcé du popup Heart...");
+        showHeartRoomBriefing.value = true;
+        setTimeout(() => {
+            showHeartRoomBriefing.value = false;
+        }, 5000); // 5 secondes pour le test
     } else if (roomId === "imaging") {
         console.log("❌ Conditions Imaging Room non remplies:", {
             hasPlayedImagingRoomAudio: hasPlayedImagingRoomAudio.value,
@@ -810,15 +889,15 @@ const handleRoomCompleted = async (roomId) => {
                 roomErrors: gameState.roomErrors,
                 roomHints: gameState.roomHints,
             };
-            
+
             finalScoreData.value = gameData;
             showFinalScore.value = true;
-            
+
             // Soumettre le score si l'utilisateur est connecté
             await handleScoreSubmission(gameData);
-            
+
             // Nettoyer le cache après la fin de mission
-            console.log('🎉 Mission terminée - Nettoyage du cache');
+            console.log("🎉 Mission terminée - Nettoyage du cache");
             clearGameState();
         }, 2000); // Délai de 2 secondes après la dernière salle
     } else {
@@ -907,12 +986,12 @@ const handleAuthSuccess = () => {
 const handleLogout = async () => {
     if (gameState.isGameStarted) {
         showWarning(
-            "DÉCONNEXION BLOQUÉE", 
-            "Impossible de se déconnecter pendant une partie en cours. Terminez d'abord votre mission ou réinitialisez le jeu."
+            "DÉCONNEXION BLOQUÉE",
+            "Impossible de se déconnecter pendant une partie en cours. Terminez d'abord votre mission ou réinitialisez le jeu.",
         );
         return;
     }
-    
+
     try {
         await logout();
         showSuccess("DÉCONNEXION", "Vous avez été déconnecté avec succès");
@@ -922,11 +1001,13 @@ const handleLogout = async () => {
     }
 };
 
-
 // Gestion de la soumission des scores
 const handleScoreSubmission = async (gameData) => {
     if (!isAuthenticated.value) {
-        showWarning("CONNEXION REQUISE", "Vous devez être connecté pour sauvegarder votre score");
+        showWarning(
+            "CONNEXION REQUISE",
+            "Vous devez être connecté pour sauvegarder votre score",
+        );
         return;
     }
 
@@ -939,9 +1020,12 @@ const handleScoreSubmission = async (gameData) => {
             errors: gameData.errors || 0,
             hints: gameData.hints || 0,
             completed: gameData.completed || false,
-            gameData: gameData
+            gameData: gameData,
         });
-        showSuccess("SCORE SAUVEGARDÉ", `Votre score de ${score.toLocaleString('fr-FR')} points a été enregistré !`);
+        showSuccess(
+            "SCORE SAUVEGARDÉ",
+            `Votre score de ${score.toLocaleString("fr-FR")} points a été enregistré !`,
+        );
     } catch (error) {
         showError("ERREUR", "Impossible de sauvegarder le score");
         console.error("Erreur sauvegarde score:", error);
@@ -1020,17 +1104,23 @@ onMounted(async () => {
     // Vérifier la connectivité API
     console.log("🔍 Vérification de la connectivité API...");
     try {
-        const { checkApiHealth } = await import('./composables/useApi');
+        const { checkApiHealth } = await import("./composables/useApi");
         const isApiHealthy = await checkApiHealth();
         if (isApiHealthy) {
             console.log("✅ API backend accessible");
         } else {
             console.error("❌ API backend non accessible");
-            showError("ERREUR CONNEXION", "Le serveur backend n'est pas accessible. Vérifiez qu'il est démarré sur le port 3001.");
+            showError(
+                "ERREUR CONNEXION",
+                "Le serveur backend n'est pas accessible. Vérifiez qu'il est démarré sur le port 3001.",
+            );
         }
     } catch (error) {
         console.error("❌ Erreur de vérification API:", error);
-        showError("ERREUR CONNEXION", "Impossible de se connecter au serveur backend.");
+        showError(
+            "ERREUR CONNEXION",
+            "Impossible de se connecter au serveur backend.",
+        );
     }
 
     // Test direct du fichier audio
@@ -1063,16 +1153,17 @@ onMounted(async () => {
 
 /* Styles pour la modal de quitter la partie */
 .quit-modal .scanline {
-  background: linear-gradient(
-    transparent 50%,
-    rgba(239, 68, 68, 0.03) 50%
-  );
-  background-size: 100% 4px;
-  animation: scanline-quit 0.1s linear infinite;
+    background: linear-gradient(transparent 50%, rgba(239, 68, 68, 0.03) 50%);
+    background-size: 100% 4px;
+    animation: scanline-quit 0.1s linear infinite;
 }
 
 @keyframes scanline-quit {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(4px); }
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(4px);
+    }
 }
 </style>
