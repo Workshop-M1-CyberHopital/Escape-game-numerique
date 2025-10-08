@@ -392,53 +392,22 @@ const playRoomSelectionAudio = async () => {
 
 // Fonction pour activer l'audio manuellement
 const activateAudio = async () => {
-    console.log("🎵 Activation manuelle de l'audio...");
+    console.log("🎵 Activation manuelle de l'audio par l'utilisateur...");
     try {
-        // Test direct avec le fichier audio
-        console.log("🎵 Test direct de lecture...");
-        const directAudio = new Audio("/RoomSelection.mp3");
-        directAudio.volume = 0.5;
+        // Demander la permission audio d'abord
+        const permissionGranted = await requestAudioPermission();
+        console.log("🎵 Permission audio accordée:", permissionGranted);
 
-        directAudio.addEventListener("play", () => {
-            console.log("✅ Lecture directe réussie !");
-        });
-
-        directAudio.addEventListener("error", (e) => {
-            console.error("❌ Erreur lecture directe:", e);
-        });
-
-        // Tenter la lecture directe
-        await directAudio.play();
-        console.log("✅ Son joué directement !");
-
-        // Marquer comme joué
-        hasPlayedRoomSelectionAudio.value = true;
-        showAudioActivationButton.value = false;
-
-        // Afficher le briefing pendant la lecture
-        showAudioBriefing.value = true;
-
-        // Masquer le briefing après la lecture (environ 60 secondes)
-        setTimeout(() => {
-            showAudioBriefing.value = false;
-        }, 60000);
+        if (permissionGranted) {
+            console.log("🎵 Permission accordée - Lancement de l'audio...");
+            await playRoomSelectionAudio();
+        } else {
+            console.log("❌ Permission audio refusée par l'utilisateur");
+            showError("Permission refusée", "L'audio ne peut pas être activé sans votre autorisation.");
+        }
     } catch (error) {
         console.error("❌ Erreur lors de l'activation audio:", error);
-        console.log("Tentative avec la méthode normale...");
-
-        try {
-            const permissionGranted = await requestAudioPermission();
-            if (permissionGranted) {
-                await playRoomSelectionAudio();
-            } else {
-                console.log("❌ Permission audio toujours refusée");
-            }
-        } catch (error2) {
-            console.error(
-                "❌ Erreur lors de l'activation audio (méthode normale):",
-                error2,
-            );
-        }
+        showError("Erreur audio", "Impossible d'activer l'audio. Vérifiez vos paramètres de navigateur.");
     }
 };
 
@@ -1064,30 +1033,7 @@ watch(
 
             // Afficher le bouton d'activation audio
             showAudioActivationButton.value = true;
-
-            // Tenter automatiquement la permission
-            try {
-                console.log("🎵 Tentative automatique de permission audio...");
-                const permissionGranted = await requestAudioPermission();
-                console.log("🎵 Permission audio accordée:", permissionGranted);
-
-                if (permissionGranted) {
-                    console.log(
-                        "🎵 CONDITIONS REMPLIES - TENTATIVE DE LECTURE DU SON",
-                    );
-                    await playRoomSelectionAudio();
-                } else {
-                    console.log(
-                        "❌ Permission audio refusée - Bouton d'activation affiché",
-                    );
-                }
-            } catch (error) {
-                console.error(
-                    "❌ Erreur lors de la demande de permission:",
-                    error,
-                );
-                console.log("❌ Bouton d'activation affiché");
-            }
+            console.log("🎵 Bouton d'activation audio affiché - Attente de l'action utilisateur");
         } else {
             console.log("❌ CONDITIONS NON REMPLIES");
             if (!isOnRoomSelection)
