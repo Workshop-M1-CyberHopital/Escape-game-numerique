@@ -426,33 +426,7 @@ Escape-game-numerique/front/src/components/rooms/CPRRoom.vue
                         </button>
                     </div>
 
-                    <!-- Système audio médical -->
-                    <div
-                        class="bg-gray-800/30 border border-gray-600 rounded p-3"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <i
-                                    data-lucide="volume-2"
-                                    class="w-4 h-4 text-cyber-blue"
-                                ></i>
-                                <span class="text-xs text-gray-400 font-tech"
-                                    >AUDIO RCP</span
-                                >
-                            </div>
-                            <div class="text-xs text-green-400 font-tech">
-                                ACTIF
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Audio (caché) -->
-                    <audio
-                        ref="audioRef"
-                        src="/CPRRoom.mp3"
-                        preload="auto"
-                        loop
-                    ></audio>
                 </div>
             </div>
         </div>
@@ -533,7 +507,6 @@ const isCompressing = ref(false);
 const isBeating = ref(false);
 const beatProgress = ref(0);
 const isInBeatWindow = ref(false);
-const audioRef = ref(null);
 const lastCompressionSuccess = ref(null); // null = pas encore de compression, true = succès, false = échec
 
 // Rythme : 100 BPM = 600ms par compression (rythme réaliste)
@@ -550,14 +523,6 @@ const startSimulation = () => {
     correctCompressions.value = 0;
     lastBeatTime = Date.now();
 
-    // Démarrer l'audio
-    if (audioRef.value) {
-        audioRef.value.currentTime = 0;
-        audioRef.value.play().catch(() => {
-            // Fallback si audio non disponible
-        });
-    }
-
     // Démarrer le rythme
     startBeatTimer();
 };
@@ -569,10 +534,6 @@ const stopSimulation = () => {
     isBeating.value = false;
     beatProgress.value = 0;
     isInBeatWindow.value = false;
-
-    if (audioRef.value) {
-        audioRef.value.pause();
-    }
 };
 
 const resetSimulation = () => {
