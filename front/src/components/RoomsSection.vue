@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ completedRooms.length }} / 4
+                            {{ completedRooms.length }} / 5
                         </span>
                     </div>
                     <div
@@ -28,7 +28,7 @@
                     >
                         <div
                             class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
-                            :style="`width: ${(completedRooms.length / 4) * 100}%`"
+                            :style="`width: ${(completedRooms.length / 5) * 100}%`"
                         >
                             <span
                                 v-if="completedRooms.length > 0"
@@ -36,7 +36,7 @@
                             >
                                 {{
                                     Math.round(
-                                        (completedRooms.length / 4) * 100,
+                                        (completedRooms.length / 5) * 100,
                                     )
                                 }}%
                             </span>
@@ -48,6 +48,7 @@
                         <span>SERVEUR</span>
                         <span>LAB ADN</span>
                         <span>IMAGERIE</span>
+                        <span>PROTHÈSES</span>
                         <span>CŒUR</span>
                     </div>
                 </div>
@@ -356,6 +357,83 @@
                         v-if="isUnlocked('heart')"
                         class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
                         style="background-color: #ff00ff"
+                    ></div>
+                </div>
+
+                <!-- Room 5: Prosthesis -->
+                <div
+                    @click="handleRoomClick('prosthesis')"
+                    :class="[
+                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+                        isUnlocked('prosthesis')
+                            ? 'border-orange-500 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 hover:border-orange-500/80'
+                            : 'border-gray-600 opacity-60 cursor-not-allowed',
+                    ]"
+                >
+                    <div class="absolute top-4 right-4">
+                        <i
+                            :data-lucide="
+                                isUnlocked('prosthesis') ? 'unlock' : 'lock'
+                            "
+                            :class="
+                                isUnlocked('prosthesis')
+                                    ? 'w-6 h-6 text-green-400'
+                                    : 'w-6 h-6 text-gray-500'
+                            "
+                        >
+                        </i>
+                    </div>
+                    <div class="p-0">
+                        <div
+                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
+                            style="
+                                background-color: rgba(249, 115, 22, 0.2);
+                                border: 2px solid #f97316;
+                            "
+                        >
+                            <i
+                                data-lucide="settings"
+                                class="w-8 h-8 text-orange-500"
+                            ></i>
+                        </div>
+                        <h3
+                            class="text-2xl font-cyber font-bold mb-2"
+                            style="color: #f97316"
+                        >
+                            SALLE DES PROTHÈSES
+                        </h3>
+                        <p class="text-sm font-tech text-gray-400 mb-3">
+                            Système orthopédique désynchronisé
+                        </p>
+                        <p class="text-sm text-gray-300 mb-4">
+                            Réaligner les articulations virtuelles en résolvant
+                            une énigme de mécanique logique
+                        </p>
+                        <div class="space-y-2">
+                            <span
+                                class="inline-block px-3 py-1 border border-orange-500 text-orange-500 font-tech text-xs rounded"
+                            >
+                                OBJECTIF
+                            </span>
+                            <p class="text-xs text-gray-400">
+                                Comprendre la biomécanique et les technologies
+                                IoT médicales
+                            </p>
+                        </div>
+                        <div
+                            v-if="!isUnlocked('prosthesis')"
+                            class="mt-4 pt-4 border-t border-gray-700"
+                        >
+                            <p class="text-xs font-tech text-yellow-500">
+                                🔒 Complétez les salles précédentes pour
+                                débloquer
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        v-if="isUnlocked('prosthesis')"
+                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
+                        style="background-color: #f97316"
                     ></div>
                 </div>
             </div>
