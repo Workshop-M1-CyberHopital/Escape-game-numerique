@@ -14,7 +14,7 @@ set -Eeuo pipefail  # Stoppe le script si une commande échoue
 # --- Variables principales ---
 rgname="workshop-EISI"          # Nom du resource group Azure
 aksname="AKSClusterWorkshop"    # Nom du cluster AKS
-rgloc="francecentral"           # Région Azure
+rgloc="westeurope"           # Région Azure
 apitoken="ubVqfAcvE7507ZwuTWamvCJe"
 redpass="password_redis_519"    # Mot de passe Redis
 
@@ -235,8 +235,9 @@ done
     az aks create \
       -g "$rgname" -n "$aksname" \
       --enable-managed-identity \
-      --node-count 2 \
-      --generate-ssh-keys
+      --node-count 1 \
+      --node-vm-size Standard_B2s \
+      --generate-ssh-keys \
     #  --enable-addons monitoring \
 
   fi
@@ -290,8 +291,9 @@ done
     az aks create \
       -g "$rgname" -n "$aksname" \
       --enable-managed-identity \
-      --node-count 2 \
-      --generate-ssh-keys
+      --node-count 1 \
+      --node-vm-size Standard_B2s \
+      --generate-ssh-keys \
     #  --enable-addons monitoring \
   fi
 
