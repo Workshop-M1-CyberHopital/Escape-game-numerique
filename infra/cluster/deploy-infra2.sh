@@ -56,7 +56,7 @@ deploy_workshop() {
   separator
 # --- Déploiement de l'application, Redis, MariaDB ---
   echo "Déploiement de Redis, MariaDB et de l’application Escape Game..."
-  kubectl apply -f escape.yaml
+  kubectl apply -f escape-compare.yaml
 
 # --- Attente pour laisser les pods se créer correctement ---
   echo "Attente de 15 secondes pour la création initiale des pods..."
