@@ -32,20 +32,30 @@ app.use(helmet({
 }));
 
 // Middleware CORS pour le frontend
-app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:5173', // Vite dev server
-        'http://127.0.0.1:5173',
-        'https://escape-game-numerique.vercel.app', // Production Vercel
-        /^https:\/\/.*\.vercel\.app$/ // Tous les sous-domaines Vercel
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    optionsSuccessStatus: 200
-}));
+const corsOptions = process.env.NODE_ENV === 'production' 
+    ? {
+        origin: true, // Accepter toutes les origines en production
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+        optionsSuccessStatus: 200
+    }
+    : {
+        origin: [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:5173', // Vite dev server
+            'http://127.0.0.1:5173',
+            'https://escape-game-numerique.vercel.app', // Production Vercel
+            /^https:\/\/.*\.vercel\.app$/ // Tous les sous-domaines Vercel
+        ],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+        optionsSuccessStatus: 200
+    };
+
+app.use(cors(corsOptions));
 
 // Compression des réponses
 app.use(compression());
@@ -66,19 +76,26 @@ app.use('/api/', limiter);
 // Middleware pour gérer les requêtes OPTIONS (preflight)
 app.options('*', (req, res) => {
     const origin = req.headers.origin;
-    const allowedOrigins = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'https://escape-game-numerique.vercel.app'
-    ];
     
-    // Vérifier si l'origine est autorisée
-    const isAllowedOrigin = allowedOrigins.includes(origin) || 
-                           (origin && origin.includes('.vercel.app'));
+    // En production, accepter toutes les origines
+    if (process.env.NODE_ENV === 'production') {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+    } else {
+        // En développement, vérifier les origines autorisées
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            'https://escape-game-numerique.vercel.app'
+        ];
+        
+        const isAllowedOrigin = allowedOrigins.includes(origin) || 
+                               (origin && origin.includes('.vercel.app'));
+        
+        res.header('Access-Control-Allow-Origin', isAllowedOrigin ? origin : '*');
+    }
     
-    res.header('Access-Control-Allow-Origin', isAllowedOrigin ? origin : '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
     res.header('Access-Control-Allow-Credentials', 'true');
