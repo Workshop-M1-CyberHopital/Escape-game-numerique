@@ -206,13 +206,13 @@ deploy_workshop() {
   kubectl get ingress
   kubectl get certificate -A | grep True || true
 
-  separator
-  echo "Vérification des volumes persistants..."
-  kubectl get pvc
-  echo ""
-  echo "Si un PVC est toujours en Pending, vérifie le driver CSI avec :"
-  echo "  az aks show -g \"$rgname\" -n \"$aksname\" --query \"storageProfile.fileCsiDriver\" -o table"
-  echo ""
+  # separator
+  # echo "Vérification des volumes persistants..."
+  # kubectl get pvc
+  # echo ""
+  # echo "Si un PVC est toujours en Pending, vérifie le driver CSI avec :"
+  # echo "  az aks show -g \"$rgname\" -n \"$aksname\" --query \"storageProfile.fileCsiDriver\" -o table"
+  # echo ""
   
   separator
   echo "Déploiement terminé avec succès !"
@@ -251,12 +251,12 @@ if [[ "$CHOICE" == "1" ]]; then
     --node-vm-size Standard_B2pls_v2 \
     --generate-ssh-keys
 
-  # Activation du driver CSI Azure File
-  echo "Activation du driver Azure File CSI..."
-  az aks update -g "$rgname" -n "$aksname" --enable-azurefile-csi-driver
+  # # Activation du driver CSI Azure File
+  # echo "Activation du driver Azure File CSI..."
+  # az aks update -g "$rgname" -n "$aksname" --enable-azurefile-csi-driver
 
-  echo "Vérification du statut du driver CSI..."
-  az aks show -g "$rgname" -n "$aksname" --query "storageProfile.fileCsiDriver" -o table
+  # echo "Vérification du statut du driver CSI..."
+  # az aks show -g "$rgname" -n "$aksname" --query "storageProfile.fileCsiDriver" -o table
 
   deploy_workshop
 
@@ -275,12 +275,12 @@ elif [[ "$CHOICE" == "2" ]]; then
       --generate-ssh-keys
   fi
 
-  # Activation du driver CSI Azure File
-  echo "Activation du driver Azure File CSI..."
-  az aks update -g "$rgname" -n "$aksname" --enable-azurefile-csi-driver
+  # # Activation du driver CSI Azure File
+  # echo "Activation du driver Azure File CSI..."
+  # az aks update -g "$rgname" -n "$aksname" --enable-azurefile-csi-driver
 
-  echo "Vérification du statut du driver CSI..."
-  az aks show -g "$rgname" -n "$aksname" --query "storageProfile.fileCsiDriver" -o table
+  # echo "Vérification du statut du driver CSI..."
+  # az aks show -g "$rgname" -n "$aksname" --query "storageProfile.fileCsiDriver" -o table
 
   deploy_workshop
 
