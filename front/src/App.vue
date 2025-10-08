@@ -277,7 +277,7 @@
                         🎵 ACTIVER L'AUDIO
                     </button>
                     <button
-                        @click="showAudioActivationButton = false"
+                        @click="continueWithoutAudio"
                         class="px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-all duration-300"
                     >
                         CONTINUER SANS AUDIO
@@ -392,54 +392,42 @@ const playRoomSelectionAudio = async () => {
 
 // Fonction pour activer l'audio manuellement
 const activateAudio = async () => {
-    console.log("🎵 Activation manuelle de l'audio...");
+    console.log("🎵 Activation manuelle de l'audio par l'utilisateur...");
     try {
-        // Test direct avec le fichier audio
-        console.log("🎵 Test direct de lecture...");
-        const directAudio = new Audio("/RoomSelection.mp3");
-        directAudio.volume = 0.5;
+        // Demander la permission audio d'abord
+        const permissionGranted = await requestAudioPermission();
+        console.log("🎵 Permission audio accordée:", permissionGranted);
 
-        directAudio.addEventListener("play", () => {
-            console.log("✅ Lecture directe réussie !");
-        });
-
-        directAudio.addEventListener("error", (e) => {
-            console.error("❌ Erreur lecture directe:", e);
-        });
-
-        // Tenter la lecture directe
-        await directAudio.play();
-        console.log("✅ Son joué directement !");
-
-        // Marquer comme joué
-        hasPlayedRoomSelectionAudio.value = true;
-        showAudioActivationButton.value = false;
-
-        // Afficher le briefing pendant la lecture
-        showAudioBriefing.value = true;
-
-        // Masquer le briefing après la lecture (environ 60 secondes)
-        setTimeout(() => {
-            showAudioBriefing.value = false;
-        }, 60000);
+        if (permissionGranted) {
+            console.log("🎵 Permission accordée - Lancement de l'audio...");
+            await playRoomSelectionAudio();
+        } else {
+            console.log("❌ Permission audio refusée par l'utilisateur");
+            showError("Permission refusée", "L'audio ne peut pas être activé sans votre autorisation.");
+        }
     } catch (error) {
         console.error("❌ Erreur lors de l'activation audio:", error);
-        console.log("Tentative avec la méthode normale...");
-
-        try {
-            const permissionGranted = await requestAudioPermission();
-            if (permissionGranted) {
-                await playRoomSelectionAudio();
-            } else {
-                console.log("❌ Permission audio toujours refusée");
-            }
-        } catch (error2) {
-            console.error(
-                "❌ Erreur lors de l'activation audio (méthode normale):",
-                error2,
-            );
-        }
+        showError("Erreur audio", "Impossible d'activer l'audio. Vérifiez vos paramètres de navigateur.");
     }
+};
+
+// Fonction pour continuer sans audio mais avec le briefing
+const continueWithoutAudio = () => {
+    console.log("🎵 Continuation sans audio - Affichage du briefing seulement");
+    
+    // Masquer le bouton d'activation
+    showAudioActivationButton.value = false;
+    
+    // Marquer comme joué pour éviter la répétition
+    hasPlayedRoomSelectionAudio.value = true;
+    
+    // Afficher le briefing sans audio
+    showAudioBriefing.value = true;
+    
+    // Masquer le briefing après la durée normale (environ 60 secondes)
+    setTimeout(() => {
+        showAudioBriefing.value = false;
+    }, 60000);
 };
 
 // Fonction pour jouer le son de la Salle du Serveur
@@ -724,17 +712,39 @@ const handleLoadingComplete = async () => {
     // Attendre que le DOM soit mis à jour
     await nextTick();
 
-    // Forcer le scroll vers le haut immédiatement
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-
-    // Double vérification après un court délai
-    setTimeout(() => {
-        window.scrollTo(0, 0);
+    // Fonction de scroll vers le haut
+    const scrollToTop = () => {
+        console.log("🔄 Tentative de scroll vers le haut...");
+        window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: "instant"
+        });
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-    }, 50);
+        document.documentElement.scrollLeft = 0;
+        document.body.scrollLeft = 0;
+        
+        // Vérifier si le scroll a fonctionné
+        setTimeout(() => {
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            console.log("📍 Position actuelle:", currentScroll);
+            if (currentScroll > 0) {
+                console.log("⚠️ Scroll non réussi, nouvelle tentative...");
+                scrollToTop();
+            } else {
+                console.log("✅ Scroll réussi vers le haut");
+            }
+        }, 100);
+    };
+
+    // Première tentative immédiate
+    scrollToTop();
+
+    // Tentatives supplémentaires avec des délais
+    setTimeout(scrollToTop, 100);
+    setTimeout(scrollToTop, 300);
+    setTimeout(scrollToTop, 500);
 };
 
 const handleEnterRoom = async (roomId) => {
@@ -775,6 +785,13 @@ const handleEnterRoom = async (roomId) => {
         audioState.isEnabled
     ) {
         await playServerRoomAudio();
+    } else if (roomId === "server" && !hasPlayedServerRoomAudio.value) {
+        console.log("🎵 Audio désactivé - Affichage du briefing Server Room sans audio");
+        showServerRoomBriefing.value = true;
+        hasPlayedServerRoomAudio.value = true;
+        setTimeout(() => {
+            showServerRoomBriefing.value = false;
+        }, 55000);
     } else if (
         roomId === "dna-lab" &&
         !hasPlayedDNARoomAudio.value &&
@@ -1064,36 +1081,36 @@ watch(
 
             // Afficher le bouton d'activation audio
             showAudioActivationButton.value = true;
-
-            // Tenter automatiquement la permission
-            try {
-                console.log("🎵 Tentative automatique de permission audio...");
-                const permissionGranted = await requestAudioPermission();
-                console.log("🎵 Permission audio accordée:", permissionGranted);
-
-                if (permissionGranted) {
-                    console.log(
-                        "🎵 CONDITIONS REMPLIES - TENTATIVE DE LECTURE DU SON",
-                    );
-                    await playRoomSelectionAudio();
-                } else {
-                    console.log(
-                        "❌ Permission audio refusée - Bouton d'activation affiché",
-                    );
-                }
-            } catch (error) {
-                console.error(
-                    "❌ Erreur lors de la demande de permission:",
-                    error,
-                );
-                console.log("❌ Bouton d'activation affiché");
-            }
+            console.log("🎵 Bouton d'activation audio affiché - Attente de l'action utilisateur");
+            
+            // Forcer le scroll vers le haut
+            setTimeout(() => {
+                console.log("🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles");
+                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }, 100);
+        } else if (isOnRoomSelection && hasPlayedRoomSelectionAudio.value) {
+            // Si l'audio a déjà été joué, afficher directement le briefing
+            console.log("🎵 Audio déjà joué - Affichage du briefing");
+            showAudioBriefing.value = true;
+            
+            // Forcer le scroll vers le haut
+            setTimeout(() => {
+                console.log("🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles (audio déjà joué)");
+                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }, 100);
+            
+            // Masquer le briefing après la durée normale (environ 60 secondes)
+            setTimeout(() => {
+                showAudioBriefing.value = false;
+            }, 60000);
         } else {
             console.log("❌ CONDITIONS NON REMPLIES");
             if (!isOnRoomSelection)
                 console.log("  - Pas sur la sélection des salles");
-            if (hasPlayedRoomSelectionAudio.value)
-                console.log("  - Son déjà joué");
         }
     },
 );
