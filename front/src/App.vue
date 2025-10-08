@@ -712,17 +712,39 @@ const handleLoadingComplete = async () => {
     // Attendre que le DOM soit mis à jour
     await nextTick();
 
-    // Forcer le scroll vers le haut immédiatement
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-
-    // Double vérification après un court délai
-    setTimeout(() => {
-        window.scrollTo(0, 0);
+    // Fonction de scroll vers le haut
+    const scrollToTop = () => {
+        console.log("🔄 Tentative de scroll vers le haut...");
+        window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: "instant"
+        });
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-    }, 50);
+        document.documentElement.scrollLeft = 0;
+        document.body.scrollLeft = 0;
+        
+        // Vérifier si le scroll a fonctionné
+        setTimeout(() => {
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            console.log("📍 Position actuelle:", currentScroll);
+            if (currentScroll > 0) {
+                console.log("⚠️ Scroll non réussi, nouvelle tentative...");
+                scrollToTop();
+            } else {
+                console.log("✅ Scroll réussi vers le haut");
+            }
+        }, 100);
+    };
+
+    // Première tentative immédiate
+    scrollToTop();
+
+    // Tentatives supplémentaires avec des délais
+    setTimeout(scrollToTop, 100);
+    setTimeout(scrollToTop, 300);
+    setTimeout(scrollToTop, 500);
 };
 
 const handleEnterRoom = async (roomId) => {
@@ -1060,10 +1082,26 @@ watch(
             // Afficher le bouton d'activation audio
             showAudioActivationButton.value = true;
             console.log("🎵 Bouton d'activation audio affiché - Attente de l'action utilisateur");
+            
+            // Forcer le scroll vers le haut
+            setTimeout(() => {
+                console.log("🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles");
+                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }, 100);
         } else if (isOnRoomSelection && hasPlayedRoomSelectionAudio.value) {
             // Si l'audio a déjà été joué, afficher directement le briefing
             console.log("🎵 Audio déjà joué - Affichage du briefing");
             showAudioBriefing.value = true;
+            
+            // Forcer le scroll vers le haut
+            setTimeout(() => {
+                console.log("🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles (audio déjà joué)");
+                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }, 100);
             
             // Masquer le briefing après la durée normale (environ 60 secondes)
             setTimeout(() => {
