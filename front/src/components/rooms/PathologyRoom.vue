@@ -164,13 +164,15 @@ const emit = defineEmits(['exit-room', 'room-completed'])
 const { completeRoom, addError } = useGameState()
 const { showSuccess, showError, showWarning, showInfo } = useToast()
 
-// Données de la salle
 const roomData = {
-    name: "Salle des pathologies",
-    description: "Diagnostic médical des pathologies",
+    title: "SALLE DES PATHOLOGIES",
+    subtitle: "Diagnostic médical",
+    description:
+        "Le virus a mélangé les pathologies et les guérisons. Remettez les pathologies vers leurs guérisons correspondantes.",
     icon: "heart-pulse",
-    color: "cyber-red"
-}
+    color: "#ff0055",
+};
+
 
 // État du jeu
 const correctMatches = ref(0)

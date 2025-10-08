@@ -101,14 +101,15 @@ const emit = defineEmits(['exit-room', 'room-completed'])
 const { completeRoom, addError } = useGameState()
 const { showSuccess, showError, showWarning, showInfo } = useToast()
 
-// Données de la salle
 const roomData = {
-    id: 'audition',
-    name: 'Salle de l\'Audition',
-    description: 'Réparation du système audio ORL',
-    icon: 'volume-2',
-    color: 'cyber-purple'
-}
+    title: "SALLE DE L'AUDITION",
+    subtitle: "Réparation du système audio ORL",
+    description:
+        "Le virus a corrompu le système audio ORL. Réparez-le en ajustant le volume.",
+    objective: "Comprendre la logique de l'ADN et des données biomédicales",
+    icon: "volume-2",
+    color: "#8b5cf6",
+};
 
 // Variables réactives
 const audioVolume = ref(50)

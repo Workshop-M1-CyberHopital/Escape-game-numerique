@@ -388,7 +388,7 @@ const roomData = {
         "Le virus a mélangé les coupes d'une IRM cérébrale. Remettez les 4 coupes dans le bon ordre (de haut en bas du crâne) pour restaurer l'imagerie médicale.",
     objective: "Découvrir le rôle de l'imagerie médicale",
     icon: "scan",
-    color: "#06b6d4",
+    color: "#00ff88",
 };
 
 const slices = ref([

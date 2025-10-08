@@ -543,7 +543,7 @@ const roomData = {
         "Le virus a corrompu une séquence ADN. Utilisez les règles d'appariement (A↔T, C↔G) pour reconstituer le brin complémentaire.",
     objective: "Comprendre la logique de l'ADN et des données biomédicales",
     icon: "dna",
-    color: "#a855f7",
+    color: "#00ffff",
 };
 
 const originalStrand = ["A", "T", "G", "C", "A", "T"];
