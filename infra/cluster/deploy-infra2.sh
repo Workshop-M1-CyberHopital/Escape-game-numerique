@@ -236,7 +236,7 @@ done
       -g "$rgname" -n "$aksname" \
       --enable-managed-identity \
       --node-count 1 \
-      --node-vm-size Standard_B2s \
+      --node-vm-size Standard_B2pls_v2 \
       --generate-ssh-keys \
     #  --enable-addons monitoring \
 
@@ -292,7 +292,7 @@ done
       -g "$rgname" -n "$aksname" \
       --enable-managed-identity \
       --node-count 1 \
-      --node-vm-size Standard_B2s \
+      --node-vm-size Standard_B2pls_v2 \
       --generate-ssh-keys \
     #  --enable-addons monitoring \
   fi
