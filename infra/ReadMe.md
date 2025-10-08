@@ -69,6 +69,9 @@ L’objectif est de permettre :
 | `traefik-config.yaml` | Traefik : dashboard, authentification et whitelist IP |
 | `README.md`           | Documentation complète (ce fichier)                   |
 
+Ajout des droits d'exécution pour les scripts .sh :
+```chmod +x check-azure-env.sh```
+
 🧩 Justification de l’utilisation de MariaDB et Redis
 
 L’infrastructure de l’application repose sur deux systèmes complémentaires de gestion des données : Redis et MariaDB.
