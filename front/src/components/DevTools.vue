@@ -88,6 +88,19 @@
                 </button>
 
                 <button
+                    @click="goToRoom('pathology')"
+                    :disabled="!gameState.isGameStarted"
+                    :class="[
+                        'px-3 py-1 font-tech text-xs rounded transition-all',
+                        gameState.isGameStarted
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
+                    ]"
+                >
+                    Salle 6: Pathologies
+                </button>
+
+                <button
                     @click="resetGame"
                     class="px-3 py-1 bg-gray-700 text-white font-tech text-xs rounded hover:bg-gray-800 transition-all"
                 >
