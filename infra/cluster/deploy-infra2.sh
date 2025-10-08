@@ -151,9 +151,9 @@ deploy_workshop() {
   separator
   # --- Récupération de l’adresse IP publique ---
   echo "Attente de l'attribution d'une IP publique pour Traefik..."
-  until kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null | grep -qE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'; do
-    printf '.'
-    sleep 5
+  until kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null | grep -qE '^(20|40|51|52|104|168|191)\.'; do
+    echo "⏳ En attente d'une IP publique Azure valide..."
+    sleep 10
   done
   echo ""
   WorkshopIngIP=$(kubectl get svc traefik -n workshop -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
@@ -166,7 +166,7 @@ deploy_workshop() {
   echo "   - escape.eisi-dune.eu"
   echo "   - traefik.eisi-dune.eu"
   echo ""
-  read -n1 -r -p "Appuie sur [Y] quand c'est fait, ou [N] pour arrêter : " key
+  read -r -p "Appuie sur [Y] quand c'est fait, ou [N] pour arrêter : " key
   echo
   if [[ "$key" =~ ^[Nn]$ ]]; then
     echo "Arrêt du script — configure d’abord les DNS sur Gandi."
