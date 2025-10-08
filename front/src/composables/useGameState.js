@@ -85,7 +85,13 @@ export function useGameState() {
   };
 
   const unlockAllRooms = () => {
-    gameState.unlockedRooms = ["server", "dna-lab", "imaging", "heart"];
+    gameState.unlockedRooms = [
+      "server",
+      "dna-lab",
+      "imaging",
+      "prosthesis",
+      "heart",
+    ];
   };
 
   const resetGame = () => {
@@ -181,8 +187,8 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 4 salles sont complétées
-    const allRooms = ["server", "dna-lab", "imaging", "heart"];
+    // Vérifier si les 5 salles sont complétées
+    const allRooms = ["server", "dna-lab", "imaging", "prosthesis", "heart"];
     return allRooms.every((room) => gameState.completedRooms.includes(room));
   };
 

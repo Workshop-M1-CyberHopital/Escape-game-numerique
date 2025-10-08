@@ -115,6 +115,12 @@
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
+
+            <ProsthesisRoom
+                v-if="gameState.currentRoom === 'prosthesis'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
         </div>
 
         <!-- Game Not Started: Show Landing Page -->
@@ -298,6 +304,7 @@ import ServerRoom from "./components/rooms/ServerRoom.vue";
 import DNARoom from "./components/rooms/DNARoom.vue";
 import ImagingRoom from "./components/rooms/ImagingRoom.vue";
 import HeartRoom from "./components/rooms/HeartRoom.vue";
+import ProsthesisRoom from "./components/rooms/ProsthesisRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
 import DevTools from "./components/DevTools.vue";
@@ -863,6 +870,8 @@ const handleRoomCompleted = async (roomId) => {
     } else if (roomId === "dna-lab") {
         unlockRoom("imaging");
     } else if (roomId === "imaging") {
+        unlockRoom("prosthesis");
+    } else if (roomId === "prosthesis") {
         unlockRoom("heart");
     }
 

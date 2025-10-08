@@ -27,9 +27,9 @@
                     :disabled="!gameState.isGameStarted"
                     :class="[
                         'px-3 py-1 font-tech text-xs rounded transition-all',
-                        gameState.isGameStarted 
-                            ? 'bg-red-500 text-white hover:bg-red-600' 
-                            : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        gameState.isGameStarted
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
                     ]"
                 >
                     Salle 1: Serveur
@@ -40,9 +40,9 @@
                     :disabled="!gameState.isGameStarted"
                     :class="[
                         'px-3 py-1 font-tech text-xs rounded transition-all',
-                        gameState.isGameStarted 
-                            ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                            : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        gameState.isGameStarted
+                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
                     ]"
                 >
                     Salle 2: ADN
@@ -53,9 +53,9 @@
                     :disabled="!gameState.isGameStarted"
                     :class="[
                         'px-3 py-1 font-tech text-xs rounded transition-all',
-                        gameState.isGameStarted 
-                            ? 'bg-green-500 text-white hover:bg-green-600' 
-                            : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        gameState.isGameStarted
+                            ? 'bg-green-500 text-white hover:bg-green-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
                     ]"
                 >
                     Salle 3: IRM
@@ -66,12 +66,25 @@
                     :disabled="!gameState.isGameStarted"
                     :class="[
                         'px-3 py-1 font-tech text-xs rounded transition-all',
-                        gameState.isGameStarted 
-                            ? 'bg-purple-500 text-white hover:bg-purple-600' 
-                            : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        gameState.isGameStarted
+                            ? 'bg-purple-500 text-white hover:bg-purple-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
                     ]"
                 >
                     Salle 4: Cœur
+                </button>
+
+                <button
+                    @click="goToRoom('prosthesis')"
+                    :disabled="!gameState.isGameStarted"
+                    :class="[
+                        'px-3 py-1 font-tech text-xs rounded transition-all',
+                        gameState.isGameStarted
+                            ? 'bg-orange-500 text-white hover:bg-orange-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
+                    ]"
+                >
+                    Salle 5: Prothèses
                 </button>
 
                 <button
@@ -140,7 +153,7 @@ const goToRoom = (roomId) => {
     if (!props.gameState.isGameStarted) {
         return;
     }
-    
+
     emit("enter-room", roomId);
 };
 
