@@ -227,8 +227,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: https
-    port: 443
+  - name: http
+    port: 80
     protocol: TCP
     targetPort: 80
   selector:
