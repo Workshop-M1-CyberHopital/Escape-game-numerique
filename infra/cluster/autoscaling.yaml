@@ -1,0 +1,38 @@
+# ===============================================
+# Autoscaling de l'application Escape Game
+# Workshop EISI 2025–2026
+# ===============================================
+# Objectif :
+#  - Adapter automatiquement le nombre de pods de escape-app
+#    selon la charge CPU et mémoire moyenne.
+#  - Fonctionne sur AKS (Azure Kubernetes Service)
+# ===============================================
+
+# Autoscale Escape app
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: scale-escape
+  namespace: workshop
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: escape-app
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  # --- Surveille l'utilisation CPU ---
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # --- Surveille l'utilisation mémoire ---
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 75

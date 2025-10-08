@@ -2,11 +2,11 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: smoothie-traefik.simplon-duna.space
+  name: traefik.eisi-dune.eu
 spec:
   dnsNames:
-  - smoothie-traefik.simplon-duna.space
+  - traefik.eisi-dune.eu
   issuerRef:
     name: letsencrypt
     kind: Issuer
-  secretName: secret-tls-dev
+  secretName: secret-tls-workshop
