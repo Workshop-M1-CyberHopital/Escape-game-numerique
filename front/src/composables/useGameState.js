@@ -30,6 +30,7 @@ const gameState = reactive({
     serverRoom: false,
     dnaRoom: false,
     imagingRoom: false,
+    pathologyRoom: false,
     finishServerRoom: false,
     finishDNARoom: false,
     finishImagingRoom: false,
@@ -92,6 +93,7 @@ export function useGameState() {
       "imaging",
       "prosthesis",
       "heart",
+      "pathology",
     ];
   };
 
@@ -188,8 +190,8 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 5 salles sont complétées
-    const allRooms = ["server", "dna-lab", "imaging", "prosthesis", "heart"];
+    // Vérifier si les 6 salles sont complétées
+    const allRooms = ["server", "dna-lab", "imaging", "prosthesis", "heart", "pathology"];
     return allRooms.every((room) => gameState.completedRooms.includes(room));
   };
 
