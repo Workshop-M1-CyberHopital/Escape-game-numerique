@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ completedRooms.length }} / 5
+                            {{ completedRooms.length }} / 6
                         </span>
                     </div>
                     <div
@@ -28,7 +28,7 @@
                     >
                         <div
                             class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
-                            :style="`width: ${(completedRooms.length / 5) * 100}%`"
+                            :style="`width: ${(completedRooms.length / 6) * 100}%`"
                         >
                             <span
                                 v-if="completedRooms.length > 0"
@@ -36,7 +36,7 @@
                             >
                                 {{
                                     Math.round(
-                                        (completedRooms.length / 5) * 100,
+                                        (completedRooms.length / 6) * 100,
                                     )
                                 }}%
                             </span>
@@ -48,13 +48,14 @@
                         <span>SERVEUR</span>
                         <span>LAB ADN</span>
                         <span>IMAGERIE</span>
-                        <span>PROTHÈSES</span>
                         <span>CŒUR</span>
+                        <span>PROTHÈSES</span>
+                        <span>PATHOLOGIES</span>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Room 1: Server -->
                 <div
                     @click="handleRoomClick('server')"
@@ -434,6 +435,81 @@
                         v-if="isUnlocked('prosthesis')"
                         class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
                         style="background-color: #f97316"
+                    ></div>
+                </div>
+
+                <!-- Room 6: Pathology -->
+                <div
+                    @click="handleRoomClick('pathology')"
+                    :class="[
+                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+                        isUnlocked('pathology')
+                            ? 'border-cyber-red cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-red/20 hover:border-cyber-red/80'
+                            : 'border-gray-600 opacity-60 cursor-not-allowed',
+                    ]"
+                >
+                    <div class="absolute top-4 right-4">
+                        <i
+                            :data-lucide="
+                                isUnlocked('pathology') ? 'unlock' : 'lock'
+                            "
+                            :class="
+                                isUnlocked('pathology')
+                                    ? 'w-6 h-6 text-green-400'
+                                    : 'w-6 h-6 text-gray-500'
+                            "
+                        >
+                        </i>
+                    </div>
+                    <div class="p-0">
+                        <div
+                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
+                            style="
+                                background-color: rgba(255, 0, 85, 0.2);
+                                border: 2px solid #ff0055;
+                            "
+                        >
+                            <i
+                                data-lucide="heart-pulse"
+                                class="w-8 h-8 text-cyber-red"
+                            ></i>
+                        </div>
+                        <h3
+                            class="text-2xl font-cyber font-bold mb-2"
+                            style="color: #ff0055"
+                        >
+                            SALLE DES PATHOLOGIES
+                        </h3>
+                        <p class="text-sm font-tech text-gray-400 mb-3">
+                            Diagnostic médical
+                        </p>
+                        <p class="text-sm text-gray-300 mb-4">
+                            Associez chaque pathologie à sa guérison correspondante
+                        </p>
+                        <div class="space-y-2">
+                            <span
+                                class="inline-block px-3 py-1 border border-cyber-red text-cyber-red font-tech text-xs rounded"
+                            >
+                                OBJECTIF
+                            </span>
+                            <p class="text-xs text-gray-400">
+                                Sensibiliser aux pathologies médicales et leurs traitements
+                            </p>
+                        </div>
+                        <div
+                            v-if="!isUnlocked('pathology')"
+                            class="mt-4 pt-4 border-t border-gray-700"
+                        >
+                            <p class="text-xs font-tech text-yellow-500">
+                                🔒 Complétez les salles précédentes pour
+                                débloquer
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        v-if="isUnlocked('pathology')"
+                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
+                        style="background-color: #ff0055"
                     ></div>
                 </div>
             </div>

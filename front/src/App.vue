@@ -121,6 +121,12 @@
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
+
+            <PathologyRoom
+                v-if="gameState.currentRoom === 'pathology'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
         </div>
 
         <!-- Game Not Started: Show Landing Page -->
@@ -244,6 +250,16 @@
             @close="handleCloseHeartRoomBriefing"
         />
 
+        <PathologyRoomBriefing
+            :visible="showPathologyRoomBriefing && !isBriefingShown('pathologyRoom')"
+            @close="handleClosePathologyRoomBriefing"
+        />
+
+        <FinishPathologyRoomBriefing
+            :visible="showFinishPathologyRoomBriefing"
+            @close="handleCloseFinishPathologyRoomBriefing"
+        />
+
         <!-- Audio Activation Button -->
         <div
             v-if="showAudioActivationButton"
@@ -305,6 +321,7 @@ import DNARoom from "./components/rooms/DNARoom.vue";
 import ImagingRoom from "./components/rooms/ImagingRoom.vue";
 import HeartRoom from "./components/rooms/HeartRoom.vue";
 import ProsthesisRoom from "./components/rooms/ProsthesisRoom.vue";
+import PathologyRoom from "./components/rooms/PathologyRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
 import DevTools from "./components/DevTools.vue";
@@ -312,10 +329,12 @@ import AudioBriefing from "./components/briefing/AudioBriefing.vue";
 import FinishServerRoomBriefing from "./components/briefing/FinishServerRoomBriefing.vue";
 import FinishDNARoomBriefing from "./components/briefing/FinishDNARoomBriefing.vue";
 import FinishImagingRoomBriefing from "./components/briefing/FinishImagingRoomBriefing.vue";
+import FinishPathologyRoomBriefing from "./components/briefing/FinishPathologyRoomBriefing.vue";
 import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
 import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
 import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
 import HeartRoomBriefing from "./components/briefing/HeartRoomBriefing.vue";
+import PathologyRoomBriefing from "./components/briefing/PathologyRoomBriefing.vue";
 import FinalScore from "./components/FinalScore.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
@@ -366,6 +385,10 @@ const showFinishImagingRoomBriefing = ref(false);
 const hasPlayedFinishImagingRoomAudio = ref(false);
 const showHeartRoomBriefing = ref(false);
 const hasPlayedHeartRoomAudio = ref(false);
+const showPathologyRoomBriefing = ref(false);
+const hasPlayedPathologyRoomAudio = ref(false);
+const showFinishPathologyRoomBriefing = ref(false);
+const hasPlayedFinishPathologyRoomAudio = ref(false);
 const showFinalScore = ref(false);
 const finalScoreData = ref(null);
 
@@ -680,6 +703,46 @@ const handleCloseHeartRoomBriefing = () => {
     console.log("🎵 Heart Room briefing fermé et son arrêté");
 };
 
+const handleClosePathologyRoomBriefing = () => {
+    showPathologyRoomBriefing.value = false;
+    markBriefingAsShown("pathologyRoom");
+    stopSound("pathologyRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("pathologyRoom");
+    }, 100);
+    console.log("🎵 Pathology Room briefing fermé et son arrêté");
+};
+
+// Fonction pour jouer le son de félicitations PathologyRoom
+const playFinishPathologyRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son de félicitations PathologyRoom...");
+        showFinishPathologyRoomBriefing.value = true;
+        await playSound("finishPathologyRoom");
+        hasPlayedFinishPathologyRoomAudio.value = true;
+        console.log("✅ Son de félicitations PathologyRoom joué avec succès");
+        setTimeout(() => {
+            showFinishPathologyRoomBriefing.value = false;
+        }, 33000); // 33 secondes
+    } catch (error) {
+        console.error(
+            "❌ Erreur lors de la lecture du son de félicitations PathologyRoom:",
+            error,
+        );
+        showFinishPathologyRoomBriefing.value = false;
+    }
+};
+
+const handleCloseFinishPathologyRoomBriefing = () => {
+    showFinishPathologyRoomBriefing.value = false;
+    stopSound("finishPathologyRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("finishPathologyRoom");
+    }, 100);
+};
+
 const handleStartMission = () => {
     showTeamSetup.value = true;
 };
@@ -845,6 +908,12 @@ const handleEnterRoom = async (roomId) => {
         setTimeout(() => {
             showHeartRoomBriefing.value = false;
         }, 5000); // 5 secondes pour le test
+    } else if (roomId === "pathology") {
+        console.log("🎵 Affichage du briefing Pathology Room...");
+        if (!isBriefingShown('pathologyRoom')) {
+            showPathologyRoomBriefing.value = true;
+            hasPlayedPathologyRoomAudio.value = true;
+        }
     } else if (roomId === "imaging") {
         console.log("❌ Conditions Imaging Room non remplies:", {
             hasPlayedImagingRoomAudio: hasPlayedImagingRoomAudio.value,
@@ -890,6 +959,8 @@ const handleRoomCompleted = async (roomId) => {
         unlockRoom("heart");
     } else if (roomId === "heart") {
         unlockRoom("prosthesis");
+    } else if (roomId === "prosthesis") {
+        unlockRoom("pathology");
     }
 
     // Vérifier si le jeu est terminé
@@ -973,6 +1044,18 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations ImagingRoom...",
         );
         await playFinishImagingRoomAudio();
+    }
+
+    // Si c'est la salle PathologyRoom, jouer l'audio de félicitations
+    if (
+        roomId === "pathology" &&
+        !hasPlayedFinishPathologyRoomAudio.value &&
+        audioState.isEnabled
+    ) {
+        console.log(
+            "🎵 Déclenchement de l'audio de félicitations PathologyRoom...",
+        );
+        await playFinishPathologyRoomAudio();
     }
 
     // Attendre que le DOM soit mis à jour
