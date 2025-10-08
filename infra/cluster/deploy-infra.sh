@@ -105,7 +105,7 @@ deploy_workshop() {
 
   separator
   echo "Déploiement de Redis, MariaDB et de l’application Escape Game..."
-  kubectl apply -f escape-compare.yaml
+  kubectl apply -f escape.yaml
   sleep 15
 
   separator
