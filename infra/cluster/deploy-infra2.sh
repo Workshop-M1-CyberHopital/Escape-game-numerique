@@ -14,7 +14,7 @@ set -Eeuo pipefail  # Stoppe le script si une commande échoue
 # --- Variables principales ---
 rgname="workshop-EISI"          # Nom du resource group Azure
 aksname="AKSClusterWorkshop"    # Nom du cluster AKS
-rgloc="germanywestcentral"           # Région Azure
+rgloc="germanywestcentral"           # Région Azure autorisées pour Students ["germanywestcentral","francecentral","swedencentral","italynorth","polandcentral"]
 apitoken="ubVqfAcvE7507ZwuTWamvCJe"
 redpass="password_redis_519"    # Mot de passe Redis
 
