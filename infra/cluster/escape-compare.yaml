@@ -125,7 +125,7 @@ spec:
       name: mariadb-storage
     spec:
       accessModes: ["ReadWriteMany"]
-      storageClassName: azurefile-csi
+      storageClassName: azurefile
       resources:
         requests:
           storage: 5Gi
@@ -228,7 +228,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: redis-pvc
 spec:
-  storageClassName: azurefile-csi # StorageClass Azure plus sûr
+  storageClassName: azurefile # StorageClass Azure azurefile-csi pour les comptes payants, azurefile pour les comptes gratuits
   accessModes:
     - ReadWriteMany
   resources:
