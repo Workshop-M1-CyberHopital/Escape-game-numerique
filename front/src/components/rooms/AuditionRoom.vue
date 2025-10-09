@@ -175,7 +175,7 @@ import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
 
 const emit = defineEmits(['exit-room', 'room-completed'])
-const { completeRoom, addError, addHint } = useGameState()
+const { completeRoom, addError, addHint, PENALTY_PER_ERROR } = useGameState()
 const { showSuccess, showError, showWarning, showInfo } = useToast()
 
 const roomData = {
@@ -440,7 +440,9 @@ const selectAnswer = (answerIndex) => {
         correctAnswers.value++
         showSuccess("RÉPONSE CORRECTE !", currentTestData.result)
     } else {
-        showError("RÉPONSE INCORRECTE", "Vous devez avoir la bonne réponse pour continuer. Réécoutez le son et réessayez.")
+        // Ajouter une pénalité pour la mauvaise réponse
+        addError('audition')
+        showError("RÉPONSE INCORRECTE", `Vous devez avoir la bonne réponse pour continuer. Réécoutez le son et réessayez. +${PENALTY_PER_ERROR}s de pénalité`)
         // Réinitialiser pour permettre une nouvelle tentative
         setTimeout(() => {
             selectedAnswer.value = null
