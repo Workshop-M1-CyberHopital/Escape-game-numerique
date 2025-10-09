@@ -1,5 +1,5 @@
 <template>
-    <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" @click.self="handleClose">
+    <div v-if="visible" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm" @click.self="handleClose">
         <div class="bg-gray-900/95 border-2 border-cyber-blue rounded-lg p-6 max-w-md w-full mx-4 scanline" @click.stop>
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">

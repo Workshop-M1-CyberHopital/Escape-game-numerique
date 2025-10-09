@@ -225,6 +225,9 @@ import {
     ScanLine,
     Heart,
     BarChart3,
+    Volume2,
+    HeartPulse,
+    Settings,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -266,6 +269,9 @@ const iconMap = {
     dna: Dna,
     "scan-line": ScanLine,
     heart: Heart,
+    "volume-2": Volume2,
+    "heart-pulse": HeartPulse,
+    settings: Settings,
 };
 
 // Fonction pour obtenir le composant d'icône

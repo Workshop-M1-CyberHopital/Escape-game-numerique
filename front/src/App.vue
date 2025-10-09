@@ -127,6 +127,12 @@
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
+
+            <AuditionRoom
+                v-if="gameState.currentRoom === 'audition'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
         </div>
 
         <!-- Game Not Started: Show Landing Page -->
@@ -140,6 +146,7 @@
                 :connected-player-name="user?.username || ''"
                 @close="showTeamSetup = false"
                 @start-game="handleStartGame"
+                @open-auth="handleOpenAuth"
             />
 
             <!-- Loading Screen -->
@@ -221,7 +228,7 @@
 
         <!-- DNA Room Briefing -->
         <DNARoomBriefing
-            :visible="showDNARoomBriefing"
+            :visible="showDNARoomBriefing && !isBriefingShown('dnaRoom')"
             @close="handleCloseDNARoomBriefing"
         />
 
@@ -236,7 +243,7 @@
         />
 
         <ImagingRoomBriefing
-            :visible="showImagingRoomBriefing"
+            :visible="showImagingRoomBriefing && !isBriefingShown('imagingRoom')"
             @close="handleCloseImagingRoomBriefing"
         />
 
@@ -246,7 +253,7 @@
         />
 
         <HeartRoomBriefing
-            :visible="showHeartRoomBriefing"
+            :visible="showHeartRoomBriefing && !isBriefingShown('heartRoom')"
             @close="handleCloseHeartRoomBriefing"
         />
 
@@ -258,6 +265,16 @@
         <FinishPathologyRoomBriefing
             :visible="showFinishPathologyRoomBriefing"
             @close="handleCloseFinishPathologyRoomBriefing"
+        />
+
+        <AuditionRoomBriefing
+            :visible="showAuditionRoomBriefing && !isBriefingShown('auditionRoom')"
+            @close="handleCloseAuditionRoomBriefing"
+        />
+
+        <FinishAuditionRoomBriefing
+            :visible="showFinishAuditionRoomBriefing"
+            @close="handleCloseFinishAuditionRoomBriefing"
         />
 
         <!-- Audio Activation Button -->
@@ -322,6 +339,7 @@ import ImagingRoom from "./components/rooms/ImagingRoom.vue";
 import HeartRoom from "./components/rooms/HeartRoom.vue";
 import ProsthesisRoom from "./components/rooms/ProsthesisRoom.vue";
 import PathologyRoom from "./components/rooms/PathologyRoom.vue";
+import AuditionRoom from "./components/rooms/AuditionRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
 import DevTools from "./components/DevTools.vue";
@@ -330,11 +348,13 @@ import FinishServerRoomBriefing from "./components/briefing/FinishServerRoomBrie
 import FinishDNARoomBriefing from "./components/briefing/FinishDNARoomBriefing.vue";
 import FinishImagingRoomBriefing from "./components/briefing/FinishImagingRoomBriefing.vue";
 import FinishPathologyRoomBriefing from "./components/briefing/FinishPathologyRoomBriefing.vue";
+import FinishAuditionRoomBriefing from "./components/briefing/FinishAuditionRoomBriefing.vue";
 import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
 import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
 import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
 import HeartRoomBriefing from "./components/briefing/HeartRoomBriefing.vue";
 import PathologyRoomBriefing from "./components/briefing/PathologyRoomBriefing.vue";
+import AuditionRoomBriefing from "./components/briefing/AuditionRoomBriefing.vue";
 import FinalScore from "./components/FinalScore.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
@@ -389,6 +409,10 @@ const showPathologyRoomBriefing = ref(false);
 const hasPlayedPathologyRoomAudio = ref(false);
 const showFinishPathologyRoomBriefing = ref(false);
 const hasPlayedFinishPathologyRoomAudio = ref(false);
+const showAuditionRoomBriefing = ref(false);
+const hasPlayedAuditionRoomAudio = ref(false);
+const showFinishAuditionRoomBriefing = ref(false);
+const hasPlayedFinishAuditionRoomAudio = ref(false);
 const showFinalScore = ref(false);
 const finalScoreData = ref(null);
 
@@ -585,6 +609,7 @@ const handleCloseServerRoomBriefing = () => {
 
 const handleCloseDNARoomBriefing = () => {
     showDNARoomBriefing.value = false;
+    markBriefingAsShown("dnaRoom");
     stopSound("dnaRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -595,6 +620,7 @@ const handleCloseDNARoomBriefing = () => {
 
 const handleCloseImagingRoomBriefing = () => {
     showImagingRoomBriefing.value = false;
+    markBriefingAsShown("imagingRoom");
     stopSound("imagingRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -695,6 +721,7 @@ const handleCloseFinishImagingRoomBriefing = () => {
 
 const handleCloseHeartRoomBriefing = () => {
     showHeartRoomBriefing.value = false;
+    markBriefingAsShown("heartRoom");
     stopSound("heartRoom");
     // Arrêt agressif pour Safari
     setTimeout(() => {
@@ -740,6 +767,63 @@ const handleCloseFinishPathologyRoomBriefing = () => {
     // Arrêt agressif pour Safari
     setTimeout(() => {
         stopSound("finishPathologyRoom");
+    }, 100);
+};
+
+// Fonction pour jouer l'audio AuditionRoom
+const playAuditionRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son AuditionRoom...");
+        showAuditionRoomBriefing.value = true;
+        await playSound("auditionRoom");
+        hasPlayedAuditionRoomAudio.value = true;
+        console.log("✅ Son AuditionRoom joué avec succès");
+        setTimeout(() => {
+            showAuditionRoomBriefing.value = false;
+        }, 33000); // 33 secondes
+    } catch (error) {
+        console.error("❌ Erreur lors de la lecture du son AuditionRoom:", error);
+        showAuditionRoomBriefing.value = false;
+    }
+};
+
+const handleCloseAuditionRoomBriefing = () => {
+    showAuditionRoomBriefing.value = false;
+    markBriefingAsShown("auditionRoom");
+    stopSound("auditionRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("auditionRoom");
+    }, 100);
+    console.log("🎵 Audition Room briefing fermé et son arrêté");
+};
+
+// Fonction pour jouer le son de félicitations AuditionRoom
+const playFinishAuditionRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son de félicitations AuditionRoom...");
+        showFinishAuditionRoomBriefing.value = true;
+        await playSound("finishAuditionRoom");
+        hasPlayedFinishAuditionRoomAudio.value = true;
+        console.log("✅ Son de félicitations AuditionRoom joué avec succès");
+        setTimeout(() => {
+            showFinishAuditionRoomBriefing.value = false;
+        }, 33000); // 33 secondes
+    } catch (error) {
+        console.error(
+            "❌ Erreur lors de la lecture du son de félicitations AuditionRoom:",
+            error,
+        );
+        showFinishAuditionRoomBriefing.value = false;
+    }
+};
+
+const handleCloseFinishAuditionRoomBriefing = () => {
+    showFinishAuditionRoomBriefing.value = false;
+    stopSound("finishAuditionRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("finishAuditionRoom");
     }, 100);
 };
 
@@ -914,6 +998,12 @@ const handleEnterRoom = async (roomId) => {
             showPathologyRoomBriefing.value = true;
             hasPlayedPathologyRoomAudio.value = true;
         }
+    } else if (roomId === "audition") {
+        console.log("🎵 Affichage du briefing Audition Room...");
+        if (!isBriefingShown('auditionRoom')) {
+            showAuditionRoomBriefing.value = true;
+            hasPlayedAuditionRoomAudio.value = true;
+        }
     } else if (roomId === "imaging") {
         console.log("❌ Conditions Imaging Room non remplies:", {
             hasPlayedImagingRoomAudio: hasPlayedImagingRoomAudio.value,
@@ -961,6 +1051,8 @@ const handleRoomCompleted = async (roomId) => {
         unlockRoom("prosthesis");
     } else if (roomId === "prosthesis") {
         unlockRoom("pathology");
+    } else if (roomId === "pathology") {
+        unlockRoom("audition");
     }
 
     // Vérifier si le jeu est terminé
@@ -1058,6 +1150,18 @@ const handleRoomCompleted = async (roomId) => {
         await playFinishPathologyRoomAudio();
     }
 
+    // Si c'est la salle AuditionRoom, jouer l'audio de félicitations
+    if (
+        roomId === "audition" &&
+        !hasPlayedFinishAuditionRoomAudio.value &&
+        audioState.isEnabled
+    ) {
+        console.log(
+            "🎵 Déclenchement de l'audio de félicitations AuditionRoom...",
+        );
+        await playFinishAuditionRoomAudio();
+    }
+
     // Attendre que le DOM soit mis à jour
     await nextTick();
 
@@ -1089,6 +1193,10 @@ const handleRestartGame = () => {
 const handleAuthSuccess = () => {
     showAuthModal.value = false;
     // Le message de succès est déjà affiché par AuthModal
+};
+
+const handleOpenAuth = () => {
+    showAuthModal.value = true;
 };
 
 // Gestion de la déconnexion avec blocage pendant la partie
