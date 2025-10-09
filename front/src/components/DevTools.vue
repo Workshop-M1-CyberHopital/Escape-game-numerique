@@ -127,6 +127,19 @@
                 </button>
 
                 <button
+                    @click="goToRoom('final')"
+                    :disabled="!gameState.isGameStarted"
+                    :class="[
+                        'px-3 py-1 font-tech text-xs rounded transition-all',
+                        gameState.isGameStarted
+                            ? 'bg-green-500 text-white hover:bg-green-600'
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed',
+                    ]"
+                >
+                    Salle 9: Final
+                </button>
+
+                <button
                     @click="resetGame"
                     class="px-3 py-1 bg-gray-700 text-white font-tech text-xs rounded hover:bg-gray-800 transition-all"
                 >

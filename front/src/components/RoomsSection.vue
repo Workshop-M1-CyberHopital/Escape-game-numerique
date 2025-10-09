@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ completedRooms.length }} / 8
+                            {{ completedRooms.length }} / 9
                         </span>
                     </div>
                     <div
@@ -666,6 +666,80 @@
                         v-if="isUnlocked('eye')"
                         class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
                         style="background-color: #22d3ee"
+                    ></div>
+                </div>
+
+                <!-- Room 9: Final -->
+                <div
+                    @click="handleRoomClick('final')"
+                    :class="[
+                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+                        isUnlocked('final')
+                            ? 'border-cyber-green cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-green/20 hover:border-cyber-green/80'
+                            : 'border-gray-600 opacity-60 cursor-not-allowed',
+                    ]"
+                >
+                    <div class="absolute top-4 right-4">
+                        <i
+                            :data-lucide="
+                                isUnlocked('final') ? 'unlock' : 'lock'
+                            "
+                            :class="
+                                isUnlocked('final')
+                                    ? 'w-6 h-6 text-green-400'
+                                    : 'w-6 h-6 text-gray-500'
+                            "
+                        >
+                        </i>
+                    </div>
+                    <div class="p-0">
+                        <div
+                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
+                            style="
+                                background-color: rgba(16, 185, 129, 0.2);
+                                border: 2px solid #10b981;
+                            "
+                        >
+                            <i
+                                data-lucide="shield-check"
+                                class="w-8 h-8 text-cyber-green"
+                            ></i>
+                        </div>
+                        <h3
+                            class="text-2xl font-cyber font-bold mb-2"
+                            style="color: #10b981"
+                        >
+                            SALLE DE FIN
+                        </h3>
+                        <p class="text-sm font-tech text-gray-400 mb-3">
+                            Diagnostic final - Patient critique
+                        </p>
+                        <p class="text-sm text-gray-300 mb-4">
+                            La cyberattaque est résolue ! Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier médical.
+                        </p>
+                        <div class="space-y-2">
+                            <span
+                                class="inline-block px-3 py-1 border border-cyber-green text-cyber-green font-tech text-xs rounded"
+                            >
+                                OBJECTIF
+                            </span>
+                            <p class="text-xs text-gray-400">
+                                Diagnostiquer le patient et sécuriser son dossier médical
+                            </p>
+                        </div>
+                        <div
+                            v-if="!isUnlocked('final')"
+                            class="mt-4 pt-4 border-t border-gray-700"
+                        >
+                            <p class="text-xs font-tech text-yellow-500">
+                                🔒 Complétez les salles précédentes pour débloquer
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        v-if="isUnlocked('final')"
+                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
+                        style="background-color: #10b981"
                     ></div>
                 </div>
             </div>

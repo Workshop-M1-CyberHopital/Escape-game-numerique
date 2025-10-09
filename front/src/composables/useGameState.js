@@ -97,6 +97,7 @@ export function useGameState() {
       "pathology",
       "audition",
       "eye",
+      "final",
     ];
   };
 
@@ -195,7 +196,7 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 8 salles sont complétées
+    // Vérifier si les 9 salles sont complétées
     const allRooms = [
       "server",
       "dna-lab",
@@ -205,6 +206,7 @@ export function useGameState() {
       "pathology",
       "audition",
       "eye",
+      "final",
     ];
     return allRooms.every((room) => gameState.completedRooms.includes(room));
   };

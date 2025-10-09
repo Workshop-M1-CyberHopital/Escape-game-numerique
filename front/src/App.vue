@@ -139,6 +139,12 @@
                 @exit-room="handleExitRoom"
                 @room-completed="handleRoomCompleted"
             />
+
+            <FinalRoom
+                v-if="gameState.currentRoom === 'final'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
         </div>
 
         <!-- Game Not Started: Show Landing Page -->
@@ -284,9 +290,21 @@
             @close="handleCloseAuditionRoomBriefing"
         />
 
+        <FinalRoomBriefing
+            :visible="
+                showFinalRoomBriefing && !isBriefingShown('finalRoom')
+            "
+            @close="handleCloseFinalRoomBriefing"
+        />
+
         <FinishAuditionRoomBriefing
             :visible="showFinishAuditionRoomBriefing"
             @close="handleCloseFinishAuditionRoomBriefing"
+        />
+
+        <FinishFinalRoomBriefing
+            :visible="showFinishFinalRoomBriefing"
+            @close="handleCloseFinishFinalRoomBriefing"
         />
 
         <!-- Audio Activation Button -->
@@ -353,6 +371,7 @@ import ProsthesisRoom from "./components/rooms/ProsthesisRoom.vue";
 import EyeRoom from "./components/rooms/EyeRoom.vue";
 import PathologyRoom from "./components/rooms/PathologyRoom.vue";
 import AuditionRoom from "./components/rooms/AuditionRoom.vue";
+import FinalRoom from "./components/rooms/FinalRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
 import AudioControls from "./components/AudioControls.vue";
 import DevTools from "./components/DevTools.vue";
@@ -368,6 +387,8 @@ import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
 import HeartRoomBriefing from "./components/briefing/HeartRoomBriefing.vue";
 import PathologyRoomBriefing from "./components/briefing/PathologyRoomBriefing.vue";
 import AuditionRoomBriefing from "./components/briefing/AuditionRoomBriefing.vue";
+import FinalRoomBriefing from "./components/briefing/FinalRoomBriefing.vue";
+import FinishFinalRoomBriefing from "./components/briefing/FinishFinalRoomBriefing.vue";
 import FinalScore from "./components/FinalScore.vue";
 import { useGameState } from "./composables/useGameState";
 import { useToast } from "./composables/useToast";
@@ -424,6 +445,10 @@ const showFinishPathologyRoomBriefing = ref(false);
 const hasPlayedFinishPathologyRoomAudio = ref(false);
 const showAuditionRoomBriefing = ref(false);
 const hasPlayedAuditionRoomAudio = ref(false);
+const showFinalRoomBriefing = ref(false);
+const hasPlayedFinalRoomAudio = ref(false);
+const showFinishFinalRoomBriefing = ref(false);
+const hasPlayedFinishFinalRoomAudio = ref(false);
 const showFinishAuditionRoomBriefing = ref(false);
 const hasPlayedFinishAuditionRoomAudio = ref(false);
 const showFinalScore = ref(false);
@@ -849,6 +874,66 @@ const handleCloseFinishAuditionRoomBriefing = () => {
     }, 100);
 };
 
+// Fonction pour jouer le son de briefing FinalRoom
+const playFinalRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son de briefing FinalRoom...");
+        showFinalRoomBriefing.value = true;
+        await playSound("finalRoom");
+        hasPlayedFinalRoomAudio.value = true;
+        console.log("✅ Son de briefing FinalRoom joué avec succès");
+        setTimeout(() => {
+            showFinalRoomBriefing.value = false;
+        }, 33000); // 33 secondes
+    } catch (error) {
+        console.error(
+            "❌ Erreur lors de la lecture du son FinalRoom:",
+            error,
+        );
+        showFinalRoomBriefing.value = false;
+    }
+};
+
+const handleCloseFinalRoomBriefing = () => {
+    showFinalRoomBriefing.value = false;
+    markBriefingAsShown("finalRoom");
+    stopSound("finalRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("finalRoom");
+    }, 100);
+    console.log("🎵 Final Room briefing fermé et son arrêté");
+};
+
+// Fonction pour jouer le son de félicitations FinalRoom
+const playFinishFinalRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son de félicitations FinalRoom...");
+        showFinishFinalRoomBriefing.value = true;
+        await playSound("finishFinalRoom");
+        hasPlayedFinishFinalRoomAudio.value = true;
+        console.log("✅ Son de félicitations FinalRoom joué avec succès");
+        setTimeout(() => {
+            showFinishFinalRoomBriefing.value = false;
+        }, 33000); // 33 secondes
+    } catch (error) {
+        console.error(
+            "❌ Erreur lors de la lecture du son de félicitations FinalRoom:",
+            error,
+        );
+        showFinishFinalRoomBriefing.value = false;
+    }
+};
+
+const handleCloseFinishFinalRoomBriefing = () => {
+    showFinishFinalRoomBriefing.value = false;
+    stopSound("finishFinalRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("finishFinalRoom");
+    }, 100);
+};
+
 const handleStartMission = () => {
     showTeamSetup.value = true;
 };
@@ -1029,6 +1114,12 @@ const handleEnterRoom = async (roomId) => {
             showAuditionRoomBriefing.value = true;
             hasPlayedAuditionRoomAudio.value = true;
         }
+    } else if (roomId === "final") {
+        console.log("🎵 Affichage du briefing Final Room...");
+        if (!isBriefingShown("finalRoom")) {
+            showFinalRoomBriefing.value = true;
+            hasPlayedFinalRoomAudio.value = true;
+        }
     } else if (roomId === "imaging") {
         console.log("❌ Conditions Imaging Room non remplies:", {
             hasPlayedImagingRoomAudio: hasPlayedImagingRoomAudio.value,
@@ -1080,6 +1171,8 @@ const handleRoomCompleted = async (roomId) => {
         unlockRoom("audition");
     } else if (roomId === "audition") {
         unlockRoom("eye");
+    } else if (roomId === "eye") {
+        unlockRoom("final");
     }
 
     // Vérifier si le jeu est terminé
@@ -1187,6 +1280,18 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations AuditionRoom...",
         );
         await playFinishAuditionRoomAudio();
+    }
+
+    // Si c'est la salle FinalRoom, jouer l'audio de félicitations
+    if (
+        roomId === "final" &&
+        !hasPlayedFinishFinalRoomAudio.value &&
+        audioState.isEnabled
+    ) {
+        console.log(
+            "🎵 Déclenchement de l'audio de félicitations FinalRoom...",
+        );
+        await playFinishFinalRoomAudio();
     }
 
     // Attendre que le DOM soit mis à jour
