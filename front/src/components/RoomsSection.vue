@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ completedRooms.length }} / 7
+                            {{ completedRooms.length }} / 8
                         </span>
                     </div>
                     <div
