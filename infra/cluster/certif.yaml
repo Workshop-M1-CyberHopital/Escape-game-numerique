@@ -8,5 +8,5 @@ spec:
   - traefik.eisi-dune.eu
   issuerRef:
     name: letsencrypt
-    kind: Issuer
+    kind: ClusterIssuer
   secretName: secret-tls-workshop
