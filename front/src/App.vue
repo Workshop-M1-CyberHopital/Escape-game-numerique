@@ -146,6 +146,7 @@
                 :connected-player-name="user?.username || ''"
                 @close="showTeamSetup = false"
                 @start-game="handleStartGame"
+                @open-auth="handleOpenAuth"
             />
 
             <!-- Loading Screen -->
@@ -1192,6 +1193,10 @@ const handleRestartGame = () => {
 const handleAuthSuccess = () => {
     showAuthModal.value = false;
     // Le message de succès est déjà affiché par AuthModal
+};
+
+const handleOpenAuth = () => {
+    showAuthModal.value = true;
 };
 
 // Gestion de la déconnexion avec blocage pendant la partie
