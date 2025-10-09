@@ -272,6 +272,16 @@
             @close="handleCloseHeartRoomBriefing"
         />
 
+        <ProsthesisRoomBriefing
+            :visible="showProsthesisRoomBriefing && !isBriefingShown('prosthesisRoom')"
+            @close="handleCloseProsthesisRoomBriefing"
+        />
+
+        <FinishProsthesisRoomBriefing
+            :visible="showFinishProsthesisRoomBriefing"
+            @close="handleCloseFinishProsthesisRoomBriefing"
+        />
+
         <PathologyRoomBriefing
             :visible="
                 showPathologyRoomBriefing && !isBriefingShown('pathologyRoom')
@@ -382,10 +392,12 @@ import FinishDNARoomBriefing from "./components/briefing/FinishDNARoomBriefing.v
 import FinishImagingRoomBriefing from "./components/briefing/FinishImagingRoomBriefing.vue";
 import FinishPathologyRoomBriefing from "./components/briefing/FinishPathologyRoomBriefing.vue";
 import FinishAuditionRoomBriefing from "./components/briefing/FinishAuditionRoomBriefing.vue";
+import FinishProsthesisRoomBriefing from "./components/briefing/FinishProsthesisRoomBriefing.vue";
 import ServerRoomBriefing from "./components/briefing/ServerRoomBriefing.vue";
 import DNARoomBriefing from "./components/briefing/DNARoomBriefing.vue";
 import ImagingRoomBriefing from "./components/briefing/ImagingRoomBriefing.vue";
 import HeartRoomBriefing from "./components/briefing/HeartRoomBriefing.vue";
+import ProsthesisRoomBriefing from "./components/briefing/ProsthesisRoomBriefing.vue";
 import PathologyRoomBriefing from "./components/briefing/PathologyRoomBriefing.vue";
 import AuditionRoomBriefing from "./components/briefing/AuditionRoomBriefing.vue";
 import FinalRoomBriefing from "./components/briefing/FinalRoomBriefing.vue";
@@ -440,6 +452,10 @@ const showFinishImagingRoomBriefing = ref(false);
 const hasPlayedFinishImagingRoomAudio = ref(false);
 const showHeartRoomBriefing = ref(false);
 const hasPlayedHeartRoomAudio = ref(false);
+const showProsthesisRoomBriefing = ref(false);
+const hasPlayedProsthesisRoomAudio = ref(false);
+const showFinishProsthesisRoomBriefing = ref(false);
+const hasPlayedFinishProsthesisRoomAudio = ref(false);
 const showPathologyRoomBriefing = ref(false);
 const hasPlayedPathologyRoomAudio = ref(false);
 const showFinishPathologyRoomBriefing = ref(false);
@@ -604,6 +620,31 @@ const playImagingRoomAudio = async () => {
     }
 };
 
+// Fonction pour jouer le son de la Salle des Prothèses
+const playProsthesisRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son de la Salle des Prothèses...");
+
+        // Afficher le briefing pendant la lecture
+        showProsthesisRoomBriefing.value = true;
+
+        await playSound("prosthesisRoom");
+        hasPlayedProsthesisRoomAudio.value = true;
+        console.log("✅ Son de la Salle des Prothèses joué avec succès");
+
+        // Masquer le briefing après la lecture (environ 33 secondes)
+        setTimeout(() => {
+            showProsthesisRoomBriefing.value = false;
+        }, 33000);
+    } catch (error) {
+        console.error(
+            "❌ Erreur lors de la lecture du son de la Salle des Prothèses:",
+            error,
+        );
+        showProsthesisRoomBriefing.value = false;
+    }
+};
+
 // Fonction pour jouer le son de la Salle du Cœur
 const playHeartRoomAudio = async () => {
     try {
@@ -694,6 +735,26 @@ const playFinishServerRoomAudio = async () => {
     }
 };
 
+// Fonction pour jouer le son de félicitations ProsthesisRoom
+const playFinishProsthesisRoomAudio = async () => {
+    try {
+        console.log("🎵 Lecture du son de félicitations ProsthesisRoom...");
+        showFinishProsthesisRoomBriefing.value = true;
+        await playSound("finishProsthesisRoom");
+        hasPlayedFinishProsthesisRoomAudio.value = true;
+        console.log("✅ Son de félicitations ProsthesisRoom joué avec succès");
+        setTimeout(() => {
+            showFinishProsthesisRoomBriefing.value = false;
+        }, 30000); // 30 secondes
+    } catch (error) {
+        console.error(
+            "❌ Erreur lors de la lecture du son de félicitations ProsthesisRoom:",
+            error,
+        );
+        showFinishProsthesisRoomBriefing.value = false;
+    }
+};
+
 const handleCloseFinishServerRoomBriefing = () => {
     showFinishServerRoomBriefing.value = false;
     stopSound("finishServerRoom");
@@ -773,6 +834,28 @@ const handleCloseHeartRoomBriefing = () => {
         stopSound("heartRoom");
     }, 100);
     console.log("🎵 Heart Room briefing fermé et son arrêté");
+};
+
+const handleCloseProsthesisRoomBriefing = () => {
+    showProsthesisRoomBriefing.value = false;
+    markBriefingAsShown("prosthesisRoom");
+    stopSound("prosthesisRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("prosthesisRoom");
+    }, 100);
+    console.log("🎵 Prosthesis Room briefing fermé et son arrêté");
+};
+
+const handleCloseFinishProsthesisRoomBriefing = () => {
+    showFinishProsthesisRoomBriefing.value = false;
+    hasPlayedFinishProsthesisRoomAudio.value = true;
+    stopSound("finishProsthesisRoom");
+    // Arrêt agressif pour Safari
+    setTimeout(() => {
+        stopSound("finishProsthesisRoom");
+    }, 100);
+    console.log("🎵 Finish Prosthesis Room briefing fermé et son arrêté");
 };
 
 const handleClosePathologyRoomBriefing = () => {
@@ -1103,6 +1186,19 @@ const handleEnterRoom = async (roomId) => {
         setTimeout(() => {
             showHeartRoomBriefing.value = false;
         }, 5000); // 5 secondes pour le test
+    } else if (
+        roomId === "prosthesis" &&
+        !hasPlayedProsthesisRoomAudio.value &&
+        audioState.isEnabled
+    ) {
+        console.log("🎵 Tentative de lecture du son Prosthesis Room...");
+        await playProsthesisRoomAudio();
+    } else if (roomId === "prosthesis") {
+        console.log("🎵 Affichage du briefing Prosthesis Room...");
+        if (!isBriefingShown("prosthesisRoom")) {
+            showProsthesisRoomBriefing.value = true;
+            hasPlayedProsthesisRoomAudio.value = true;
+        }
     } else if (roomId === "pathology") {
         console.log("🎵 Affichage du briefing Pathology Room...");
         if (!isBriefingShown("pathologyRoom")) {
@@ -1236,6 +1332,31 @@ const handleRoomCompleted = async (roomId) => {
         hasPlayedFinishServerRoomAudio.value = true;
         setTimeout(() => {
             showFinishServerRoomBriefing.value = false;
+        }, 30000); // 30 secondes
+    }
+
+    // Si c'est la salle ProsthesisRoom, jouer l'audio de félicitations
+    if (
+        roomId === "prosthesis" &&
+        !hasPlayedFinishProsthesisRoomAudio.value &&
+        audioState.isEnabled
+    ) {
+        console.log(
+            "🎵 Déclenchement de l'audio de félicitations ProsthesisRoom...",
+        );
+        await playFinishProsthesisRoomAudio();
+    } else if (roomId === "prosthesis" && !hasPlayedFinishProsthesisRoomAudio.value) {
+        console.log("❌ Conditions ProsthesisRoom non remplies:", {
+            hasPlayedFinishProsthesisRoomAudio: hasPlayedFinishProsthesisRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+        });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin ProsthesisRoom...");
+        showFinishProsthesisRoomBriefing.value = true;
+        hasPlayedFinishProsthesisRoomAudio.value = true;
+        setTimeout(() => {
+            showFinishProsthesisRoomBriefing.value = false;
         }, 30000); // 30 secondes
     }
 
