@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ completedRooms.length }} / 8
+                            {{ completedRooms.length }} / 9
                         </span>
                     </div>
                     <div
@@ -666,6 +666,69 @@
                         v-if="isUnlocked('eye')"
                         class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
                         style="background-color: #22d3ee"
+                    ></div>
+                </div>
+
+                <!-- Room 9: Final -->
+                <div
+                    @click="handleRoomClick('final')"
+                    :class="[
+                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+                        isUnlocked('final')
+                            ? 'border-cyber-green cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-green/20 hover:border-cyber-green/80'
+                            : 'border-gray-600 opacity-60 cursor-not-allowed',
+                    ]"
+                >
+                    <div class="absolute top-4 right-4">
+                        <i
+                            :data-lucide="
+                                isUnlocked('final') ? 'unlock' : 'lock'
+                            "
+                            :class="
+                                isUnlocked('final')
+                                    ? 'w-6 h-6 text-green-400'
+                                    : 'w-6 h-6 text-gray-500'
+                            "
+                        >
+                        </i>
+                    </div>
+                    <div class="p-0">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 bg-cyber-green/20 rounded-lg flex items-center justify-center">
+                                <i data-lucide="shield-check" class="w-6 h-6 text-cyber-green"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-cyber font-bold text-white text-lg">
+                                    SALLE DE FIN
+                                </h3>
+                                <p class="text-gray-400 text-sm font-tech">
+                                    Diagnostic final - Patient critique
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                            La cyberattaque est résolue ! Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier médical.
+                        </p>
+                        <div
+                            v-if="isCompleted('final')"
+                            class="flex items-center gap-2 text-green-400 text-sm font-tech"
+                        >
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            <span>COMPLÉTÉE</span>
+                        </div>
+                        <div
+                            v-if="!isUnlocked('final')"
+                            class="mt-4 pt-4 border-t border-gray-700"
+                        >
+                            <p class="text-xs font-tech text-yellow-500">
+                                🔒 Complétez les salles précédentes pour débloquer
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        v-if="isUnlocked('final')"
+                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
+                        style="background-color: #10b981"
                     ></div>
                 </div>
             </div>

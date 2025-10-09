@@ -212,6 +212,18 @@
                                             Système ophtalmologique défaillant
                                         </div>
                                     </div>
+                                    <div
+                                        class="bg-green-900/20 border border-green-500/50 rounded p-3"
+                                    >
+                                        <div
+                                            class="text-green-400 font-bold text-sm"
+                                        >
+                                            SALLE DE FIN
+                                        </div>
+                                        <div class="text-gray-300 text-xs">
+                                            Fin de la mission
+                                        </div>
+                                    </div>
                                 </div>
                                 <p class="mt-6 text-cyber-blue">
                                     <span class="text-yellow-400"
