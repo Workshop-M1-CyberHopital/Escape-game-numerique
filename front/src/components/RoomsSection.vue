@@ -715,7 +715,7 @@
                             Diagnostic final - Patient critique
                         </p>
                         <p class="text-sm text-gray-300 mb-4">
-                            La cyberattaque est résolue ! Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier médical.
+                            Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier médical.
                         </p>
                         <div class="space-y-2">
                             <span
