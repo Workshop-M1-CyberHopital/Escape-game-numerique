@@ -311,48 +311,115 @@ const playTestSound = async () => {
 
 // Son de battements cardiaques
 const playHeartbeatSound = async (duration) => {
-    const oscillator = audioContext.value.createOscillator()
-    const gainNode = audioContext.value.createGain()
+    // Créer plusieurs oscillateurs pour un son plus puissant
+    const oscillators = []
+    const gainNodes = []
     
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(80, audioContext.value.currentTime) // Fréquence légèrement plus haute
-    gainNode.gain.setValueAtTime(0, audioContext.value.currentTime)
+    // Fréquences multiples pour un son plus audible
+    const frequencies = [60, 80, 100] // Harmoniques pour plus de volume
+    const amplitudes = [0.8, 0.6, 0.4] // Amplitudes décroissantes
     
-    // Créer un rythme de battements avec volume plus fort
-    for (let i = 0; i < duration * 1.2; i++) {
-        const time = audioContext.value.currentTime + i * 0.8
-        gainNode.gain.setValueAtTime(0.6, time) // Volume augmenté
-        gainNode.gain.setValueAtTime(0.2, time + 0.1)
+    for (let i = 0; i < frequencies.length; i++) {
+        const osc = audioContext.value.createOscillator()
+        const gain = audioContext.value.createGain()
+        
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(frequencies[i], audioContext.value.currentTime)
+        gain.gain.setValueAtTime(0, audioContext.value.currentTime)
+        
+        osc.connect(gain)
+        gain.connect(audioContext.value.destination)
+        
+        oscillators.push(osc)
+        gainNodes.push(gain)
     }
     
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.value.destination)
+    // Créer un rythme de battements avec volume maximum
+    for (let i = 0; i < duration * 1.2; i++) {
+        const time = audioContext.value.currentTime + i * 0.8
+        
+        gainNodes.forEach((gain, index) => {
+            gain.gain.setValueAtTime(amplitudes[index], time) // Volume maximum
+            gain.gain.setValueAtTime(amplitudes[index] * 0.3, time + 0.1) // Pause entre battements
+        })
+    }
     
-    oscillator.start()
-    oscillator.stop(audioContext.value.currentTime + duration)
+    // Démarrer tous les oscillateurs
+    oscillators.forEach(osc => {
+        osc.start()
+        osc.stop(audioContext.value.currentTime + duration)
+    })
 }
 
 // Son de respiration
 const playBreathingSound = async (duration) => {
-    const oscillator = audioContext.value.createOscillator()
-    const gainNode = audioContext.value.createGain()
+    // Créer plusieurs oscillateurs pour un son plus complexe et réaliste
+    const oscillators = []
+    const gainNodes = []
     
-    oscillator.type = 'sawtooth'
-    oscillator.frequency.setValueAtTime(200, audioContext.value.currentTime)
-    gainNode.gain.setValueAtTime(0, audioContext.value.currentTime)
+    // Fréquences multiples pour simuler le bruit de respiration
+    const frequencies = [80, 120, 160, 200] // Harmoniques naturelles
+    const amplitudes = [0.3, 0.2, 0.15, 0.1] // Amplitudes décroissantes
     
-    // Créer un son sifflant
-    for (let i = 0; i < duration * 2; i++) {
-        const time = audioContext.value.currentTime + i * 0.5
-        oscillator.frequency.setValueAtTime(180 + Math.random() * 40, time)
-        gainNode.gain.setValueAtTime(0.2 + Math.random() * 0.1, time)
+    for (let i = 0; i < frequencies.length; i++) {
+        const osc = audioContext.value.createOscillator()
+        const gain = audioContext.value.createGain()
+        
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(frequencies[i], audioContext.value.currentTime)
+        gain.gain.setValueAtTime(0, audioContext.value.currentTime)
+        
+        osc.connect(gain)
+        gain.connect(audioContext.value.destination)
+        
+        oscillators.push(osc)
+        gainNodes.push(gain)
     }
     
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.value.destination)
+    // Créer un cycle de respiration réaliste
+    const breathCycles = Math.floor(duration * 0.6) // 0.6 cycles par seconde (plus lent)
+    for (let i = 0; i < breathCycles; i++) {
+        const cycleStart = audioContext.value.currentTime + i * 1.6 // 1.6 secondes par cycle
+        
+        // Inspiration (2 secondes)
+        for (let j = 0; j < 20; j++) {
+            const time = cycleStart + j * 0.1
+            const progress = j / 20
+            const breathIntensity = Math.sin(progress * Math.PI) // Courbe sinusoïdale
+            
+            gainNodes.forEach((gain, index) => {
+                gain.gain.setValueAtTime(
+                    amplitudes[index] * breathIntensity * 0.4, 
+                    time
+                )
+            })
+        }
+        
+        // Pause (0.3 secondes)
+        gainNodes.forEach(gain => {
+            gain.gain.setValueAtTime(0.02, cycleStart + 2.0)
+        })
+        
+        // Expiration (1.3 secondes)
+        for (let j = 0; j < 13; j++) {
+            const time = cycleStart + 2.3 + j * 0.1
+            const progress = j / 13
+            const breathIntensity = Math.sin(progress * Math.PI) // Courbe sinusoïdale
+            
+            gainNodes.forEach((gain, index) => {
+                gain.gain.setValueAtTime(
+                    amplitudes[index] * breathIntensity * 0.3, 
+                    time
+                )
+            })
+        }
+    }
     
-    oscillator.start()
-    oscillator.stop(audioContext.value.currentTime + duration)
+    // Démarrer tous les oscillateurs
+    oscillators.forEach(osc => {
+        osc.start()
+        osc.stop(audioContext.value.currentTime + duration)
+    })
 }
 
 // Son d'acouphènes
