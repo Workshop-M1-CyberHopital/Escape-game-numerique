@@ -163,24 +163,13 @@ deploy_workshop() {
   rm -f tls.key tls.crt
 
   separator
-  echo "Déploiement du webhook cert-manager-webhook-gandi officiel via Helm avec PAT..."
+  echo "Déploiement du webhook Gandi via Helm avec chart local et values.yaml..."
 
   helm uninstall cert-manager-webhook-gandi -n cert-manager --ignore-not-found || true
 
-  helm repo add cert-manager-webhook-gandi https://sintef.github.io/cert-manager-webhook-gandi
-  helm repo update
-
-  helm install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
+  helm upgrade --install cert-manager-webhook-gandi ./cert-manager-webhook-gandi \
     --namespace cert-manager --create-namespace \
-    --set gandiApiToken="$apitoken" \
-    --set image.repository="ghcr.io/sintef/cert-manager-webhook-gandi" \
-    --set image.tag="v0.5.2" \
-    --set tls.enabled=true \
-    --set tls.secretName="cert-manager-webhook-tls" \
-    --set resources.requests.cpu="50m" \
-    --set resources.requests.memory="64Mi" \
-    --set resources.limits.cpu="200m" \
-    --set resources.limits.memory="256Mi"
+    --values ./cert-manager-webhook-gandi/values.yaml
 
   echo "Attente de la disponibilité du webhook..."
   kubectl rollout status deployment/cert-manager-webhook-gandi -n cert-manager --timeout=120s || true
