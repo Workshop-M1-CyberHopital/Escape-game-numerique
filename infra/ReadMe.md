@@ -19,6 +19,26 @@ Architecture globale de l'infrastructure Escape Game déployée sur AKS, sécuri
 
 Topologie détaillée comme suit :
 
+                 ┌──────────────┐
+                 │ Utilisateurs │
+                 └──────┬───────┘
+                        │ HTTPS
+                 ┌──────▼───────┐
+                 │  Traefik     │
+                 │ Ingress Ctrl │
+                 └──────┬───────┘
+                        │
+      ┌─────────────────┬───────────────┐
+      │                 │               │
+┌─────▼─────┐     ┌─────▼─────┐    ┌────▼────┐
+│Escape App │     │ Redis Pod │    │MariaDB  │
+│   Pods    │     │ (cache)   │    │ Pod     │
+└───────────┘     └───────────┘    └─────────┘
+
+Les utilisateurs accèdent via HTTPS vers Traefik qui fait l’équilibrage de charge.
+Traefik distribue vers l’app Escape Game, le cache Redis, et la base MariaDB (avec stockage local).
+La simplicité évite des détails sur le webhook ou certificats qui ne sont pas encore prêts.
+
 Utilisateurs --> HTTPS --> Traefik Ingress Controller --> Application Escape Game Pods  
 &emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;---> Redis Pod (cache)  
 &emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;---> MariaDB Pod (stockage local K8s hostPath)  

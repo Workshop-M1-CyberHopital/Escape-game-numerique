@@ -170,17 +170,29 @@ deploy_workshop() {
   helm repo add cert-manager-webhook-gandi https://sintef.github.io/cert-manager-webhook-gandi
   helm repo update
 
-  helm install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
+  helm upgrade --install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
     --namespace cert-manager --create-namespace \
     --set gandiApiToken="$apitoken" \
-    --set image.repository="ghcr.io/sintef/cert-manager-webhook-gandi" \
-    --set image.tag="v0.5.2" \
+    --set image.repository="smartgic/cert-manager-webhook-gandi" \
+    --set image.tag="latest" \
     --set tls.enabled=true \
     --set tls.secretName="cert-manager-webhook-tls" \
     --set resources.requests.cpu="50m" \
     --set resources.requests.memory="64Mi" \
     --set resources.limits.cpu="200m" \
     --set resources.limits.memory="256Mi"
+
+  # helm install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
+  #   --namespace cert-manager --create-namespace \
+  #   --set gandiApiToken="$apitoken" \
+  #   --set image.repository="ghcr.io/sintef/cert-manager-webhook-gandi" \
+  #   --set image.tag="v0.5.2" \
+  #   --set tls.enabled=true \
+  #   --set tls.secretName="cert-manager-webhook-tls" \
+  #   --set resources.requests.cpu="50m" \
+  #   --set resources.requests.memory="64Mi" \
+  #   --set resources.limits.cpu="200m" \
+  #   --set resources.limits.memory="256Mi"
 
   echo "Attente de la disponibilité du webhook..."
   kubectl rollout status deployment/cert-manager-webhook-gandi -n cert-manager --timeout=120s || true
