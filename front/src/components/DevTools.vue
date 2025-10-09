@@ -147,6 +147,13 @@
                 </button>
 
                 <button
+                    @click="triggerEndGame"
+                    class="px-3 py-1 bg-green-700 text-white font-tech text-xs rounded hover:bg-green-800 transition-all"
+                >
+                    🏁 Fin de jeu
+                </button>
+
+                <button
                     @click="toggleDev"
                     class="px-3 py-1 bg-red-700 text-white font-tech text-xs rounded hover:bg-red-800 transition-all"
                 >
@@ -183,6 +190,7 @@ const emit = defineEmits([
     "enter-room",
     "unlock-all-rooms",
     "reset-game",
+    "trigger-end-game",
 ]);
 
 const isDev = ref(false);
@@ -211,6 +219,10 @@ const goToRoom = (roomId) => {
 
 const resetGame = () => {
     emit("reset-game");
+};
+
+const triggerEndGame = () => {
+    emit("trigger-end-game");
 };
 </script>
 
