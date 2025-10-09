@@ -1,173 +1,109 @@
-🧩 Workshop M1 EISI 2025–2026
+# Workshop M1 EISI 2025–2026 - Documentation
 
-Déploiement de l’infrastructure Escape Game sur AKS (Azure Kubernetes Service)
-📘 Sommaire
-
-Objectif du projet
-
-Architecture globale
-
-Fichiers du projet
-
-Étapes de déploiement
-
-Vérifications post-déploiement
-
-Commandes utiles
-
-Nettoyage de l’environnement
-
-🎯 Objectifs du projet
+## Objectif du projet
 
 Mettre en place une infrastructure Kubernetes complète sur Azure (AKS) pour héberger une application web d’escape game développée par l’équipe Dev.
 
 L’objectif est de permettre :
 
-* l’accès sécurisé via HTTPS (Let's Encrypt),
+- un accès sécurisé via HTTPS (Let's Encrypt),
+- la gestion du trafic via Traefik,
+- la persistance des données (Redis + stockage local Kubernetes),
+- l’utilisation d’une base de données MariaDB avec stockage local sur les nœuds Kubernetes (compte étudiant Azure gratuit ne supportant pas la persistance Azure Files CSI).
 
-* la gestion du trafic via Traefik,
+## Architecture globale
 
-* la persistance des données (Redis + stockage Azure Files),
+Architecture globale de l'infrastructure Escape Game déployée sur AKS, sécurisée via Traefik et TLS Let’s Encrypt.
 
-* l’utilisation d’une base de données managée Azure
+![Architecture diagram of Escape Game infrastructure on AKS with Traefik, Redis, MariaDB, and HTTPS.](https://user-gen-media-assets.s3.amazonaws.com/seedream_images/ad2a8052-1146-418d-a320-6e8ddf5aa084.png)
 
-🏗️ Architecture globale
-🔹 Schéma d’infrastructure
+Topologie détaillée comme suit :
 
+Utilisateurs --> HTTPS --> Traefik Ingress Controller --> Application Escape Game Pods  
+&emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;---> Redis Pod (cache)  
+&emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;---> MariaDB Pod (stockage local K8s hostPath)  
+&emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;---> Traefik Dashboard (auth + whitelisting)  
 
-                      ┌──────────────────────────────┐
-                      │        Utilisateurs          │
-                      └──────────────┬───────────────┘
-                                     │
-                           HTTPS (Let's Encrypt)
-                                     │
-                      ┌──────────────▼───────────────┐
-                      │   Traefik Ingress Controller │
-                      │ (AKS, ports 80/443, HTTPS)  │
-                      └──────┬──────────┬───────────┘
-                             │          │
-               ┌─────────────▼─┐      ┌─▼─────────────────────┐
-               │ Escape Game App│      │ Traefik Dashboard     │
-               │ (Pods AKS)     │      │ + Auth/Whitelist IP   │
-               └──────────┬─────┘      └───────────────────────┘
-                          │
-        ┌─────────────────┼──────────────────┐
-        │                 │                  │
- ┌──────▼───────┐   ┌─────▼──────────┐   ┌───▼────────────────────┐
- │ Redis (cache)│   │ Azure Files PVC│   │ Azure Database (PaaS)  │
- │ (Pod K8S)    │   │ Persistance     │   │ for MariaDB            │
- └──────────────┘   └────────────────┘   └────────────────────────┘
+## Fichiers du projet
 
-📂 Fichiers du projet
+- `infra_creation.sh` : Script principal déploiement infra  
+- `infra_deploy2.sh` : Script version chart.yaml + values.yaml  
+- `escape.yaml` : Déploiement app Escape Game + Redis + MariaDB  
+- `ingress.yaml` : Configuration accès HTTPS  
+- `issuer.yaml` : Configuration Let's Encrypt  
+- `certif.yaml` : Certificat TLS Traefik  
+- `traefik-config.yaml` : Configuration Traefik dashboard + auth + IP  
+- `chart.yaml` et `values.yaml` : Helm chart webhook-gandi  
+- Scripts auxiliaires : Nettoyage et vérification infra  
 
-| Fichier               | Description                                           |
-| --------------------- | ----------------------------------------------------- |
-| `infra_creation.sh`   | Script principal de déploiement de l’infra            |
-| `escape.yaml`         | Déploiement de l’app Escape Game + Redis              |
-| `ingress.yaml`        | Accès public HTTPS à l’application                    |
-| `issuer.yaml`         | Configuration Let's Encrypt (certificats SSL)         |
-| `traefik-config.yaml` | Traefik : dashboard, authentification et whitelist IP |
-| `README.md`           | Documentation complète (ce fichier)                   |
+## Documentation PAT Gandi
 
-Ajout des droits d'exécution pour les scripts .sh :
-```chmod +x check-azure-env.sh```
+Le déploiement utilise un Personal Access Token (PAT) pour remplacer l’ancien token API déprécié de Gandi, suivant la documentation officielle Gandi :  
+<https://docs.gandi.net/en/managing_an_organization/organizations/personal_access_token.html>
 
-🧩 Justification de l’utilisation de MariaDB et Redis
+## Particularités techniques
 
-L’infrastructure de l’application repose sur deux systèmes complémentaires de gestion des données : Redis et MariaDB.
-Redis est utilisé comme cache en mémoire pour accélérer les échanges et stocker les informations temporaires (sessions de jeu, scores en cours, etc.), tandis que MariaDB agit comme base de données relationnelle persistante, garantissant la sauvegarde durable des données critiques telles que les joueurs, les scores finaux et la configuration du jeu.
-Cette séparation des rôles permet de combiner performance et fiabilité, en optimisant à la fois la rapidité d’exécution et la cohérence des données à long terme.
+- **Persistance MariaDB** :  
+  Compte étudiant Azure gratuit interdit d’utiliser Azure Files CSI. Le stockage se fait via Kubernetes `hostPath` local (semi-persistant, pertes de données possibles si pods migrent).
 
-🚀 Étapes de déploiement
-🔧 1. Prérequis
+- **Redis** :  
+  Stockage `emptyDir` éphémère utilisé, adapté pour cache.
 
-* Un compte Azure (ex. étudiant)
-* Docker Hub avec l’image monrepo/escape-game:latest
-* Gandi (ou autre registrar) configuré pour ton domaine
-→ escape.eisi-dune.eu et traefik.eisi-dune.eu
-* Azure Database for MariaDB déployée et accessible publiquement
+- **Autoscaling et monitoring** :  
+  Limités sur compte gratuit Azure (addons non disponibles).
 
-⚙️ 2. Lancer le déploiement
+- **Image Docker multi-architecture** :  
+  Construction multiarchi effectuée avec Builder Docker, image poussée sur Docker Hub.
 
-Ouvre ton terminal / VSCode / WSL Ubuntu
+## Étapes de déploiement
 
-Donne les droits d’exécution :
-```chmod +x infra_creation.sh```
+### Prérequis
 
-Lance le script :
-```./infra_creation.sh```
+- Compte Azure (étudiant ou autre)  
+- Docker Hub avec l’image Docker multi-archi `produn/escape-workshop:latest`  
+- Domaine Gandi configuré (`escape.eisi-dune.eu`, `traefik.eisi-dune.eu`)  
+- Compte Azure Database for MariaDB (utilisé localement sur AKS via `hostPath`)
 
-Le script va :
+### Exécution
 
-* créer le groupe de ressources Azure et le cluster AKS,
-* déployer Redis et ton application,
-* installer Traefik et cert-manager,
-* récupérer l’IP publique,
-* t’inviter à configurer tes enregistrements DNS,
-* puis générer automatiquement les certificats HTTPS.
+- Donner les droits :  
 
-🌍 3. Configurer ton DNS sur Gandi
+`
+chmod +x infra_creation.sh
+chmod +x infra_deploy2.sh
+`
 
-Quand le script affiche :
+- Lancer le script voulu :  
 
-📡 Adresse IP détectée : XX.XX.XX.XX
+`
+./infra_creation.sh # Version simple sans helm chart local
+./infra_deploy2.sh # Version avec Helm chart et values.yaml
+`
 
+## Vérifications post-déploiement
 
-→ Crée deux enregistrements A dans ton domaine Gandi :
-| Nom       | Type | Valeur                |
-| --------- | ---- | --------------------- |
-| `escape`  | A    | (adresse IP affichée) |
-| `traefik` | A    | (même adresse IP)     |
+- `kubectl get pods -n default`  
+- `kubectl get svc -n default`  
+- `kubectl get ingress -n default`  
+- `kubectl get certificate -A`  
+- Accès application HTTPS : <https://escape.eisi-dune.eu>  
+- Dashboard Traefik sécurisé : <https://traefik.eisi-dune.eu>
 
-Puis confirme dans le script [Y].
+## Commandes utiles
 
-🧪 Vérifications post-déploiement
+- Logs app Escape Game :  
 
-Une fois le script terminé, vérifie que tout fonctionne :
-# Pods déployés
-kubectl get pods -n workshop
+`kubectl logs -n default -l app=escape-app --tail=50`
 
-# Services et IP internes
-kubectl get svc -n workshop
+- Accès shell pod :  
+  
+`kubectl exec -it -n default deploy/escape-app -- /bin/bash`
 
-# Vérifie que Traefik est bien exposé
-kubectl get svc traefik -n workshop -o wide
+- Liste objets Kubernetes :  
 
-# Vérifie les certificats HTTPS
-kubectl get certificate -A
-
-# Vérifie les routes externes
-kubectl get ingress -n workshop
-
-Si tout est correct :
-
-L’application est disponible sur https://escape.eisi-dune.eu
-Le tableau de bord Traefik sur https://traefik.eisi-dune.eu
-
-🧰 Commandes utiles
-# Voir les logs de l’application
-kubectl logs -n workshop -l app=escape-app --tail=50
-
-# Accéder au shell d’un pod
-kubectl exec -it -n workshop deploy/escape-app -- /bin/bash
-
-# Liste complète des objets K8S
-kubectl get all -n workshop
-
-🧹 Nettoyage de l’environnement
-
-Quand le workshop est terminé, libère les ressources Azure :
-az group delete -n workshop-EISI --yes --no-wait
-
-💡 Points forts du déploiement
-
-✅ Infrastructure Cloud-Native complète sur Azure
-✅ Application sécurisée par HTTPS + Let's Encrypt
-✅ Traefik pour la gestion du trafic et le dashboard d’administration
-✅ Redis + Azure Files pour la persistance des données
-✅ Base MariaDB managée Azure, haute disponibilité garantie
-✅ Script de déploiement automatisé et commenté
+`kubectl get all -n default`
 
 
-Topologies :
+- Nettoyage Azure :  
 
+`az group delete -n workshop-EISI --yes --no-wait`
