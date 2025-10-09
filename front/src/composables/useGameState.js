@@ -92,6 +92,7 @@ export function useGameState() {
       "server",
       "dna-lab",
       "imaging",
+      "heart",
       "prosthesis",
       "pathology",
       "audition",
@@ -194,11 +195,12 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 7 salles sont complétées
+    // Vérifier si les 8 salles sont complétées
     const allRooms = [
       "server",
       "dna-lab",
       "imaging",
+      "heart",
       "prosthesis",
       "pathology",
       "audition",

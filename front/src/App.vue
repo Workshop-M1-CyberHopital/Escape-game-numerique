@@ -1071,6 +1071,8 @@ const handleRoomCompleted = async (roomId) => {
     } else if (roomId === "dna-lab") {
         unlockRoom("imaging");
     } else if (roomId === "imaging") {
+        unlockRoom("heart");
+    } else if (roomId === "heart") {
         unlockRoom("prosthesis");
     } else if (roomId === "prosthesis") {
         unlockRoom("pathology");
