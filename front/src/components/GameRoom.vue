@@ -311,6 +311,7 @@ import {
     HeartPulse,
     Settings,
     Eye,
+    ShieldCheck,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -357,6 +358,7 @@ const iconMap = {
     "heart-pulse": HeartPulse,
     settings: Settings,
     eye: Eye,
+    "shield-check": ShieldCheck,
 };
 
 // Fonction pour obtenir le composant d'icône
