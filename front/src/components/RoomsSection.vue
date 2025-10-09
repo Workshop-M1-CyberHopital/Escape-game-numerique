@@ -693,28 +693,39 @@
                         </i>
                     </div>
                     <div class="p-0">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-12 h-12 bg-cyber-green/20 rounded-lg flex items-center justify-center">
-                                <i data-lucide="shield-check" class="w-6 h-6 text-cyber-green"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-cyber font-bold text-white text-lg">
-                                    SALLE DE FIN
-                                </h3>
-                                <p class="text-gray-400 text-sm font-tech">
-                                    Diagnostic final - Patient critique
-                                </p>
-                            </div>
+                        <div
+                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
+                            style="
+                                background-color: rgba(16, 185, 129, 0.2);
+                                border: 2px solid #10b981;
+                            "
+                        >
+                            <i
+                                data-lucide="shield-check"
+                                class="w-8 h-8 text-cyber-green"
+                            ></i>
                         </div>
-                        <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                        <h3
+                            class="text-2xl font-cyber font-bold mb-2"
+                            style="color: #10b981"
+                        >
+                            SALLE DE FIN
+                        </h3>
+                        <p class="text-sm font-tech text-gray-400 mb-3">
+                            Diagnostic final - Patient critique
+                        </p>
+                        <p class="text-sm text-gray-300 mb-4">
                             La cyberattaque est résolue ! Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier médical.
                         </p>
-                        <div
-                            v-if="isCompleted('final')"
-                            class="flex items-center gap-2 text-green-400 text-sm font-tech"
-                        >
-                            <i data-lucide="check-circle" class="w-4 h-4"></i>
-                            <span>COMPLÉTÉE</span>
+                        <div class="space-y-2">
+                            <span
+                                class="inline-block px-3 py-1 border border-cyber-green text-cyber-green font-tech text-xs rounded"
+                            >
+                                OBJECTIF
+                            </span>
+                            <p class="text-xs text-gray-400">
+                                Diagnostiquer le patient et sécuriser son dossier médical
+                            </p>
                         </div>
                         <div
                             v-if="!isUnlocked('final')"
