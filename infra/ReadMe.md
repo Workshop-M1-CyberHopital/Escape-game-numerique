@@ -96,25 +96,11 @@ L’objectif est de permettre :
 
 Architecture globale de l'infrastructure Escape Game déployée sur AKS, sécurisée via Traefik et TLS Let’s Encrypt.
 
-![Architecture diagram of Escape Game infrastructure on AKS with Traefik, Redis, MariaDB, and HTTPS.](./cluster-gandi/topologie_infra_workshop.png)
+![Architecture diagram of Escape Game infrastructure on AKS with Traefik, Redis, MariaDB, and HTTPS.](./cluster-acme/topologie_infra_workshop.png)
 
 Topologie détaillée comme suit :
 
-                 ┌──────────────┐
-                 │ Utilisateurs │
-                 └──────┬───────┘
-                        │ HTTPS
-                 ┌──────▼───────┐
-                 │  Traefik     │
-                 │ Ingress Ctrl │
-                 └──────┬───────┘
-                        │
-      ┌─────────────────┬───────────────┐
-      │                 │               │
-┌─────▼─────┐     ┌─────▼─────┐    ┌────▼────┐
-│Escape App │     │ Redis Pod │    │MariaDB  │
-│   Pods    │     │ (cache)   │    │ Pod     │
-└───────────┘     └───────────┘    └─────────┘
+![Architecture diagram of Escape Game infrastructure on AKS with Traefik, Redis, MariaDB, and HTTPS.](./cluster-acme/topologie_escape_workshop.png)
 
 Les utilisateurs accèdent via HTTPS vers Traefik qui fait l’équilibrage de charge.
 Traefik distribue vers l’app Escape Game, le cache Redis, et la base MariaDB (avec stockage local).
