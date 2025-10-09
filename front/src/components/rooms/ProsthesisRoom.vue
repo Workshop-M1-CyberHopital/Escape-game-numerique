@@ -623,8 +623,11 @@ const checkJoints = () => {
             "Excellent ! Toutes les articulations sont maintenant synchronisées. Le système orthopédique est opérationnel.",
         );
 
-        completeRoom("prosthesis");
-        emit("room-completed", "prosthesis");
+        // Petit délai pour permettre au briefing de fin de s'afficher
+        setTimeout(() => {
+            completeRoom("prosthesis");
+            emit("room-completed", "prosthesis");
+        }, 300);
     } else {
         addError("prosthesis");
 

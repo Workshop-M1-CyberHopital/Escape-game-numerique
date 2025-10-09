@@ -756,9 +756,12 @@
               "Excellent ! Vous avez réussi à décoder le mot de passe et à restaurer le pare-feu. La sécurité des données de santé est maintenant protégée.",
               8000,
           );
-  
-          completeRoom("server");
-          emit("room-completed", "server");
+
+          // Petit délai pour permettre au briefing de fin de s'afficher
+          setTimeout(() => {
+              completeRoom("server");
+              emit("room-completed", "server");
+          }, 300);
       } else {
           addError("server");
           showError(

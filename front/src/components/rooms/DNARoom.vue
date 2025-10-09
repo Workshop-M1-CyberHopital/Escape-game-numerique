@@ -624,8 +624,11 @@ const checkAminoAcids = () => {
             "Excellent ! Vous avez traduit la séquence ADN en acides aminés. La sécurité biométrique est maintenant rétablie.",
         );
 
-        completeRoom("dna-lab");
-        emit("room-completed", "dna-lab");
+        // Petit délai pour permettre au briefing de fin de s'afficher
+        setTimeout(() => {
+            completeRoom("dna-lab");
+            emit("room-completed", "dna-lab");
+        }, 300);
     } else {
         addError("dna-lab");
         showError(

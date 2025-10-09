@@ -624,8 +624,11 @@ const completeSimulation = () => {
         "Excellent ! Vous avez effectué un massage cardiaque parfait. Le patient est stabilisé.",
     );
 
-    completeRoom("heart");
-    emit("room-completed", "heart");
+    // Petit délai pour permettre au briefing de fin de s'afficher
+    setTimeout(() => {
+        completeRoom("heart");
+        emit("room-completed", "heart");
+    }, 300);
 };
 
 const showHint = () => {
