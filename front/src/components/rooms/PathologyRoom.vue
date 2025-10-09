@@ -169,6 +169,7 @@ const roomData = {
     subtitle: "Diagnostic médical",
     description:
         "Le virus a mélangé les pathologies et les guérisons. Remettez les pathologies vers leurs guérisons correspondantes.",
+    objective: "Remettre les pathologies vers leurs guérisons correspondantes",
     icon: "heart-pulse",
     color: "#ff0055",
 };
