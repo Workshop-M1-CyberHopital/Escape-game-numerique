@@ -326,15 +326,13 @@ const handleDrop = (event, cureIndex) => {
             // Vérifier si toutes les correspondances sont faites
             if (correctMatches.value === pathologies.value.length) {
                 createFireworks(3000)
-                setTimeout(() => {
-                    showSuccess(
-                        "DIAGNOSTIC MÉDICAL TERMINÉ !",
-                        "Félicitations ! Vous avez correctement diagnostiqué toutes les pathologies."
-                    )
-                    isCompleted.value = true
-                    completeRoom('pathology')
-                    emit('room-completed', 'pathology')
-                }, 2000)
+                showSuccess(
+                    "DIAGNOSTIC MÉDICAL TERMINÉ !",
+                    "Félicitations ! Vous avez correctement diagnostiqué toutes les pathologies."
+                )
+                isCompleted.value = true
+                completeRoom('pathology')
+                emit('room-completed', 'pathology')
             }
         } else {
             // Marquer l'erreur

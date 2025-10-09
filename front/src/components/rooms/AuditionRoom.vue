@@ -470,10 +470,8 @@ const nextTest = () => {
                 "DIAGNOSTIC TERMINÉ !",
                 `Excellent diagnostic ! ${Math.round(successRate)}% de réussite.`
             )
-            setTimeout(() => {
-                completeRoom('audition')
-                emit('room-completed', 'audition')
-            }, 2000)
+            completeRoom('audition')
+            emit('room-completed', 'audition')
         } else {
             showError(
                 "DIAGNOSTIC INCOMPLET",
