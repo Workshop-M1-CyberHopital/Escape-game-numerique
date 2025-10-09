@@ -92,9 +92,11 @@ export function useGameState() {
       "server",
       "dna-lab",
       "imaging",
-      "prosthesis",
-      "eye",
       "heart",
+      "prosthesis",
+      "pathology",
+      "audition",
+      "eye",
     ];
   };
 
@@ -193,14 +195,16 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 6 salles sont complétées
+    // Vérifier si les 8 salles sont complétées
     const allRooms = [
       "server",
       "dna-lab",
       "imaging",
-      "prosthesis",
-      "eye",
       "heart",
+      "prosthesis",
+      "pathology",
+      "audition",
+      "eye",
     ];
     return allRooms.every((room) => gameState.completedRooms.includes(room));
   };
