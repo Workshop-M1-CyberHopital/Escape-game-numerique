@@ -95,6 +95,8 @@ export function useGameState() {
       "prosthesis",
       "eye",
       "heart",
+      "pathology",
+      "audition",
     ];
   };
 
