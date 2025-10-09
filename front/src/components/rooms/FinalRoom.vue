@@ -430,8 +430,11 @@ const completeFinalRoom = () => {
         "Félicitations ! Vous avez sauvé le patient et sécurisé ses données. La cyberattaque est définitivement vaincue !"
     )
     
-    completeRoom('final')
-    emit('room-completed', 'final')
+    // Petit délai pour permettre au briefing de fin de s'afficher
+    setTimeout(() => {
+        completeRoom('final')
+        emit('room-completed', 'final')
+    }, 300)
 }
 
 // Afficher un indice

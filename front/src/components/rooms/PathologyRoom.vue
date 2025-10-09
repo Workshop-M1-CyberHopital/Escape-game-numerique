@@ -331,8 +331,11 @@ const handleDrop = (event, cureIndex) => {
                     "Félicitations ! Vous avez correctement diagnostiqué toutes les pathologies."
                 )
                 isCompleted.value = true
-                completeRoom('pathology')
-                emit('room-completed', 'pathology')
+                // Petit délai pour permettre au briefing de fin de s'afficher
+                setTimeout(() => {
+                    completeRoom('pathology')
+                    emit('room-completed', 'pathology')
+                }, 300)
             }
         } else {
             // Marquer l'erreur
