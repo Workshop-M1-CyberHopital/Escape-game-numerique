@@ -8,6 +8,6 @@ spec:
   - traefik.eisi-dune.eu
   - escape.eisi-dune.eu
   issuerRef:
-    name: letsencrypt
+    name: letsencrypt-http
     kind: ClusterIssuer
   secretName: secret-tls-workshop

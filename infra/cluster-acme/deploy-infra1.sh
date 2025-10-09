@@ -144,59 +144,6 @@ deploy_workshop() {
       --version v1.10.1
   fi
 
-  kubectl rollout status deployment/cert-manager -n cert-manager --timeout=120s || true
-
-  separator
-  echo "Génération d’un certificat TLS auto-signé pour le webhook Gandi..."
-
-  rm -f tls.key tls.crt
-
-  if [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
-    openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.crt -subj "//CN=cert-manager-webhook-gandi.cert-manager.svc"
-  else
-    openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.crt -subj "/CN=cert-manager-webhook-gandi.cert-manager.svc"
-  fi
-
-  echo "Création du secret cert-manager-webhook-tls..."
-  kubectl create secret tls cert-manager-webhook-tls --cert=tls.crt --key=tls.key -n cert-manager --dry-run=client -o yaml | kubectl apply -f -
-
-  rm -f tls.key tls.crt
-
-  separator
-  echo "Déploiement du webhook cert-manager-webhook-gandi officiel via Helm avec PAT..."
-
-  helm uninstall cert-manager-webhook-gandi -n cert-manager --ignore-not-found || true
-
-  helm repo add cert-manager-webhook-gandi https://sintef.github.io/cert-manager-webhook-gandi
-  helm repo update
-
-  helm upgrade --install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
-    --namespace cert-manager --create-namespace \
-    --set gandiApiToken="$apitoken" \
-    --set image.repository="smartgic/cert-manager-webhook-gandi" \
-    --set image.tag="latest" \
-    --set tls.enabled=true \
-    --set tls.secretName="cert-manager-webhook-tls" \
-    --set resources.requests.cpu="50m" \
-    --set resources.requests.memory="64Mi" \
-    --set resources.limits.cpu="200m" \
-    --set resources.limits.memory="256Mi"
-
-  # helm install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
-  #   --namespace cert-manager --create-namespace \
-  #   --set gandiApiToken="$apitoken" \
-  #   --set image.repository="ghcr.io/sintef/cert-manager-webhook-gandi" \
-  #   --set image.tag="v0.5.2" \
-  #   --set tls.enabled=true \
-  #   --set tls.secretName="cert-manager-webhook-tls" \
-  #   --set resources.requests.cpu="50m" \
-  #   --set resources.requests.memory="64Mi" \
-  #   --set resources.limits.cpu="200m" \
-  #   --set resources.limits.memory="256Mi"
-
-  echo "Attente de la disponibilité du webhook..."
-  kubectl rollout status deployment/cert-manager-webhook-gandi -n cert-manager --timeout=120s || true
-
   separator
   echo "Application de la configuration Let's Encrypt (Issuer)..."
   kubectl apply -f issuer.yaml

@@ -87,7 +87,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd,traefik-dashboard-auth@kubernetescrd
-    cert-manager.io/issuer: letsencrypt
+    cert-manager.io/issuer: letsencrypt-http
 spec:
   ingressClassName: traefik
   rules:

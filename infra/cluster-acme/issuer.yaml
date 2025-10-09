@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt
+  name: letsencrypt-http
 spec:
   acme:
     email: dunvaelleroux@gmail.com
@@ -16,7 +16,3 @@ spec:
       - http01:
           ingress:
             class: traefik
-            config:
-              apiKeySecretRef:
-                key: api-token
-                name: gandi-credentials
