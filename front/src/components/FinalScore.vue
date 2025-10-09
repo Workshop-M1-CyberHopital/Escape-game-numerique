@@ -40,80 +40,154 @@
 
                 <!-- Message de fin de mission -->
                 <div class="text-center">
-                    <div 
+                    <div
                         class="bg-gray-800/50 border rounded-lg p-6"
                         :class="getMissionBorderColor()"
                     >
-                        <div class="flex items-center justify-center gap-3 mb-4">
-                            <div 
+                        <div
+                            class="flex items-center justify-center gap-3 mb-4"
+                        >
+                            <div
                                 class="w-3 h-3 rounded-full animate-pulse"
                                 :class="getMissionStatusColor()"
                             ></div>
-                            <h2 
+                            <h2
                                 class="text-lg font-bold font-tech"
                                 :class="getMissionTextColor()"
                             >
                                 {{ getMissionStatus() }}
                             </h2>
                         </div>
-                        
-                        <div class="space-y-3 text-gray-300 font-tech text-sm leading-relaxed">
-                            <p v-if="scoreData.score >= 10" class="text-cyber-green">
-                                <span class="font-bold">Excellent travail, agent !</span>
+
+                        <div
+                            class="space-y-3 text-gray-300 font-tech text-sm leading-relaxed"
+                        >
+                            <p
+                                v-if="scoreData.score >= 10"
+                                class="text-cyber-green"
+                            >
+                                <span class="font-bold"
+                                    >Excellent travail, agent !</span
+                                >
                             </p>
                             <p v-else class="text-red-400">
-                                <span class="font-bold">Mission échouée, agent.</span>
+                                <span class="font-bold"
+                                    >Mission échouée, agent.</span
+                                >
                             </p>
-                            
+
                             <p v-if="scoreData.score >= 10">
-                                Vous avez brillamment repoussé la cyberattaque et sécurisé tous les systèmes hospitaliers. 
-                                <span class="text-cyber-green font-bold">Les patients de l'hôpital ont été sauvés grâce à votre expertise.</span>
+                                Vous avez brillamment repoussé la cyberattaque
+                                et sécurisé tous les systèmes hospitaliers.
+                                <span class="text-cyber-green font-bold"
+                                    >Les patients de l'hôpital ont été sauvés
+                                    grâce à votre expertise.</span
+                                >
                             </p>
                             <p v-else>
-                                La cyberattaque a réussi à compromettre les systèmes hospitaliers. 
-                                <span class="text-red-400 font-bold">Les patients de l'hôpital n'ont pas été sauvés.</span>
+                                La cyberattaque a réussi à compromettre les
+                                systèmes hospitaliers.
+                                <span class="text-red-400 font-bold"
+                                    >Les patients de l'hôpital n'ont pas été
+                                    sauvés.</span
+                                >
                             </p>
-                            
-                            <div 
+
+                            <div
                                 class="rounded p-4 mt-4"
                                 :class="getMissionBoxColor()"
                             >
-                                <p class="font-bold mb-2" :class="getMissionBoxTextColor()">
+                                <p
+                                    class="font-bold mb-2"
+                                    :class="getMissionBoxTextColor()"
+                                >
                                     STATUT DE LA MISSION :
                                 </p>
                                 <div class="space-y-2 text-xs">
-                                    <div class="flex items-center gap-2" v-if="scoreData.score >= 10">
-                                        <div class="w-2 h-2 bg-cyber-green rounded-full"></div>
-                                        <span class="text-cyber-green">Cyberattaque repoussée</span>
+                                    <div
+                                        class="flex items-center gap-2"
+                                        v-if="scoreData.score >= 10"
+                                    >
+                                        <div
+                                            class="w-2 h-2 bg-cyber-green rounded-full"
+                                        ></div>
+                                        <span class="text-cyber-green"
+                                            >Cyberattaque repoussée</span
+                                        >
                                     </div>
-                                    <div class="flex items-center gap-2" v-if="scoreData.score >= 10">
-                                        <div class="w-2 h-2 bg-cyber-green rounded-full"></div>
-                                        <span class="text-cyber-green">Systèmes hospitaliers sécurisés</span>
+                                    <div
+                                        class="flex items-center gap-2"
+                                        v-if="scoreData.score >= 10"
+                                    >
+                                        <div
+                                            class="w-2 h-2 bg-cyber-green rounded-full"
+                                        ></div>
+                                        <span class="text-cyber-green"
+                                            >Systèmes hospitaliers
+                                            sécurisés</span
+                                        >
                                     </div>
-                                    <div class="flex items-center gap-2" v-if="scoreData.score >= 10">
-                                        <div class="w-2 h-2 bg-cyber-green rounded-full"></div>
-                                        <span class="text-cyber-green">Patients sauvés</span>
+                                    <div
+                                        class="flex items-center gap-2"
+                                        v-if="scoreData.score >= 10"
+                                    >
+                                        <div
+                                            class="w-2 h-2 bg-cyber-green rounded-full"
+                                        ></div>
+                                        <span class="text-cyber-green"
+                                            >Patients sauvés</span
+                                        >
                                     </div>
-                                    <div class="flex items-center gap-2" v-if="scoreData.score < 10">
-                                        <div class="w-2 h-2 bg-red-400 rounded-full"></div>
-                                        <span class="text-red-400">Cyberattaque réussie</span>
+                                    <div
+                                        class="flex items-center gap-2"
+                                        v-if="scoreData.score < 10"
+                                    >
+                                        <div
+                                            class="w-2 h-2 bg-red-400 rounded-full"
+                                        ></div>
+                                        <span class="text-red-400"
+                                            >Cyberattaque réussie</span
+                                        >
                                     </div>
-                                    <div class="flex items-center gap-2" v-if="scoreData.score < 10">
-                                        <div class="w-2 h-2 bg-red-400 rounded-full"></div>
-                                        <span class="text-red-400">Systèmes hospitaliers compromis</span>
+                                    <div
+                                        class="flex items-center gap-2"
+                                        v-if="scoreData.score < 10"
+                                    >
+                                        <div
+                                            class="w-2 h-2 bg-red-400 rounded-full"
+                                        ></div>
+                                        <span class="text-red-400"
+                                            >Systèmes hospitaliers
+                                            compromis</span
+                                        >
                                     </div>
-                                    <div class="flex items-center gap-2" v-if="scoreData.score < 10">
-                                        <div class="w-2 h-2 bg-red-400 rounded-full"></div>
-                                        <span class="text-red-400">Patients en danger</span>
+                                    <div
+                                        class="flex items-center gap-2"
+                                        v-if="scoreData.score < 10"
+                                    >
+                                        <div
+                                            class="w-2 h-2 bg-red-400 rounded-full"
+                                        ></div>
+                                        <span class="text-red-400"
+                                            >Patients en danger</span
+                                        >
                                     </div>
                                 </div>
                             </div>
-                            
-                            <p v-if="scoreData.score >= 10" class="text-center text-cyber-green font-bold mt-4">
-                                Mission accomplie avec succès, agent. Vous êtes un héros.
+
+                            <p
+                                v-if="scoreData.score >= 10"
+                                class="text-center text-cyber-green font-bold mt-4"
+                            >
+                                Mission accomplie avec succès, agent. Vous êtes
+                                un héros.
                             </p>
-                            <p v-else class="text-center text-red-400 font-bold mt-4">
-                                Mission échouée. Les patients paient le prix de votre échec.
+                            <p
+                                v-else
+                                class="text-center text-red-400 font-bold mt-4"
+                            >
+                                Mission échouée. Les patients paient le prix de
+                                votre échec.
                             </p>
                         </div>
                     </div>
@@ -208,13 +282,20 @@
                         ></i>
                         STATISTIQUES PAR SALLE
                     </h3>
-                    <div class="space-y-3">
+                    <div
+                        class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar"
+                    >
                         <div
                             v-for="room in [
                                 'server',
                                 'dna-lab',
                                 'imaging',
                                 'heart',
+                                'audition',
+                                'eye',
+                                'pathology',
+                                'prosthesis',
+                                'final',
                             ]"
                             :key="room"
                             class="bg-gray-800/40 rounded-lg p-3"
@@ -350,6 +431,11 @@ const getRoomName = (roomId) => {
         "dna-lab": "LABORATOIRE ADN",
         imaging: "SALLE D'IMAGERIE",
         heart: "SALLE DE RÉANIMATION",
+        audition: "SALLE D'AUDITION",
+        eye: "SALLE OPHTALMOLOGIE",
+        pathology: "SALLE PATHOLOGIE",
+        prosthesis: "SALLE PROTHÈSE",
+        final: "SALLE FINALE",
     };
     return names[roomId] || roomId;
 };
