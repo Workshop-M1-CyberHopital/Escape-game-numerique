@@ -201,10 +201,10 @@
                                         </div>
                                     </div>
                                     <div
-                                        class="bg-violet-900/20 border border-violet-500/50 rounded p-3"
+                                        class="bg-cyan-900/20 border border-cyan-500/50 rounded p-3"
                                     >
                                         <div
-                                            class="text-violet-400 font-bold text-sm"
+                                            class="text-cyan-400 font-bold text-sm"
                                         >
                                             SALLE DES YEUX
                                         </div>
