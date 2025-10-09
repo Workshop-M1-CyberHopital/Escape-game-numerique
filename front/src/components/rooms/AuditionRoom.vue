@@ -139,7 +139,7 @@ const roomData = {
     subtitle: "Réparation du système audio ORL",
     description:
         "Le virus a corrompu le système audio ORL. Réparez-le en ajustant le volume.",
-    objective: "Comprendre la logique de l'ADN et des données biomédicales",
+    objective: "Ajuster le volume pour restaurer l'audio",
     icon: "volume-2",
     color: "#8b5cf6",
 };
