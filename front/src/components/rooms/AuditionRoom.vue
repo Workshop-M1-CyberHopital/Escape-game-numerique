@@ -111,16 +111,21 @@
                 </div>
 
                 <!-- Résultats du test -->
-                <div v-if="showResults" class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-green rounded-lg p-6 scanline">
+                <div v-if="showResults" class="bg-gray-800/60 backdrop-blur-md border-2 rounded-lg p-6 scanline" 
+                     :class="selectedAnswer === testData[currentTest]?.correctAnswer ? 'border-cyber-green' : 'border-red-500'">
                     <div class="text-center">
                         <div class="flex items-center justify-center gap-3 mb-4">
-                            <i data-lucide="check-circle" class="w-8 h-8 text-cyber-green"></i>
-                            <h3 class="text-cyber-green font-bold text-2xl">RÉSULTAT DU TEST</h3>
+                            <i :data-lucide="selectedAnswer === testData[currentTest]?.correctAnswer ? 'check-circle' : 'x-circle'" 
+                               :class="selectedAnswer === testData[currentTest]?.correctAnswer ? 'w-8 h-8 text-cyber-green' : 'w-8 h-8 text-red-500'"></i>
+                            <h3 :class="selectedAnswer === testData[currentTest]?.correctAnswer ? 'text-cyber-green font-bold text-2xl' : 'text-red-500 font-bold text-2xl'">
+                                {{ selectedAnswer === testData[currentTest]?.correctAnswer ? 'RÉPONSE CORRECTE !' : 'RÉPONSE INCORRECTE' }}
+                            </h3>
                         </div>
                         <p class="text-gray-300 mb-6">
-                            {{ testData[currentTest]?.result }}
+                            {{ selectedAnswer === testData[currentTest]?.correctAnswer ? testData[currentTest]?.result : 'Vous devez avoir la bonne réponse pour continuer. Réécoutez le son et réessayez.' }}
                         </p>
                         <button
+                            v-if="selectedAnswer === testData[currentTest]?.correctAnswer"
                             @click="nextTest"
                             class="bg-cyber-green hover:bg-cyber-green/80 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors duration-300"
                         >
@@ -197,6 +202,7 @@ const testData = ref([
     {
         title: "Test 1: Battements cardiaques",
         description: "Écoutez ce son et identifiez s'il s'agit de battements cardiaques normaux ou anormaux.",
+        soundType: "heartbeat",
         correctAnswer: 0,
         options: [
             { text: "Battements normaux", icon: "heart" },
@@ -246,25 +252,6 @@ const initAudioContext = async () => {
 const activateAudio = async () => {
     try {
         await initAudioContext()
-        
-        // Test audio simple pour vérifier que ça fonctionne
-        const testOscillator = audioContext.value.createOscillator()
-        const testGain = audioContext.value.createGain()
-        
-        testOscillator.type = 'sine'
-        testOscillator.frequency.setValueAtTime(440, audioContext.value.currentTime)
-        testGain.gain.setValueAtTime(0.1, audioContext.value.currentTime)
-        
-        testOscillator.connect(testGain)
-        testGain.connect(audioContext.value.destination)
-        
-        testOscillator.start()
-        testOscillator.stop(audioContext.value.currentTime + 0.5)
-        
-        showSuccess(
-            "DIAGNOSTIC ACTIVÉ",
-            "Le système de diagnostic auditif est maintenant opérationnel."
-        )
     } catch (error) {
         console.error('Erreur activation audio:', error)
         showError(
@@ -328,14 +315,14 @@ const playHeartbeatSound = async (duration) => {
     const gainNode = audioContext.value.createGain()
     
     oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(60, audioContext.value.currentTime) // Fréquence basse
+    oscillator.frequency.setValueAtTime(80, audioContext.value.currentTime) // Fréquence légèrement plus haute
     gainNode.gain.setValueAtTime(0, audioContext.value.currentTime)
     
-    // Créer un rythme de battements
+    // Créer un rythme de battements avec volume plus fort
     for (let i = 0; i < duration * 1.2; i++) {
         const time = audioContext.value.currentTime + i * 0.8
-        gainNode.gain.setValueAtTime(0.3, time)
-        gainNode.gain.setValueAtTime(0.1, time + 0.1)
+        gainNode.gain.setValueAtTime(0.6, time) // Volume augmenté
+        gainNode.gain.setValueAtTime(0.2, time + 0.1)
     }
     
     oscillator.connect(gainNode)
@@ -403,11 +390,15 @@ const selectAnswer = (answerIndex) => {
     
     if (isCorrect) {
         correctAnswers.value++
-        playSuccessSound()
         showSuccess("RÉPONSE CORRECTE !", currentTestData.result)
     } else {
-        playErrorSound()
-        showError("RÉPONSE INCORRECTE", "Essayez de mieux écouter le son.")
+        showError("RÉPONSE INCORRECTE", "Vous devez avoir la bonne réponse pour continuer. Réécoutez le son et réessayez.")
+        // Réinitialiser pour permettre une nouvelle tentative
+        setTimeout(() => {
+            selectedAnswer.value = null
+            hasPlayed.value = false
+            showResults.value = false
+        }, 3000)
     }
 }
 
@@ -423,7 +414,6 @@ const nextTest = () => {
         const successRate = (correctAnswers.value / totalTests.value) * 100
         
         if (successRate >= 66) { // 2/3 ou plus
-            playSuccessSound()
             showSuccess(
                 "DIAGNOSTIC TERMINÉ !",
                 `Excellent diagnostic ! ${Math.round(successRate)}% de réussite.`
@@ -433,7 +423,6 @@ const nextTest = () => {
                 emit('room-completed', 'audition')
             }, 2000)
         } else {
-            playErrorSound()
             showError(
                 "DIAGNOSTIC INCOMPLET",
                 `Seulement ${Math.round(successRate)}% de réussite. Recommencez le diagnostic.`
@@ -452,49 +441,6 @@ const resetDiagnostic = () => {
     hasPlayed.value = false
     showResults.value = false
     correctAnswers.value = 0
-}
-
-// Sons de feedback
-const playSuccessSound = async () => {
-    try {
-        await initAudioContext()
-        const oscillator = audioContext.value.createOscillator()
-        const gainNode = audioContext.value.createGain()
-        
-        oscillator.frequency.setValueAtTime(800, audioContext.value.currentTime)
-        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.value.currentTime + 0.5)
-        gainNode.gain.setValueAtTime(0.3, audioContext.value.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.value.currentTime + 0.5)
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.value.destination)
-        
-        oscillator.start()
-        oscillator.stop(audioContext.value.currentTime + 0.5)
-    } catch (error) {
-        console.error('Erreur son succès:', error)
-    }
-}
-
-const playErrorSound = async () => {
-    try {
-        await initAudioContext()
-        const oscillator = audioContext.value.createOscillator()
-        const gainNode = audioContext.value.createGain()
-        
-        oscillator.frequency.setValueAtTime(200, audioContext.value.currentTime)
-        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.value.currentTime + 0.3)
-        gainNode.gain.setValueAtTime(0.2, audioContext.value.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.value.currentTime + 0.3)
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.value.destination)
-        
-        oscillator.start()
-        oscillator.stop(audioContext.value.currentTime + 0.3)
-    } catch (error) {
-        console.error('Erreur son erreur:', error)
-    }
 }
 
 // Fonction pour afficher un indice
