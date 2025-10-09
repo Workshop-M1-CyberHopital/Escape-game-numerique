@@ -1,0 +1,67 @@
+# ===========================================
+# RBAC for cert-manager
+# ===========================================
+# Ce fichier définit les permissions RBAC nécessaires à cert-manager
+# afin qu'il puisse :
+#   - créer et gérer les objets de type Certificate, CertificateRequest, etc.
+#   - accéder aux Secrets pour stocker les certificats TLS générés
+#   - approuver automatiquement les CertificateRequests via les Signers
+# ===========================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager
+rules:
+  # Permissions principales pour cert-manager.io
+  # Permet la gestion complète des certificats et des requêtes associées
+  - apiGroups: ["cert-manager.io"]
+    resources:
+      - certificaterequests
+      - certificates
+      - orders
+      - challenges
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+
+  # Autorisation spécifique pour approuver automatiquement les demandes de certificat
+  - apiGroups: ["cert-manager.io"]
+    resources:
+      - signers
+    verbs:
+      - approve  # autorise cert-manager à approuver des CertificateRequests
+
+  # Accès aux secrets pour stocker et mettre à jour les certificats TLS
+  - apiGroups: [""]
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+
+---
+# ClusterRoleBinding
+# Lie le rôle ClusterRole défini ci-dessus au ServiceAccount de cert-manager situé dans le namespace "cert-manager"
+# Cela permet au pod cert-manager d’exécuter les actions autorisées globalement sur le cluster
+# ===========================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-manager
+subjects:
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
