@@ -1,91 +1,136 @@
 <template>
     <GameRoom :room-data="roomData" @exit-room="$emit('exit-room')">
         <div class="space-y-6">
-            <!-- Instructions simplifiées -->
+            <!-- Instructions du mini-jeu -->
             <div
                 class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-8 scanline text-center"
             >
                 <div class="flex items-center justify-center gap-3 mb-6">
-                    <i data-lucide="volume-2" class="w-8 h-8 text-cyber-purple"></i>
+                    <i data-lucide="activity" class="w-8 h-8 text-cyber-purple"></i>
                     <h3 class="font-cyber font-bold text-cyber-purple text-2xl">
-                        RÉPARATION AUDIO SIMPLE
+                        DIAGNOSTIC AUDITIF INTERACTIF
                     </h3>
                 </div>
                 <p class="text-gray-300 mb-8 text-lg">
-                    Écoutez le son et ajustez le volume pour le restaurer !
+                    Testez l'audition du patient en identifiant les sons corrects !
                 </p>
                 
-                <!-- Activation audio simple -->
+                <!-- Activation audio -->
                 <div v-if="!audioContext" class="bg-cyber-purple/20 border border-cyber-purple/50 rounded-lg p-6 mb-8">
                     <button
                         @click="activateAudio"
                         class="bg-cyber-purple hover:bg-cyber-purple/80 text-white px-10 py-5 rounded-lg font-bold text-xl transition-colors duration-300 flex items-center gap-4 mx-auto"
                     >
                         <i data-lucide="volume-2" class="w-8 h-8"></i>
-                        ACTIVER L'AUDIO
+                        DÉMARRER LE DIAGNOSTIC
                     </button>
                 </div>
             </div>
 
-            <!-- Contrôle audio simple -->
-            <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-8 scanline"
-            >
-            <div class="text-center mb-8">
-                <h3 class="text-cyber-purple font-bold text-2xl mb-6">
-                    VOLUME AUDIO
-                </h3>
-                
-                <!-- Contrôle de volume simple -->
-                <div class="max-w-lg mx-auto">
-                    <div class="mb-6">
-                        <input
-                            v-model="audioVolume"
-                            type="range"
-                            min="0"
-                            max="100"
-                            step="1"
-                            class="w-full h-4 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                            style="background: linear-gradient(to right, #8b5cf6 0%, #8b5cf6 var(--value, 50%), #374151 var(--value, 50%), #374151 100%);"
-                            :style="{ '--value': audioVolume + '%' }"
-                        />
+            <!-- Mini-jeu d'audiogramme -->
+            <div v-if="audioContext" class="space-y-6">
+                <!-- Progression du test -->
+                <div class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-yellow rounded-lg p-6 scanline">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="target" class="w-5 h-5 text-cyber-yellow"></i>
+                            <span class="text-cyber-yellow font-bold">PROGRESSION DU TEST</span>
+                        </div>
+                        <div class="text-cyber-yellow font-bold">
+                            {{ currentTest + 1 }} / {{ totalTests }}
+                        </div>
                     </div>
-                    <div class="text-cyber-purple font-bold text-2xl">
-                        {{ audioVolume }}%
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div 
+                            class="bg-cyber-yellow h-3 rounded-full transition-all duration-500"
+                            :style="{ width: ((currentTest + 1) / totalTests * 100) + '%' }"
+                        ></div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Boutons de contrôle -->
-            <div class="flex items-center justify-center gap-8">
-                <button
-                    @click="playTestSound"
-                    class="bg-cyber-purple hover:bg-cyber-purple/80 text-white px-10 py-5 rounded-lg font-bold text-xl transition-colors duration-300 flex items-center gap-4"
-                >
-                    <i data-lucide="play" class="w-6 h-6"></i>
-                    ÉCOUTER
-                </button>
-                <button
-                    @click="validateAudio"
-                    class="bg-cyber-green hover:bg-cyber-green/80 text-white px-10 py-5 rounded-lg font-bold text-xl transition-colors duration-300 flex items-center gap-4"
-                >
-                    <i data-lucide="check" class="w-6 h-6"></i>
-                    VALIDER
-                </button>
-            </div>
-        </div>
 
-            <!-- Progression -->
-            <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-yellow rounded-lg p-6 scanline"
-            >
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="target" class="w-5 h-5 text-cyber-yellow"></i>
-                        <span class="text-cyber-yellow font-bold">PROGRESSION</span>
+                <!-- Interface du test -->
+                <div class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-8 scanline">
+                    <div class="text-center mb-8">
+                        <h3 class="text-cyber-purple font-bold text-2xl mb-4">
+                            {{ testData[currentTest]?.title }}
+                        </h3>
+                        <p class="text-gray-300 mb-6">
+                            {{ testData[currentTest]?.description }}
+                        </p>
+                        
+                        <!-- Visualisation audio -->
+                        <div class="mb-8">
+                            <div class="flex justify-center items-end gap-2 h-32">
+                                <div 
+                                    v-for="(bar, index) in audioBars" 
+                                    :key="index"
+                                    class="bg-cyber-purple rounded-t transition-all duration-100"
+                                    :style="{ 
+                                        height: bar + '%', 
+                                        width: '8px',
+                                        opacity: isPlaying ? 1 : 0.3
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-cyber-yellow font-bold">
-                        {{ audioVolume }}% / 100%
+                    
+                    <!-- Boutons de contrôle -->
+                    <div class="flex items-center justify-center gap-8 mb-8">
+                        <button
+                            @click="playTestSound"
+                            :disabled="isPlaying"
+                            class="bg-cyber-purple hover:bg-cyber-purple/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-10 py-5 rounded-lg font-bold text-xl transition-colors duration-300 flex items-center gap-4"
+                        >
+                            <i data-lucide="play" class="w-6 h-6"></i>
+                            {{ isPlaying ? 'EN COURS...' : 'ÉCOUTER LE SON' }}
+                        </button>
+                    </div>
+
+                    <!-- Options de réponse -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button
+                            v-for="(option, index) in testData[currentTest]?.options"
+                            :key="index"
+                            @click="selectAnswer(index)"
+                            :disabled="!hasPlayed"
+                            :class="[
+                                'p-6 rounded-lg border-2 transition-all duration-300 font-bold text-lg',
+                                selectedAnswer === index 
+                                    ? 'border-cyber-green bg-cyber-green/20 text-cyber-green' 
+                                    : 'border-gray-600 hover:border-cyber-purple text-gray-300 hover:text-cyber-purple',
+                                !hasPlayed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                            ]"
+                        >
+                            <div class="flex items-center gap-3">
+                                <i :data-lucide="option.icon" class="w-6 h-6"></i>
+                                {{ option.text }}
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Résultats du test -->
+                <div v-if="showResults" class="bg-gray-800/60 backdrop-blur-md border-2 rounded-lg p-6 scanline" 
+                     :class="selectedAnswer === testData[currentTest]?.correctAnswer ? 'border-cyber-green' : 'border-red-500'">
+                    <div class="text-center">
+                        <div class="flex items-center justify-center gap-3 mb-4">
+                            <i :data-lucide="selectedAnswer === testData[currentTest]?.correctAnswer ? 'check-circle' : 'x-circle'" 
+                               :class="selectedAnswer === testData[currentTest]?.correctAnswer ? 'w-8 h-8 text-cyber-green' : 'w-8 h-8 text-red-500'"></i>
+                            <h3 :class="selectedAnswer === testData[currentTest]?.correctAnswer ? 'text-cyber-green font-bold text-2xl' : 'text-red-500 font-bold text-2xl'">
+                                {{ selectedAnswer === testData[currentTest]?.correctAnswer ? 'RÉPONSE CORRECTE !' : 'RÉPONSE INCORRECTE' }}
+                            </h3>
+                        </div>
+                        <p class="text-gray-300 mb-6">
+                            {{ selectedAnswer === testData[currentTest]?.correctAnswer ? testData[currentTest]?.result : 'Vous devez avoir la bonne réponse pour continuer. Réécoutez le son et réessayez.' }}
+                        </p>
+                        <button
+                            v-if="selectedAnswer === testData[currentTest]?.correctAnswer"
+                            @click="nextTest"
+                            class="bg-cyber-green hover:bg-cyber-green/80 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors duration-300"
+                        >
+                            {{ currentTest < totalTests - 1 ? 'TEST SUIVANT' : 'TERMINER LE DIAGNOSTIC' }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -101,14 +146,13 @@
 
                 <div class="space-y-2 text-sm text-gray-300">
                     <div v-if="hintsShown >= 1" class="fade-in">
-                        💡 Le volume doit être ajusté pour être audible mais pas trop fort.
+                        💡 Écoutez attentivement chaque son avant de répondre.
                     </div>
                     <div v-if="hintsShown >= 2" class="fade-in">
-                        💡 Le volume optimal se situe dans une plage spécifique.
+                        💡 Les sons médicaux ont des caractéristiques spécifiques (rythme, fréquence, intensité).
                     </div>
                     <div v-if="hintsShown >= 3" class="fade-in">
-                        💡 Réponse : Ajustez le volume entre 
-                        <span class="text-cyber-green font-bold">80% et 100%</span> pour réussir !
+                        💡 Concentrez-vous sur le rythme et la régularité des sons.
                     </div>
                 </div>
 
@@ -125,34 +169,74 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import GameRoom from '../GameRoom.vue'
 import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
 
 const emit = defineEmits(['exit-room', 'room-completed'])
-const { completeRoom, addError, addHint } = useGameState()
+const { completeRoom, addError, addHint, PENALTY_PER_ERROR } = useGameState()
 const { showSuccess, showError, showWarning, showInfo } = useToast()
 
 const roomData = {
     title: "SALLE DE L'AUDITION",
-    subtitle: "Réparation du système audio ORL",
-    description:
-        "Le virus a corrompu le système audio ORL. Réparez-le en ajustant le volume.",
-    objective: "Ajuster le volume pour restaurer l'audio",
+    subtitle: "Diagnostic auditif interactif",
+    description: "Testez l'audition du patient en identifiant les sons médicaux corrects.",
+    objective: "Identifier les sons médicaux pour diagnostiquer l'audition",
     icon: "volume-2",
     color: "#8b5cf6",
 };
 
 // Variables réactives
-const audioVolume = ref(50)
 const audioContext = ref(null)
-const isCompleted = ref(false)
-const errors = ref(0)
+const currentTest = ref(0)
+const selectedAnswer = ref(null)
+const hasPlayed = ref(false)
+const showResults = ref(false)
+const isPlaying = ref(false)
 const hintsShown = ref(0)
+const correctAnswers = ref(0)
 
-// AudioContext et oscillateurs
-let oscillators = {}
+// Données des tests d'audiogramme
+const testData = ref([
+    {
+        title: "Test 1: Battements cardiaques",
+        description: "Écoutez ce son et identifiez s'il s'agit de battements cardiaques normaux ou anormaux.",
+        soundType: "heartbeat",
+        correctAnswer: 0,
+        options: [
+            { text: "Battements normaux", icon: "heart" },
+            { text: "Battements irréguliers", icon: "activity" }
+        ],
+        result: "Excellent ! Vous avez identifié correctement les battements cardiaques normaux."
+    },
+    {
+        title: "Test 2: Respiration",
+        description: "Identifiez le type de respiration que vous entendez.",
+        soundType: "breathing",
+        correctAnswer: 1,
+        options: [
+            { text: "Respiration normale", icon: "wind" },
+            { text: "Respiration sifflante", icon: "zap" }
+        ],
+        result: "Parfait ! Vous avez détecté la respiration sifflante, signe d'un problème respiratoire."
+    },
+    {
+        title: "Test 3: Sons de l'oreille",
+        description: "Écoutez attentivement et déterminez la nature de ce son auditif.",
+        soundType: "ear",
+        correctAnswer: 0,
+        options: [
+            { text: "Acouphènes (bourdonnement)", icon: "volume-x" },
+            { text: "Son normal", icon: "volume-2" }
+        ],
+        result: "Bravo ! Vous avez identifié les acouphènes, un symptôme important à traiter."
+    }
+])
+
+// Variables calculées
+const totalTests = computed(() => testData.value.length)
+const audioBars = ref(Array(20).fill(0))
 
 // Initialiser l'AudioContext
 const initAudioContext = async () => {
@@ -168,10 +252,6 @@ const initAudioContext = async () => {
 const activateAudio = async () => {
     try {
         await initAudioContext()
-        showSuccess(
-            "AUDIO ACTIVÉ",
-            "L'audio est maintenant activé. Vous pouvez tester le son."
-        )
     } catch (error) {
         console.error('Erreur activation audio:', error)
         showError(
@@ -181,128 +261,236 @@ const activateAudio = async () => {
     }
 }
 
-// Jouer un son de test simple
+// Générer des barres audio animées
+const animateAudioBars = () => {
+    const interval = setInterval(() => {
+        if (isPlaying.value) {
+            audioBars.value = audioBars.value.map(() => Math.random() * 100)
+        } else {
+            clearInterval(interval)
+        }
+    }, 100)
+}
+
+// Jouer un son de test selon le type
 const playTestSound = async () => {
     try {
         await initAudioContext()
+        isPlaying.value = true
+        hasPlayed.value = true
+        animateAudioBars()
         
-        // Arrêter tous les oscillateurs existants
-        Object.values(oscillators).forEach(osc => {
-            if (osc) {
-                osc.stop()
-                osc.disconnect()
-            }
-        })
-        oscillators = {}
+        const currentTestData = testData.value[currentTest.value]
+        const duration = 3 // 3 secondes
         
-        // Créer un son simple basé sur le volume
-        const oscillator = audioContext.value.createOscillator()
-        const gainNode = audioContext.value.createGain()
+        console.log('Jouer son:', currentTestData.soundType) // Debug
         
-        oscillator.type = 'sine'
-        oscillator.frequency.setValueAtTime(440, audioContext.value.currentTime) // La note A4
-        gainNode.gain.setValueAtTime(audioVolume.value / 100 * 0.3, audioContext.value.currentTime)
+        // Créer des sons différents selon le type de test
+        switch (currentTestData.soundType) {
+            case 'heartbeat':
+                playHeartbeatSound(duration)
+                break
+            case 'breathing':
+                playBreathingSound(duration)
+                break
+            case 'ear':
+                playEarSound(duration)
+                break
+        }
         
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.value.destination)
+        setTimeout(() => {
+            isPlaying.value = false
+        }, duration * 1000)
         
-        oscillator.start()
-        oscillator.stop(audioContext.value.currentTime + 1) // 1 seconde
     } catch (error) {
         console.error('Erreur audio:', error)
-        showError(
-            "ERREUR AUDIO",
-            "Impossible de jouer l'audio. Vérifiez les permissions du navigateur."
-        )
+        showError("ERREUR AUDIO", "Impossible de jouer l'audio.")
+        isPlaying.value = false
     }
 }
 
-// Valider l'audio
-const validateAudio = () => {
-    // Le volume doit être entre 80 et 100 pour réussir
-    const targetMin = 80
-    const targetMax = 100
+// Son de battements cardiaques
+const playHeartbeatSound = async (duration) => {
+    try {
+        // Créer un élément audio pour jouer le MP3
+        const audio = new Audio('/battement_de_coeur.mp3')
+        audio.volume = 0.8 // Volume élevé
+        audio.loop = true // Boucle pour la durée du test
+        
+        // Jouer l'audio
+        await audio.play()
+        
+        // Arrêter après la durée spécifiée
+        setTimeout(() => {
+            audio.pause()
+            audio.currentTime = 0
+        }, duration * 1000)
+        
+    } catch (error) {
+        console.error('Erreur lecture MP3:', error)
+        showError("ERREUR AUDIO", "Impossible de jouer le fichier audio.")
+    }
+}
+
+// Son de respiration
+const playBreathingSound = async (duration) => {
+    // Créer plusieurs oscillateurs pour un son plus complexe et réaliste
+    const oscillators = []
+    const gainNodes = []
     
-    if (audioVolume.value >= targetMin && audioVolume.value <= targetMax) {
-        // Succès !
-        playSuccessSound()
-        showSuccess(
-            "AUDIO CORRECT !",
-            `Excellent ! Volume optimal à ${audioVolume.value}%.`
-        )
+    // Fréquences multiples pour simuler le bruit de respiration
+    const frequencies = [80, 120, 160, 200] // Harmoniques naturelles
+    const amplitudes = [0.3, 0.2, 0.15, 0.1] // Amplitudes décroissantes
+    
+    for (let i = 0; i < frequencies.length; i++) {
+        const osc = audioContext.value.createOscillator()
+        const gain = audioContext.value.createGain()
         
-        setTimeout(() => {
-            isCompleted.value = true
-            completeRoom('audition')
-            emit('room-completed', 'audition')
-        }, 2000)
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(frequencies[i], audioContext.value.currentTime)
+        gain.gain.setValueAtTime(0, audioContext.value.currentTime)
+        
+        osc.connect(gain)
+        gain.connect(audioContext.value.destination)
+        
+        oscillators.push(osc)
+        gainNodes.push(gain)
+    }
+    
+    // Créer un cycle de respiration réaliste
+    const breathCycles = Math.floor(duration * 0.6) // 0.6 cycles par seconde (plus lent)
+    for (let i = 0; i < breathCycles; i++) {
+        const cycleStart = audioContext.value.currentTime + i * 1.6 // 1.6 secondes par cycle
+        
+        // Inspiration (2 secondes)
+        for (let j = 0; j < 20; j++) {
+            const time = cycleStart + j * 0.1
+            const progress = j / 20
+            const breathIntensity = Math.sin(progress * Math.PI) // Courbe sinusoïdale
+            
+            gainNodes.forEach((gain, index) => {
+                gain.gain.setValueAtTime(
+                    amplitudes[index] * breathIntensity * 0.4, 
+                    time
+                )
+            })
+        }
+        
+        // Pause (0.3 secondes)
+        gainNodes.forEach(gain => {
+            gain.gain.setValueAtTime(0.02, cycleStart + 2.0)
+        })
+        
+        // Expiration (1.3 secondes)
+        for (let j = 0; j < 13; j++) {
+            const time = cycleStart + 2.3 + j * 0.1
+            const progress = j / 13
+            const breathIntensity = Math.sin(progress * Math.PI) // Courbe sinusoïdale
+            
+            gainNodes.forEach((gain, index) => {
+                gain.gain.setValueAtTime(
+                    amplitudes[index] * breathIntensity * 0.3, 
+                    time
+                )
+            })
+        }
+    }
+    
+    // Démarrer tous les oscillateurs
+    oscillators.forEach(osc => {
+        osc.start()
+        osc.stop(audioContext.value.currentTime + duration)
+    })
+}
+
+// Son d'acouphènes
+const playEarSound = async (duration) => {
+    const oscillator = audioContext.value.createOscillator()
+    const gainNode = audioContext.value.createGain()
+    
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(8000, audioContext.value.currentTime) // Fréquence aiguë
+    gainNode.gain.setValueAtTime(0, audioContext.value.currentTime)
+    
+    // Variation de fréquence pour simuler les acouphènes
+    for (let i = 0; i < duration * 10; i++) {
+        const time = audioContext.value.currentTime + i * 0.1
+        oscillator.frequency.setValueAtTime(7500 + Math.random() * 1000, time)
+        gainNode.gain.setValueAtTime(0.15, time)
+    }
+    
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.value.destination)
+    
+    oscillator.start()
+    oscillator.stop(audioContext.value.currentTime + duration)
+}
+
+// Sélectionner une réponse
+const selectAnswer = (answerIndex) => {
+    if (!hasPlayed.value) return
+    
+    selectedAnswer.value = answerIndex
+    showResults.value = true
+    
+    const currentTestData = testData.value[currentTest.value]
+    const isCorrect = answerIndex === currentTestData.correctAnswer
+    
+    if (isCorrect) {
+        correctAnswers.value++
+        showSuccess("RÉPONSE CORRECTE !", currentTestData.result)
     } else {
-        // Erreur
-        playErrorSound()
-        errors.value++
+        // Ajouter une pénalité pour la mauvaise réponse
         addError('audition')
-        showError(
-            "VOLUME INCORRECT !",
-            `Volume ${audioVolume.value}% incorrect. Le volume doit être entre 80% et 100%.`
-        )
-        
+        showError("RÉPONSE INCORRECTE", `Vous devez avoir la bonne réponse pour continuer. Réécoutez le son et réessayez. +${PENALTY_PER_ERROR}s de pénalité`)
+        // Réinitialiser pour permettre une nouvelle tentative
         setTimeout(() => {
-            resetAudio()
+            selectedAnswer.value = null
+            hasPlayed.value = false
+            showResults.value = false
         }, 3000)
     }
 }
 
-// Jouer un son de succès
-const playSuccessSound = async () => {
-    try {
-        await initAudioContext()
-        const oscillator = audioContext.value.createOscillator()
-        const gainNode = audioContext.value.createGain()
+// Passer au test suivant
+const nextTest = () => {
+    if (currentTest.value < totalTests.value - 1) {
+        currentTest.value++
+        selectedAnswer.value = null
+        hasPlayed.value = false
+        showResults.value = false
+    } else {
+        // Terminer le diagnostic
+        const successRate = (correctAnswers.value / totalTests.value) * 100
         
-        oscillator.frequency.setValueAtTime(800, audioContext.value.currentTime)
-        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.value.currentTime + 0.5)
-        gainNode.gain.setValueAtTime(0.3, audioContext.value.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.value.currentTime + 0.5)
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.value.destination)
-        
-        oscillator.start()
-        oscillator.stop(audioContext.value.currentTime + 0.5)
-    } catch (error) {
-        console.error('Erreur son succès:', error)
+        if (successRate >= 66) { // 2/3 ou plus
+            showSuccess(
+                "DIAGNOSTIC TERMINÉ !",
+                `Excellent diagnostic ! ${Math.round(successRate)}% de réussite.`
+            )
+            setTimeout(() => {
+                completeRoom('audition')
+                emit('room-completed', 'audition')
+            }, 2000)
+        } else {
+            showError(
+                "DIAGNOSTIC INCOMPLET",
+                `Seulement ${Math.round(successRate)}% de réussite. Recommencez le diagnostic.`
+            )
+            setTimeout(() => {
+                resetDiagnostic()
+            }, 3000)
+        }
     }
 }
 
-// Jouer un son d'erreur
-const playErrorSound = async () => {
-    try {
-        await initAudioContext()
-        const oscillator = audioContext.value.createOscillator()
-        const gainNode = audioContext.value.createGain()
-        
-        oscillator.frequency.setValueAtTime(200, audioContext.value.currentTime)
-        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.value.currentTime + 0.3)
-        gainNode.gain.setValueAtTime(0.2, audioContext.value.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.value.currentTime + 0.3)
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.value.destination)
-        
-        oscillator.start()
-        oscillator.stop(audioContext.value.currentTime + 0.3)
-    } catch (error) {
-        console.error('Erreur son erreur:', error)
-    }
-}
-
-// Réinitialiser l'audio
-const resetAudio = () => {
-    audioVolume.value = 50 // Remettre à 50%
-    showInfo(
-        "AUDIO RÉINITIALISÉ",
-        "Le volume a été remis à 50%. Ajustez-le entre 80% et 100% pour réussir."
-    )
+// Réinitialiser le diagnostic
+const resetDiagnostic = () => {
+    currentTest.value = 0
+    selectedAnswer.value = null
+    hasPlayed.value = false
+    showResults.value = false
+    correctAnswers.value = 0
 }
 
 // Fonction pour afficher un indice
@@ -313,20 +501,16 @@ const showHint = () => {
 
 onMounted(() => {
     showInfo(
-        "RÉPARATION AUDIO SIMPLE",
-        "Ajustez le volume pour restaurer l'audio. Une erreur vous obligera à recommencer !"
+        "DIAGNOSTIC AUDITIF INTERACTIF",
+        "Écoutez attentivement chaque son et identifiez sa nature pour diagnostiquer l'audition du patient."
     )
 })
 
 onUnmounted(() => {
     // Nettoyer l'audio
-    Object.values(oscillators).forEach(osc => {
-        if (osc) {
-            osc.stop()
-            osc.disconnect()
-        }
-    })
-    oscillators = {}
+    if (audioContext.value) {
+        audioContext.value.close()
+    }
 })
 </script>
 
