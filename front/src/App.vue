@@ -1292,6 +1292,19 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations FinalRoom...",
         );
         await playFinishFinalRoomAudio();
+    } else if (roomId === "final" && !hasPlayedFinishFinalRoomAudio.value) {
+        console.log("❌ Conditions FinalRoom non remplies:", {
+            hasPlayedFinishFinalRoomAudio: hasPlayedFinishFinalRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+        });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin FinalRoom...");
+        showFinishFinalRoomBriefing.value = true;
+        hasPlayedFinishFinalRoomAudio.value = true;
+        setTimeout(() => {
+            showFinishFinalRoomBriefing.value = false;
+        }, 33000); // 33 secondes
     }
 
     // Attendre que le DOM soit mis à jour
