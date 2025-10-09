@@ -10,6 +10,18 @@
 # ==========================================================
 
 ---
+# === Middleware redirigeant HTTP->HTTPS sauf pour ACME ===
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-to-https-except-acme
+spec:
+  redirectRegex:
+    regex: ^(?!/\.well-known/acme-challenge/).*$
+    replacement: https://$${host}$${requestURI}
+    permanent: true
+
+---
 # === Service : Traefik LoadBalancer =========================
 # Expose Traefik avec une IP publique statique créée sur Azure
 # ==========================================================
@@ -117,7 +129,8 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     # Middleware whitelist modifiée
-    traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd
+    # traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd # commenté pour la redirection acme
+    traefik.ingress.kubernetes.io/router.middlewares: redirect-to-https-except-acme@kubernetescrd # remplace le whitelist middleware
     cert-manager.io/issuer: letsencrypt-http
     cert-manager.io/issuer-kind: ClusterIssuer
     cert-manager.io/issuer-group: cert-manager.io
