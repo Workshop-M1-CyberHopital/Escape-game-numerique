@@ -157,6 +157,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import GameRoom from '../GameRoom.vue'
+import { createFireworks } from '../../utils/fireworks'
 import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
 
@@ -324,6 +325,7 @@ const handleDrop = (event, cureIndex) => {
             
             // Vérifier si toutes les correspondances sont faites
             if (correctMatches.value === pathologies.value.length) {
+                createFireworks(3000)
                 setTimeout(() => {
                     showSuccess(
                         "DIAGNOSTIC MÉDICAL TERMINÉ !",

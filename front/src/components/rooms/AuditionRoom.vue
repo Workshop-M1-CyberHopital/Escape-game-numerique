@@ -171,6 +171,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import GameRoom from '../GameRoom.vue'
+import { createFireworks } from '../../utils/fireworks'
 import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
 
@@ -464,6 +465,7 @@ const nextTest = () => {
         const successRate = (correctAnswers.value / totalTests.value) * 100
         
         if (successRate >= 66) { // 2/3 ou plus
+            createFireworks(3000)
             showSuccess(
                 "DIAGNOSTIC TERMINÉ !",
                 `Excellent diagnostic ! ${Math.round(successRate)}% de réussite.`

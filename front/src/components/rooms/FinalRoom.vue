@@ -279,6 +279,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import GameRoom from '../GameRoom.vue'
+import { createFireworks } from '../../utils/fireworks'
 import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
 
@@ -422,6 +423,8 @@ const completeSecurityStep = (index) => {
 
 // Terminer la salle finale
 const completeFinalRoom = () => {
+    createFireworks(3000)
+    
     showSuccess(
         "MISSION ACCOMPLIE !",
         "Félicitations ! Vous avez sauvé le patient et sécurisé ses données. La cyberattaque est définitivement vaincue !"
