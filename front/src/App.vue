@@ -1223,6 +1223,19 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations ServerRoom...",
         );
         await playFinishServerRoomAudio();
+    } else if (roomId === "server" && !hasPlayedFinishServerRoomAudio.value) {
+        console.log("❌ Conditions ServerRoom non remplies:", {
+            hasPlayedFinishServerRoomAudio: hasPlayedFinishServerRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+        });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin ServerRoom...");
+        showFinishServerRoomBriefing.value = true;
+        hasPlayedFinishServerRoomAudio.value = true;
+        setTimeout(() => {
+            showFinishServerRoomBriefing.value = false;
+        }, 30000); // 30 secondes
     }
 
     // Si c'est la salle DNARoom, jouer l'audio de félicitations
@@ -1239,11 +1252,19 @@ const handleRoomCompleted = async (roomId) => {
     ) {
         console.log("🎵 Déclenchement de l'audio de félicitations DNARoom...");
         await playFinishDNARoomAudio();
-    } else if (roomId === "dna-lab") {
+    } else if (roomId === "dna-lab" && !hasPlayedFinishDNARoomAudio.value) {
         console.log("❌ Conditions DNARoom non remplies:", {
             hasPlayedFinishDNARoomAudio: hasPlayedFinishDNARoomAudio.value,
             audioStateEnabled: audioState.isEnabled,
         });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin DNARoom...");
+        showFinishDNARoomBriefing.value = true;
+        hasPlayedFinishDNARoomAudio.value = true;
+        setTimeout(() => {
+            showFinishDNARoomBriefing.value = false;
+        }, 38000); // 38 secondes
     }
 
     // Si c'est la salle ImagingRoom, jouer l'audio de félicitations
@@ -1256,6 +1277,19 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations ImagingRoom...",
         );
         await playFinishImagingRoomAudio();
+    } else if (roomId === "imaging" && !hasPlayedFinishImagingRoomAudio.value) {
+        console.log("❌ Conditions ImagingRoom non remplies:", {
+            hasPlayedFinishImagingRoomAudio: hasPlayedFinishImagingRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+        });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin ImagingRoom...");
+        showFinishImagingRoomBriefing.value = true;
+        hasPlayedFinishImagingRoomAudio.value = true;
+        setTimeout(() => {
+            showFinishImagingRoomBriefing.value = false;
+        }, 33000); // 33 secondes
     }
 
     // Si c'est la salle PathologyRoom, jouer l'audio de félicitations
@@ -1268,6 +1302,19 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations PathologyRoom...",
         );
         await playFinishPathologyRoomAudio();
+    } else if (roomId === "pathology" && !hasPlayedFinishPathologyRoomAudio.value) {
+        console.log("❌ Conditions PathologyRoom non remplies:", {
+            hasPlayedFinishPathologyRoomAudio: hasPlayedFinishPathologyRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+        });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin PathologyRoom...");
+        showFinishPathologyRoomBriefing.value = true;
+        hasPlayedFinishPathologyRoomAudio.value = true;
+        setTimeout(() => {
+            showFinishPathologyRoomBriefing.value = false;
+        }, 33000); // 33 secondes
     }
 
     // Si c'est la salle AuditionRoom, jouer l'audio de félicitations
@@ -1280,6 +1327,19 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations AuditionRoom...",
         );
         await playFinishAuditionRoomAudio();
+    } else if (roomId === "audition" && !hasPlayedFinishAuditionRoomAudio.value) {
+        console.log("❌ Conditions AuditionRoom non remplies:", {
+            hasPlayedFinishAuditionRoomAudio: hasPlayedFinishAuditionRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+        });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin AuditionRoom...");
+        showFinishAuditionRoomBriefing.value = true;
+        hasPlayedFinishAuditionRoomAudio.value = true;
+        setTimeout(() => {
+            showFinishAuditionRoomBriefing.value = false;
+        }, 33000); // 33 secondes
     }
 
     // Si c'est la salle FinalRoom, jouer l'audio de félicitations
@@ -1292,6 +1352,19 @@ const handleRoomCompleted = async (roomId) => {
             "🎵 Déclenchement de l'audio de félicitations FinalRoom...",
         );
         await playFinishFinalRoomAudio();
+    } else if (roomId === "final" && !hasPlayedFinishFinalRoomAudio.value) {
+        console.log("❌ Conditions FinalRoom non remplies:", {
+            hasPlayedFinishFinalRoomAudio: hasPlayedFinishFinalRoomAudio.value,
+            audioStateEnabled: audioState.isEnabled,
+        });
+
+        // Afficher le briefing de fin même sans audio
+        console.log("🧪 Affichage du briefing de fin FinalRoom...");
+        showFinishFinalRoomBriefing.value = true;
+        hasPlayedFinishFinalRoomAudio.value = true;
+        setTimeout(() => {
+            showFinishFinalRoomBriefing.value = false;
+        }, 33000); // 33 secondes
     }
 
     // Attendre que le DOM soit mis à jour

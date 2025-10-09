@@ -532,8 +532,11 @@ const checkColorTest = () => {
             "Parfait ! Vous avez identifié tous les chiffres. Le système de vision des couleurs est maintenant opérationnel.",
         );
 
-        completeRoom("eye");
-        emit("room-completed", "eye");
+        // Petit délai pour permettre au briefing de fin de s'afficher
+        setTimeout(() => {
+            completeRoom("eye");
+            emit("room-completed", "eye");
+        }, 300);
     } else {
         addError("eye");
 

@@ -443,9 +443,11 @@ const checkOrder = () => {
             "L'ordre est correct. Vous avez réussi à restaurer l'imagerie médicale.",
         );
 
-        completeRoom("imaging");
-        // Émettre directement l'événement room-completed comme ServerRoom et DNARoom
-        emit("room-completed", "imaging");
+        // Petit délai pour permettre au briefing de fin de s'afficher
+        setTimeout(() => {
+            completeRoom("imaging");
+            emit("room-completed", "imaging");
+        }, 300);
     } else {
         addError("imaging");
         showError(
