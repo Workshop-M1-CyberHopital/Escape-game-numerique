@@ -22,7 +22,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-resource-group: "MC_workshop-EISI_AKSClusterWorkshop_germanywestcentral"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 135.220.40.100   # remplacée par le script au moment du déploiement
+  loadBalancerIP: __PUBLIC_IP__   # remplacée par le script au moment du déploiement
   selector:
     app.kubernetes.io/name: traefik
   ports:
