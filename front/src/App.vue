@@ -1073,9 +1073,11 @@ const handleRoomCompleted = async (roomId) => {
     } else if (roomId === "imaging") {
         unlockRoom("prosthesis");
     } else if (roomId === "prosthesis") {
+        unlockRoom("pathology");
+    } else if (roomId === "pathology") {
+        unlockRoom("audition");
+    } else if (roomId === "audition") {
         unlockRoom("eye");
-    } else if (roomId === "eye") {
-        unlockRoom("heart");
     }
 
     // Vérifier si le jeu est terminé
