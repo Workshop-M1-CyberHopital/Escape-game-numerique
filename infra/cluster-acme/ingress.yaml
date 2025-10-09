@@ -6,7 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd
+    # traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd
     # cert-manager.io/issuer: letsencrypt-http
     cert-manager.io/issuer-kind: ClusterIssuer
     cert-manager.io/issuer-group: cert-manager.io
