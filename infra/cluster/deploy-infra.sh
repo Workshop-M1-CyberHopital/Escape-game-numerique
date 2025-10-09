@@ -242,12 +242,33 @@ deploy_workshop() {
 
   kubectl rollout status deployment/cert-manager -n cert-manager --timeout=120s || true
 
-  separator
-  echo "Installation du webhook Gandi (version custom produn)..."
-  helm uninstall cert-manager-webhook-gandi -n cert-manager --ignore-not-found
+    separator
+    separator
+  echo "Génération d’un certificat TLS auto-signé pour le webhook Gandi..."
+  
+  # Suppression d’anciens fichiers si présents
+  rm -f tls.key tls.crt
+
+  # Génération du certificat auto-signé (compatible Git Bash / Linux / WSL)
+  if [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
+    openssl req -x509 -newkey rsa:2048 -nodes \
+      -keyout tls.key -out tls.crt -subj "//CN=cert-manager-webhook-gandi.cert-manager.svc"
+  else
+    openssl req -x509 -newkey rsa:2048 -nodes \
+      -keyout tls.key -out tls.crt -subj "/CN=cert-manager-webhook-gandi.cert-manager.svc"
+  fi
+
+  # Création du secret TLS dans le namespace cert-manager
+  echo "Création du secret cert-manager-webhook-tls..."
+  kubectl create secret tls cert-manager-webhook-tls \
+    --cert=tls.crt --key=tls.key -n cert-manager --dry-run=client -o yaml | kubectl apply -f -
+
+  # Nettoyage local (optionnel)
+  rm -f tls.key tls.crt
 
   separator
   echo "Déploiement du webhook Gandi (image custom produn)..."
+  helm uninstall cert-manager-webhook-gandi -n cert-manager --ignore-not-found
   kubectl apply -f webhook-gandi.yaml
 
   echo "Attente de la disponibilité du webhook..."
