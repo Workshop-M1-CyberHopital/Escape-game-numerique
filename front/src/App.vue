@@ -122,6 +122,12 @@
                 @room-completed="handleRoomCompleted"
             />
 
+            <EyeRoom
+                v-if="gameState.currentRoom === 'eye'"
+                @exit-room="handleExitRoom"
+                @room-completed="handleRoomCompleted"
+            />
+
             <PathologyRoom
                 v-if="gameState.currentRoom === 'pathology'"
                 @exit-room="handleExitRoom"
@@ -243,7 +249,9 @@
         />
 
         <ImagingRoomBriefing
-            :visible="showImagingRoomBriefing && !isBriefingShown('imagingRoom')"
+            :visible="
+                showImagingRoomBriefing && !isBriefingShown('imagingRoom')
+            "
             @close="handleCloseImagingRoomBriefing"
         />
 
@@ -258,7 +266,9 @@
         />
 
         <PathologyRoomBriefing
-            :visible="showPathologyRoomBriefing && !isBriefingShown('pathologyRoom')"
+            :visible="
+                showPathologyRoomBriefing && !isBriefingShown('pathologyRoom')
+            "
             @close="handleClosePathologyRoomBriefing"
         />
 
@@ -268,7 +278,9 @@
         />
 
         <AuditionRoomBriefing
-            :visible="showAuditionRoomBriefing && !isBriefingShown('auditionRoom')"
+            :visible="
+                showAuditionRoomBriefing && !isBriefingShown('auditionRoom')
+            "
             @close="handleCloseAuditionRoomBriefing"
         />
 
@@ -338,6 +350,7 @@ import DNARoom from "./components/rooms/DNARoom.vue";
 import ImagingRoom from "./components/rooms/ImagingRoom.vue";
 import HeartRoom from "./components/rooms/HeartRoom.vue";
 import ProsthesisRoom from "./components/rooms/ProsthesisRoom.vue";
+import EyeRoom from "./components/rooms/EyeRoom.vue";
 import PathologyRoom from "./components/rooms/PathologyRoom.vue";
 import AuditionRoom from "./components/rooms/AuditionRoom.vue";
 import ToastContainer from "./components/ToastContainer.vue";
@@ -457,27 +470,33 @@ const activateAudio = async () => {
             await playRoomSelectionAudio();
         } else {
             console.log("❌ Permission audio refusée par l'utilisateur");
-            showError("Permission refusée", "L'audio ne peut pas être activé sans votre autorisation.");
+            showError(
+                "Permission refusée",
+                "L'audio ne peut pas être activé sans votre autorisation.",
+            );
         }
     } catch (error) {
         console.error("❌ Erreur lors de l'activation audio:", error);
-        showError("Erreur audio", "Impossible d'activer l'audio. Vérifiez vos paramètres de navigateur.");
+        showError(
+            "Erreur audio",
+            "Impossible d'activer l'audio. Vérifiez vos paramètres de navigateur.",
+        );
     }
 };
 
 // Fonction pour continuer sans audio mais avec le briefing
 const continueWithoutAudio = () => {
     console.log("🎵 Continuation sans audio - Affichage du briefing seulement");
-    
+
     // Masquer le bouton d'activation
     showAudioActivationButton.value = false;
-    
+
     // Marquer comme joué pour éviter la répétition
     hasPlayedRoomSelectionAudio.value = true;
-    
+
     // Afficher le briefing sans audio
     showAudioBriefing.value = true;
-    
+
     // Masquer le briefing après la durée normale (environ 60 secondes)
     setTimeout(() => {
         showAudioBriefing.value = false;
@@ -782,7 +801,10 @@ const playAuditionRoomAudio = async () => {
             showAuditionRoomBriefing.value = false;
         }, 33000); // 33 secondes
     } catch (error) {
-        console.error("❌ Erreur lors de la lecture du son AuditionRoom:", error);
+        console.error(
+            "❌ Erreur lors de la lecture du son AuditionRoom:",
+            error,
+        );
         showAuditionRoomBriefing.value = false;
     }
 };
@@ -872,16 +894,17 @@ const handleLoadingComplete = async () => {
         window.scrollTo({
             top: 0,
             left: 0,
-            behavior: "instant"
+            behavior: "instant",
         });
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
         document.documentElement.scrollLeft = 0;
         document.body.scrollLeft = 0;
-        
+
         // Vérifier si le scroll a fonctionné
         setTimeout(() => {
-            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            const currentScroll =
+                window.pageYOffset || document.documentElement.scrollTop;
             console.log("📍 Position actuelle:", currentScroll);
             if (currentScroll > 0) {
                 console.log("⚠️ Scroll non réussi, nouvelle tentative...");
@@ -940,7 +963,9 @@ const handleEnterRoom = async (roomId) => {
     ) {
         await playServerRoomAudio();
     } else if (roomId === "server" && !hasPlayedServerRoomAudio.value) {
-        console.log("🎵 Audio désactivé - Affichage du briefing Server Room sans audio");
+        console.log(
+            "🎵 Audio désactivé - Affichage du briefing Server Room sans audio",
+        );
         showServerRoomBriefing.value = true;
         hasPlayedServerRoomAudio.value = true;
         setTimeout(() => {
@@ -994,13 +1019,13 @@ const handleEnterRoom = async (roomId) => {
         }, 5000); // 5 secondes pour le test
     } else if (roomId === "pathology") {
         console.log("🎵 Affichage du briefing Pathology Room...");
-        if (!isBriefingShown('pathologyRoom')) {
+        if (!isBriefingShown("pathologyRoom")) {
             showPathologyRoomBriefing.value = true;
             hasPlayedPathologyRoomAudio.value = true;
         }
     } else if (roomId === "audition") {
         console.log("🎵 Affichage du briefing Audition Room...");
-        if (!isBriefingShown('auditionRoom')) {
+        if (!isBriefingShown("auditionRoom")) {
             showAuditionRoomBriefing.value = true;
             hasPlayedAuditionRoomAudio.value = true;
         }
@@ -1046,13 +1071,11 @@ const handleRoomCompleted = async (roomId) => {
     } else if (roomId === "dna-lab") {
         unlockRoom("imaging");
     } else if (roomId === "imaging") {
-        unlockRoom("heart");
-    } else if (roomId === "heart") {
         unlockRoom("prosthesis");
     } else if (roomId === "prosthesis") {
-        unlockRoom("pathology");
-    } else if (roomId === "pathology") {
-        unlockRoom("audition");
+        unlockRoom("eye");
+    } else if (roomId === "eye") {
+        unlockRoom("heart");
     }
 
     // Vérifier si le jeu est terminé
@@ -1281,11 +1304,15 @@ watch(
 
             // Afficher le bouton d'activation audio
             showAudioActivationButton.value = true;
-            console.log("🎵 Bouton d'activation audio affiché - Attente de l'action utilisateur");
-            
+            console.log(
+                "🎵 Bouton d'activation audio affiché - Attente de l'action utilisateur",
+            );
+
             // Forcer le scroll vers le haut
             setTimeout(() => {
-                console.log("🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles");
+                console.log(
+                    "🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles",
+                );
                 window.scrollTo({ top: 0, left: 0, behavior: "instant" });
                 document.documentElement.scrollTop = 0;
                 document.body.scrollTop = 0;
@@ -1294,15 +1321,17 @@ watch(
             // Si l'audio a déjà été joué, afficher directement le briefing
             console.log("🎵 Audio déjà joué - Affichage du briefing");
             showAudioBriefing.value = true;
-            
+
             // Forcer le scroll vers le haut
             setTimeout(() => {
-                console.log("🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles (audio déjà joué)");
+                console.log(
+                    "🔄 [Watcher] Scroll vers le haut lors de l'arrivée sur la sélection des salles (audio déjà joué)",
+                );
                 window.scrollTo({ top: 0, left: 0, behavior: "instant" });
                 document.documentElement.scrollTop = 0;
                 document.body.scrollTop = 0;
             }, 100);
-            
+
             // Masquer le briefing après la durée normale (environ 60 secondes)
             setTimeout(() => {
                 showAudioBriefing.value = false;
@@ -1317,7 +1346,7 @@ watch(
 
 onMounted(async () => {
     initAnimations();
-    
+
     // S'assurer que le jeu repart de zéro à chaque refresh
     resetGame();
 
