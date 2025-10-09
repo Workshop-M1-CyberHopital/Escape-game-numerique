@@ -224,6 +224,7 @@
             @enter-room="handleEnterRoom"
             @unlock-all-rooms="handleUnlockAllRooms"
             @reset-game="handleResetGame"
+            @trigger-end-game="handleTriggerEndGame"
         />
 
         <!-- Audio Briefing -->
@@ -1463,6 +1464,54 @@ const handleUnlockAllRooms = () => {
 const handleResetGame = () => {
     resetGame();
     showInfo("DÉVELOPPEMENT", "Jeu réinitialisé");
+};
+
+const handleTriggerEndGame = async () => {
+    // Marquer toutes les salles comme complétées
+    const allRooms = ["server", "dna-lab", "imaging", "heart", "prosthesis", "pathology", "audition", "eye", "final"];
+    
+    allRooms.forEach(roomId => {
+        if (!gameState.completedRooms.includes(roomId)) {
+            // Ajouter directement à completedRooms
+            gameState.completedRooms.push(roomId);
+        }
+    });
+    
+    showSuccess("DÉVELOPPEMENT", "Fin de jeu déclenchée manuellement !");
+    
+    // Déclencher la fin de jeu
+    setTimeout(async () => {
+        const score = calculateFinalScore();
+        const gameData = {
+            score: score,
+            duration: gameState.timer + gameState.penaltyTime,
+            roomsCompleted: gameState.completedRooms.length,
+            errors: gameState.errors,
+            hints: gameState.hintsUsed,
+            completed: true,
+            teamName: gameState.teamName,
+            timeScore: Math.max(
+                0,
+                8 - (gameState.timer + gameState.penaltyTime) / 120,
+            ),
+            errorScore: Math.max(0, 7 - gameState.errors * 0.5),
+            hintScore: Math.max(0, 5 - gameState.hintsUsed * 1),
+            totalTime: gameState.timer + gameState.penaltyTime,
+            roomTimes: gameState.roomTimes,
+            roomErrors: gameState.roomErrors,
+            roomHints: gameState.roomHints,
+        };
+
+        finalScoreData.value = gameData;
+        showFinalScore.value = true;
+
+        // Soumettre le score si l'utilisateur est connecté
+        await handleScoreSubmission(gameData);
+
+        // Nettoyer le cache après la fin de mission
+        console.log("🎉 Mission terminée via DevTools - Nettoyage du cache");
+        clearGameState();
+    }, 1000);
 };
 
 // Watcher pour détecter l'arrivée sur la sélection des salles
