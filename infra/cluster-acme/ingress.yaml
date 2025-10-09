@@ -27,4 +27,4 @@ spec:
   tls:
     - hosts:
         - escape.eisi-dune.eu
-      secretName: escape-tls
+      secretName: secret-tls-workshop
