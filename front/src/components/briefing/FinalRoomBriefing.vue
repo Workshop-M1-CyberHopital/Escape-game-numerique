@@ -60,8 +60,9 @@
                 [TRANSMISSION FINALE - DIAGNOSTIC URGENT]
               </div>
               <div class="text-white font-tech leading-relaxed">
+  
                 <p class="mb-4">
-                  <span class="text-cyber-green">Félicitations,</span> vous avez réussi à résoudre la <span class="text-yellow-400">cyberattaque</span> et restaurer tous les systèmes.
+                  <span class="text-cyber-green">Félicitations,</span> d'être arrivé jusqu'ici.
                 </p>
                 <p class="mb-4">
                   Cependant, un <span class="text-red-400">patient en état critique</span> nécessite un diagnostic urgent. <span class="text-yellow-400">Marie Dubois, 34 ans</span> présente des symptômes graves.

@@ -12,7 +12,7 @@
                     </h3>
                 </div>
                 <p class="text-gray-300 mb-8 text-lg">
-                    La cyberattaque est résolue ! Diagnostiquez et traitez ce patient en état critique.
+                    Diagnostiquez et traitez ce patient en état critique.
                 </p>
             </div>
 
@@ -291,7 +291,7 @@ const { showSuccess, showError, showWarning, showInfo } = useToast()
 const roomData = {
     title: "SALLE DE FIN",
     subtitle: "Diagnostic final - Patient critique",
-    description: "La cyberattaque est résolue ! Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier.",
+    description: "Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier.",
     objective: "Diagnostiquer, traiter et sécuriser le dossier patient",
     icon: "shield-check",
     color: "#10b981",

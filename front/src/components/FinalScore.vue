@@ -38,6 +38,87 @@
                     </div>
                 </div>
 
+                <!-- Message de fin de mission -->
+                <div class="text-center">
+                    <div 
+                        class="bg-gray-800/50 border rounded-lg p-6"
+                        :class="getMissionBorderColor()"
+                    >
+                        <div class="flex items-center justify-center gap-3 mb-4">
+                            <div 
+                                class="w-3 h-3 rounded-full animate-pulse"
+                                :class="getMissionStatusColor()"
+                            ></div>
+                            <h2 
+                                class="text-lg font-bold font-tech"
+                                :class="getMissionTextColor()"
+                            >
+                                {{ getMissionStatus() }}
+                            </h2>
+                        </div>
+                        
+                        <div class="space-y-3 text-gray-300 font-tech text-sm leading-relaxed">
+                            <p v-if="scoreData.score >= 10" class="text-cyber-green">
+                                <span class="font-bold">Excellent travail, agent !</span>
+                            </p>
+                            <p v-else class="text-red-400">
+                                <span class="font-bold">Mission échouée, agent.</span>
+                            </p>
+                            
+                            <p v-if="scoreData.score >= 10">
+                                Vous avez brillamment repoussé la cyberattaque et sécurisé tous les systèmes hospitaliers. 
+                                <span class="text-cyber-green font-bold">Les patients de l'hôpital ont été sauvés grâce à votre expertise.</span>
+                            </p>
+                            <p v-else>
+                                La cyberattaque a réussi à compromettre les systèmes hospitaliers. 
+                                <span class="text-red-400 font-bold">Les patients de l'hôpital n'ont pas été sauvés.</span>
+                            </p>
+                            
+                            <div 
+                                class="rounded p-4 mt-4"
+                                :class="getMissionBoxColor()"
+                            >
+                                <p class="font-bold mb-2" :class="getMissionBoxTextColor()">
+                                    STATUT DE LA MISSION :
+                                </p>
+                                <div class="space-y-2 text-xs">
+                                    <div class="flex items-center gap-2" v-if="scoreData.score >= 10">
+                                        <div class="w-2 h-2 bg-cyber-green rounded-full"></div>
+                                        <span class="text-cyber-green">Cyberattaque repoussée</span>
+                                    </div>
+                                    <div class="flex items-center gap-2" v-if="scoreData.score >= 10">
+                                        <div class="w-2 h-2 bg-cyber-green rounded-full"></div>
+                                        <span class="text-cyber-green">Systèmes hospitaliers sécurisés</span>
+                                    </div>
+                                    <div class="flex items-center gap-2" v-if="scoreData.score >= 10">
+                                        <div class="w-2 h-2 bg-cyber-green rounded-full"></div>
+                                        <span class="text-cyber-green">Patients sauvés</span>
+                                    </div>
+                                    <div class="flex items-center gap-2" v-if="scoreData.score < 10">
+                                        <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+                                        <span class="text-red-400">Cyberattaque réussie</span>
+                                    </div>
+                                    <div class="flex items-center gap-2" v-if="scoreData.score < 10">
+                                        <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+                                        <span class="text-red-400">Systèmes hospitaliers compromis</span>
+                                    </div>
+                                    <div class="flex items-center gap-2" v-if="scoreData.score < 10">
+                                        <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+                                        <span class="text-red-400">Patients en danger</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p v-if="scoreData.score >= 10" class="text-center text-cyber-green font-bold mt-4">
+                                Mission accomplie avec succès, agent. Vous êtes un héros.
+                            </p>
+                            <p v-else class="text-center text-red-400 font-bold mt-4">
+                                Mission échouée. Les patients paient le prix de votre échec.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Détails des scores -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- Score Rapidité -->
@@ -223,6 +304,12 @@
                     RECOMMENCER
                 </button>
                 <button
+                    @click="generateDiploma"
+                    class="px-6 py-2 bg-yellow-500 hover:bg-yellow-500/80 text-black font-cyber font-bold rounded-lg transition-all text-sm"
+                >
+                    TÉLÉCHARGER DIPLÔME
+                </button>
+                <button
                     @click="$emit('close')"
                     class="px-6 py-2 border border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10 font-cyber font-bold rounded-lg transition-all text-sm"
                 >
@@ -235,6 +322,7 @@
 
 <script setup>
 import { onMounted } from "vue";
+import { jsPDF } from "jspdf";
 
 const props = defineProps({
     scoreData: {
@@ -299,6 +387,183 @@ const getComment = () => {
     if (score >= 10)
         return "Performance acceptable. Plus d'attention aux détails serait bénéfique.";
     return "Des efforts supplémentaires sont nécessaires pour maîtriser ces concepts.";
+};
+
+const generateDiploma = async () => {
+    const doc = new jsPDF({ orientation: "landscape" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Couleur de fond
+    doc.setFillColor(245, 245, 245);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
+
+    // Cadre officiel double
+    doc.setLineWidth(3);
+    doc.setDrawColor(0, 102, 204);
+    doc.rect(15, 15, pageWidth - 30, pageHeight - 30);
+    doc.setLineWidth(1);
+    doc.rect(18, 18, pageWidth - 36, pageHeight - 36);
+
+    // Titre
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(32);
+    doc.setTextColor(0, 102, 204);
+    doc.text("DIPLÔME D'HONNEUR", pageWidth / 2, 40, { align: "center" });
+
+    // Nom du jeu
+    doc.setFontSize(16);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Escape Game Numérique", pageWidth / 2, 55, { align: "center" });
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text("« Urgence à l'hôpital »", pageWidth / 2, 68, { align: "center" });
+
+    // Ligne décorative supérieure
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(0, 102, 204);
+    doc.line(80, 78, pageWidth - 80, 78);
+
+    // Texte officiel
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.text("Ce diplôme certifie que", pageWidth / 2, 95, {
+        align: "center",
+    });
+
+    // Nom de l'équipe
+    doc.setFontSize(24);
+    doc.setFont("times", "italic");
+    doc.setTextColor(0, 102, 204);
+    doc.text(props.scoreData.teamName, pageWidth / 2, 110, { align: "center" });
+
+    // Ligne décorative sous le nom
+    doc.setLineWidth(0.5);
+    doc.line(pageWidth / 2 - 60, 113, pageWidth / 2 + 60, 113);
+
+    // Pour avoir obtenu
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.text(
+        "a brillamment terminé l'escape game avec la note de",
+        pageWidth / 2,
+        128,
+        {
+            align: "center",
+        },
+    );
+
+    // Note avec encadré
+    doc.setFontSize(30);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 102, 204);
+    doc.text(`${props.scoreData.score}/20`, pageWidth / 2, 145, {
+        align: "center",
+    });
+
+    // Appréciation
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${getAppreciation()}`, pageWidth / 2, 158, {
+        align: "center",
+    });
+
+    // Félicitations
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(60, 60, 60);
+    doc.text(
+        "Félicitations pour votre excellent travail et votre sens de la cybersécurité !",
+        pageWidth / 2,
+        175,
+        {
+            align: "center",
+        },
+    );
+
+    // Date en bas à gauche
+    const today = new Date();
+    const dateStr = today.toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Fait le ${dateStr}`, 40, pageHeight - 25);
+
+    // Signature avec image
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Le Directeur de l'Hôpital", pageWidth - 80, pageHeight - 50, {
+        align: "center",
+    });
+
+    try {
+        const response = await fetch("/Signature.png");
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = reader.result;
+            doc.addImage(
+                base64,
+                "PNG",
+                pageWidth - 120,
+                pageHeight - 45,
+                80,
+                30,
+            );
+            doc.save(
+                `diplome_${props.scoreData.teamName.replace(/\s+/g, "_")}.pdf`,
+            );
+        };
+        reader.readAsDataURL(blob);
+    } catch (error) {
+        console.error("Erreur chargement signature:", error);
+        doc.save(
+            `diplome_${props.scoreData.teamName.replace(/\s+/g, "_")}.pdf`,
+        );
+    }
+};
+
+// Fonctions pour le message de fin de mission
+const getMissionStatus = () => {
+    const score = props.scoreData.score;
+    if (score >= 10) return "MISSION RÉUSSIE - CYBERATTAQUE ÉCHOUÉE";
+    return "MISSION ÉCHOUÉE - CYBERATTAQUE RÉUSSIE";
+};
+
+const getMissionBorderColor = () => {
+    const score = props.scoreData.score;
+    if (score >= 10) return "border-cyber-green/30";
+    return "border-red-500/30";
+};
+
+const getMissionStatusColor = () => {
+    const score = props.scoreData.score;
+    if (score >= 10) return "bg-cyber-green";
+    return "bg-red-500";
+};
+
+const getMissionTextColor = () => {
+    const score = props.scoreData.score;
+    if (score >= 10) return "text-cyber-green";
+    return "text-red-400";
+};
+
+const getMissionBoxColor = () => {
+    const score = props.scoreData.score;
+    if (score >= 10) return "bg-cyber-green/10 border border-cyber-green/30";
+    return "bg-red-500/10 border border-red-500/30";
+};
+
+const getMissionBoxTextColor = () => {
+    const score = props.scoreData.score;
+    if (score >= 10) return "text-cyber-green";
+    return "text-red-400";
 };
 
 onMounted(() => {
