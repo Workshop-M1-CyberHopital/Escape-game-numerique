@@ -11,13 +11,14 @@
 
 ---
 # === Middleware redirigeant HTTP->HTTPS sauf pour ACME ===
+# Désactivé temporairement pour permettre les tests HTTP (on pourra le réactiver après validation HTTPS)
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-to-https-except-acme
 spec:
   redirectRegex:
-    regex: ^(?!/\.well-known/acme-challenge/).*$
+    regex: ^(?!/\.well-known/acme-challenge/).*$  # garde l’exception ACME
     replacement: https://$${host}$${requestURI}
     permanent: true
 
@@ -38,10 +39,10 @@ spec:
   selector:
     app.kubernetes.io/name: traefik
   ports:
-    - name: web
+    - name: web           # HTTP (port 80)
       port: 80
       targetPort: 80
-    - name: websecure
+    - name: websecure     # HTTPS (port 443)
       port: 443
       targetPort: 443
 
@@ -90,7 +91,7 @@ spec:
 
 ---
 # === Ingress : Accès au Dashboard Traefik ==================
-# - HTTPS via cert-manager (Let's Encrypt)
+# - HTTP + HTTPS (ajout du port web)
 # - Authentification + Whitelist IP
 # ==========================================================
 apiVersion: networking.k8s.io/v1
@@ -98,8 +99,12 @@ kind: Ingress
 metadata:
   name: traefik-dashboard
   annotations:
+    # Autorise HTTP (web) + HTTPS (websecure)
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    # Pas de redirection forcée pour les tests HTTP
+    # traefik.ingress.kubernetes.io/router.middlewares: redirect-to-https-except-acme@kubernetescrd
     traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd,traefik-dashboard-auth@kubernetescrd
+    # Certificats HTTPS (activés dès que cert-manager est fonctionnel)
     cert-manager.io/cluster-issuer: letsencrypt-http
 spec:
   ingressClassName: traefik
@@ -121,16 +126,21 @@ spec:
 
 ---
 # Ingress Escape Game avec annotation cert-manager et entrée HTTP/HTTPS
+# - HTTP + HTTPS activés pour tests
+# - Redirection HTTPS commentée temporairement
+# ==========================================================
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: escape-ingress
   annotations:
     kubernetes.io/ingress.class: traefik
+    # Autorise les deux protocoles HTTP et HTTPS
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    # Middleware whitelist modifiée
-    # traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd # commenté pour la redirection acme
-    traefik.ingress.kubernetes.io/router.middlewares: redirect-to-https-except-acme@kubernetescrd # remplace le whitelist middleware
+    # Middleware whitelist commenté pour ne pas bloquer les tests HTTP
+    # traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd
+    # Redirection HTTPS désactivée temporairement
+    # traefik.ingress.kubernetes.io/router.middlewares: redirect-to-https-except-acme@kubernetescrd
     cert-manager.io/cluster-issuer: letsencrypt-http
     cert-manager.io/issuer-kind: ClusterIssuer
     cert-manager.io/issuer-group: cert-manager.io
