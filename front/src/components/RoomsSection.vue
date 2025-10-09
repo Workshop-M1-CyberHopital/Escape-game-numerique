@@ -20,7 +20,7 @@
                         <span
                             class="font-cyber text-lg text-cyber-blue font-bold"
                         >
-                            {{ completedRooms.length }} / 7
+                            {{ completedRooms.length }} / 6
                         </span>
                     </div>
                     <div
@@ -28,7 +28,7 @@
                     >
                         <div
                             class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
-                            :style="`width: ${(completedRooms.length / 7) * 100}%`"
+                            :style="`width: ${(completedRooms.length / 6) * 100}%`"
                         >
                             <span
                                 v-if="completedRooms.length > 0"
@@ -36,7 +36,7 @@
                             >
                                 {{
                                     Math.round(
-                                        (completedRooms.length / 7) * 100,
+                                        (completedRooms.length / 6) * 100,
                                     )
                                 }}%
                             </span>
@@ -48,9 +48,9 @@
                         <span>SERVEUR</span>
                         <span>LAB ADN</span>
                         <span>IMAGERIE</span>
-                        <span>CŒUR</span>
                         <span>PROTHÈSES</span>
-                        <span>PATHOLOGIES</span>
+                        <span>YEUX</span>
+                        <span>CŒUR</span>
                     </div>
                 </div>
             </div>
@@ -484,7 +484,8 @@
                             Diagnostic médical
                         </p>
                         <p class="text-sm text-gray-300 mb-4">
-                            Associez chaque pathologie à sa guérison correspondante
+                            Associez chaque pathologie à sa guérison
+                            correspondante
                         </p>
                         <div class="space-y-2">
                             <span
@@ -493,7 +494,8 @@
                                 OBJECTIF
                             </span>
                             <p class="text-xs text-gray-400">
-                                Sensibiliser aux pathologies médicales et leurs traitements
+                                Sensibiliser aux pathologies médicales et leurs
+                                traitements
                             </p>
                         </div>
                         <div
@@ -560,7 +562,8 @@
                             Réparation audiométrique
                         </p>
                         <p class="text-sm text-gray-300 mb-4">
-                            Ajustez l'égaliseur audio pour restaurer les fréquences sonores
+                            Ajustez l'égaliseur audio pour restaurer les
+                            fréquences sonores
                         </p>
                         <div class="space-y-2">
                             <span
@@ -570,7 +573,8 @@
                                 OBJECTIF
                             </span>
                             <p class="text-xs text-gray-400">
-                                Sensibiliser aux troubles auditifs et à l'audiométrie
+                                Sensibiliser aux troubles auditifs et à
+                                l'audiométrie
                             </p>
                         </div>
                         <div
@@ -578,7 +582,8 @@
                             class="mt-4 pt-4 border-t border-gray-700"
                         >
                             <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez la salle des pathologies pour débloquer
+                                🔒 Complétez la salle des pathologies pour
+                                débloquer
                             </p>
                         </div>
                     </div>
@@ -586,6 +591,81 @@
                         v-if="isUnlocked('audition')"
                         class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
                         style="background-color: #8b5cf6"
+                    ></div>
+                </div>
+
+                <!-- Room 6: Eye -->
+                <div
+                    @click="handleRoomClick('eye')"
+                    :class="[
+                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+                        isUnlocked('eye')
+                            ? 'border-cyan-500 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/20 hover:border-cyan-500/80'
+                            : 'border-gray-600 opacity-60 cursor-not-allowed',
+                    ]"
+                >
+                    <div class="absolute top-4 right-4">
+                        <i
+                            :data-lucide="isUnlocked('eye') ? 'unlock' : 'lock'"
+                            :class="
+                                isUnlocked('eye')
+                                    ? 'w-6 h-6 text-green-400'
+                                    : 'w-6 h-6 text-gray-500'
+                            "
+                        >
+                        </i>
+                    </div>
+                    <div class="p-0">
+                        <div
+                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
+                            style="
+                                background-color: rgba(34, 211, 238, 0.2);
+                                border: 2px solid #22d3ee;
+                            "
+                        >
+                            <i
+                                data-lucide="eye"
+                                class="w-8 h-8 text-cyan-500"
+                            ></i>
+                        </div>
+                        <h3
+                            class="text-2xl font-cyber font-bold mb-2"
+                            style="color: #22d3ee"
+                        >
+                            SALLE DES YEUX
+                        </h3>
+                        <p class="text-sm font-tech text-gray-400 mb-3">
+                            Diagnostic visuel corrompu
+                        </p>
+                        <p class="text-sm text-gray-300 mb-4">
+                            Recalibrer le système de diagnostic ophtalmologique
+                            avec des tests d'acuité visuelle
+                        </p>
+                        <div class="space-y-2">
+                            <span
+                                class="inline-block px-3 py-1 border border-cyan-500 text-cyan-500 font-tech text-xs rounded"
+                            >
+                                OBJECTIF
+                            </span>
+                            <p class="text-xs text-gray-400">
+                                Comprendre l'importance des tests visuels en
+                                médecine
+                            </p>
+                        </div>
+                        <div
+                            v-if="!isUnlocked('eye')"
+                            class="mt-4 pt-4 border-t border-gray-700"
+                        >
+                            <p class="text-xs font-tech text-yellow-500">
+                                🔒 Complétez les salles précédentes pour
+                                débloquer
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        v-if="isUnlocked('eye')"
+                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
+                        style="background-color: #22d3ee"
                     ></div>
                 </div>
             </div>

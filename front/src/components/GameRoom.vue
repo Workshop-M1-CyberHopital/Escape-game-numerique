@@ -44,7 +44,9 @@
                             </span>
                         </div>
                         <i
-                            :data-lucide="isStatsExpanded ? 'chevron-up' : 'chevron-down'"
+                            :data-lucide="
+                                isStatsExpanded ? 'chevron-up' : 'chevron-down'
+                            "
                             class="w-4 h-4 text-cyber-blue transition-transform"
                         ></i>
                     </button>
@@ -54,94 +56,174 @@
 
         <!-- Menu détaillé des statistiques -->
         <transition name="expand">
-            <div v-if="isStatsExpanded" class="bg-gray-800/95 backdrop-blur-md border-b-2 border-cyber-blue p-4">
+            <div
+                v-if="isStatsExpanded"
+                class="bg-gray-800/95 backdrop-blur-md border-b-2 border-cyber-blue p-4"
+            >
                 <div class="max-w-7xl mx-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                    >
                         <!-- Timer détaillé -->
-                        <div class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4">
+                        <div
+                            class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
+                        >
                             <div class="flex items-center gap-2">
-                                <i data-lucide="clock" class="w-5 h-5 text-cyber-blue"></i>
-                                <span class="font-tech text-sm text-gray-400">Temps écoulé</span>
+                                <i
+                                    data-lucide="clock"
+                                    class="w-5 h-5 text-cyber-blue"
+                                ></i>
+                                <span class="font-tech text-sm text-gray-400"
+                                    >Temps écoulé</span
+                                >
                             </div>
-                            <span class="font-cyber text-lg text-cyber-blue font-bold">
+                            <span
+                                class="font-cyber text-lg text-cyber-blue font-bold"
+                            >
                                 {{ formatTime(gameState.timer) }}
                             </span>
                         </div>
 
                         <!-- Erreurs détaillé -->
-                        <div class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4">
+                        <div
+                            class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
+                        >
                             <div class="flex items-center gap-2">
-                                <i data-lucide="x-circle" class="w-5 h-5 text-red-500"></i>
-                                <span class="font-tech text-sm text-gray-400">Erreurs</span>
+                                <i
+                                    data-lucide="x-circle"
+                                    class="w-5 h-5 text-red-500"
+                                ></i>
+                                <span class="font-tech text-sm text-gray-400"
+                                    >Erreurs</span
+                                >
                             </div>
-                            <span class="font-cyber text-lg text-red-500 font-bold">
+                            <span
+                                class="font-cyber text-lg text-red-500 font-bold"
+                            >
                                 {{ gameState.errors }}
                             </span>
                         </div>
 
                         <!-- Indices détaillé -->
-                        <div class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4">
+                        <div
+                            class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
+                        >
                             <div class="flex items-center gap-2">
-                                <i data-lucide="lightbulb" class="w-5 h-5 text-yellow-500"></i>
-                                <span class="font-tech text-sm text-gray-400">Indices utilisés</span>
+                                <i
+                                    data-lucide="lightbulb"
+                                    class="w-5 h-5 text-yellow-500"
+                                ></i>
+                                <span class="font-tech text-sm text-gray-400"
+                                    >Indices utilisés</span
+                                >
                             </div>
-                            <span class="font-cyber text-lg text-yellow-500 font-bold">
+                            <span
+                                class="font-cyber text-lg text-yellow-500 font-bold"
+                            >
                                 {{ gameState.hintsUsed }}
                             </span>
                         </div>
 
                         <!-- Équipe -->
-                        <div class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4">
+                        <div
+                            class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
+                        >
                             <div class="flex items-center gap-2">
-                                <i data-lucide="users" class="w-5 h-5 text-cyber-green"></i>
-                                <span class="font-tech text-sm text-gray-400">Équipe</span>
+                                <i
+                                    data-lucide="users"
+                                    class="w-5 h-5 text-cyber-green"
+                                ></i>
+                                <span class="font-tech text-sm text-gray-400"
+                                    >Équipe</span
+                                >
                             </div>
-                            <span class="font-tech text-sm text-cyber-green truncate max-w-[140px]">
+                            <span
+                                class="font-tech text-sm text-cyber-green truncate max-w-[140px]"
+                            >
                                 {{ gameState.teamName }}
                             </span>
                         </div>
                     </div>
 
                     <!-- Pénalités et temps total (si pénalités > 0) -->
-                    <div v-if="gameState.penaltyTime > 0" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="flex items-center justify-between bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
+                    <div
+                        v-if="gameState.penaltyTime > 0"
+                        class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
+                        <div
+                            class="flex items-center justify-between bg-orange-900/20 border border-orange-500/30 rounded-lg p-4"
+                        >
                             <div class="flex items-center gap-2">
-                                <i data-lucide="alert-triangle" class="w-5 h-5 text-orange-500"></i>
-                                <span class="font-tech text-sm text-gray-400">Pénalités</span>
+                                <i
+                                    data-lucide="alert-triangle"
+                                    class="w-5 h-5 text-orange-500"
+                                ></i>
+                                <span class="font-tech text-sm text-gray-400"
+                                    >Pénalités</span
+                                >
                             </div>
-                            <span class="font-cyber text-lg text-orange-500 font-bold">
+                            <span
+                                class="font-cyber text-lg text-orange-500 font-bold"
+                            >
                                 +{{ formatTime(gameState.penaltyTime) }}
                             </span>
                         </div>
 
-                        <div class="flex items-center justify-between bg-cyber-red/20 border border-cyber-red/30 rounded-lg p-4">
+                        <div
+                            class="flex items-center justify-between bg-cyber-red/20 border border-cyber-red/30 rounded-lg p-4"
+                        >
                             <div class="flex items-center gap-2">
-                                <i data-lucide="timer" class="w-5 h-5 text-cyber-red"></i>
-                                <span class="font-tech text-sm text-gray-300 font-bold">Temps Total</span>
+                                <i
+                                    data-lucide="timer"
+                                    class="w-5 h-5 text-cyber-red"
+                                ></i>
+                                <span
+                                    class="font-tech text-sm text-gray-300 font-bold"
+                                    >Temps Total</span
+                                >
                             </div>
-                            <span class="font-cyber text-xl text-cyber-red font-bold">
+                            <span
+                                class="font-cyber text-xl text-cyber-red font-bold"
+                            >
                                 {{ formatTime(getTotalTime()) }}
                             </span>
                         </div>
                     </div>
 
                     <!-- Détails par salle (si salles complétées) -->
-                    <div v-if="gameState.completedRooms.length > 0" class="mt-4">
-                        <div class="text-xs font-tech text-gray-400 mb-3 font-bold">
+                    <div
+                        v-if="gameState.completedRooms.length > 0"
+                        class="mt-4"
+                    >
+                        <div
+                            class="text-xs font-tech text-gray-400 mb-3 font-bold"
+                        >
                             DÉTAILS PAR SALLE
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+                        >
                             <div
                                 v-for="room in gameState.completedRooms"
                                 :key="room"
                                 class="bg-gray-800/40 rounded-lg p-3"
                             >
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-xs font-tech text-gray-300 font-bold">
+                                <div
+                                    class="flex items-center justify-between mb-2"
+                                >
+                                    <span
+                                        class="text-xs font-tech text-gray-300 font-bold"
+                                    >
                                         {{ getRoomName(room) }}
                                     </span>
-                                    <span class="text-xs font-tech text-gray-500">
-                                        {{ formatTime(gameState.roomTimes[room] || 0) }}
+                                    <span
+                                        class="text-xs font-tech text-gray-500"
+                                    >
+                                        {{
+                                            formatTime(
+                                                gameState.roomTimes[room] || 0,
+                                            )
+                                        }}
                                     </span>
                                 </div>
                                 <div class="flex gap-3 text-xs">
@@ -228,6 +310,7 @@ import {
     Volume2,
     HeartPulse,
     Settings,
+    Eye,
 } from "lucide-vue-next";
 
 const props = defineProps({
@@ -268,10 +351,12 @@ const iconMap = {
     server: Server,
     dna: Dna,
     "scan-line": ScanLine,
+    scan: ScanLine,
     heart: Heart,
     "volume-2": Volume2,
     "heart-pulse": HeartPulse,
     settings: Settings,
+    eye: Eye,
 };
 
 // Fonction pour obtenir le composant d'icône
