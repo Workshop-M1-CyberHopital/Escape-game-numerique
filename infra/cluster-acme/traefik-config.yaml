@@ -100,7 +100,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd,traefik-dashboard-auth@kubernetescrd
-    cert-manager.io/issuer: letsencrypt-http
+    cert-manager.io/cluster-issuer: letsencrypt-http
 spec:
   ingressClassName: traefik
   rules:
@@ -131,7 +131,7 @@ metadata:
     # Middleware whitelist modifiée
     # traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd # commenté pour la redirection acme
     traefik.ingress.kubernetes.io/router.middlewares: redirect-to-https-except-acme@kubernetescrd # remplace le whitelist middleware
-    cert-manager.io/issuer: letsencrypt-http
+    cert-manager.io/cluster-issuer: letsencrypt-http
     cert-manager.io/issuer-kind: ClusterIssuer
     cert-manager.io/issuer-group: cert-manager.io
 spec:
