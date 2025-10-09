@@ -243,17 +243,16 @@ deploy_workshop() {
   kubectl rollout status deployment/cert-manager -n cert-manager --timeout=120s || true
 
   separator
-  echo "Installation du webhook Gandi..."
-  if helm status cert-manager-webhook-gandi -n cert-manager &>/dev/null; then
-    echo "Webhook déjà installé."
-  else
-    helm repo add cert-manager-webhook-gandi https://bwolf.github.io/cert-manager-webhook-gandi
-    helm repo update
-    helm install cert-manager-webhook-gandi \
-      cert-manager-webhook-gandi/cert-manager-webhook-gandi \
-      --namespace cert-manager \
-      --version v0.2.0
-  fi
+  echo "Installation du webhook Gandi (version custom produn)..."
+  helm uninstall cert-manager-webhook-gandi -n cert-manager --ignore-not-found
+  helm repo add cert-manager-webhook-gandi https://gandi.github.io/cert-manager-webhook-gandi
+  helm repo update
+  helm install cert-manager-webhook-gandi \
+    cert-manager-webhook-gandi/cert-manager-webhook-gandi \
+    --namespace cert-manager \
+    --set image.repository=docker.io/produn/cert-manager-webhook-gandi \
+    --set image.tag=v0.3.0 \
+    --set groupName=acme.bwolf.me
 
   separator
   echo "Application de la configuration Let's Encrypt (Issuer)..."
@@ -283,7 +282,7 @@ deploy_workshop() {
   # echo "Si un PVC est toujours en Pending, vérifie le driver CSI avec :"
   # echo "  az aks show -g \"$rgname\" -n \"$aksname\" --query \"storageProfile.fileCsiDriver\" -o table"
   # echo ""
-  
+
   separator
   echo "Déploiement terminé avec succès !"
   echo "Application : https://escape.eisi-dune.eu"
