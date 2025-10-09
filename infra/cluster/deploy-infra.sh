@@ -124,51 +124,83 @@ deploy_workshop() {
   sleep 45
 
   separator
-  echo "Récupération de l'adresse IP publique Azure associée au cluster..."
+  echo "Création ou récupération de l'IP publique Azure statique pour Traefik..."
 
-  # On tente de récupérer l'adresse IP publique de Traefik depuis le service LoadBalancer
-  WorkshopIngIP=$(kubectl get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+  MC_RG="MC_${rgname}_${aksname}_${rgloc}"
+  IP_NAME="traefik-public-ip"
+
+  # Création si elle n’existe pas encore
+  if ! az network public-ip show --resource-group "$MC_RG" --name "$IP_NAME" &>/dev/null; then
+    echo "Création de l'adresse IP publique statique Azure..."
+    az network public-ip create \
+      --resource-group "$MC_RG" \
+      --name "$IP_NAME" \
+      --sku Standard \
+      --allocation-method static \
+      --query "publicIp.ipAddress" -o tsv >/dev/null
+    if [[ $? -ne 0 ]]; then
+      echo "Erreur lors de la création de l'IP publique Azure."
+      exit 1
+    fi
+  fi
+
+  WorkshopIngIP=$(az network public-ip show \
+    --resource-group "$MC_RG" \
+    --name "$IP_NAME" \
+    --query "ipAddress" -o tsv)
 
   if [[ -z "$WorkshopIngIP" ]]; then
-    echo "Aucune IP publique détectée automatiquement via Traefik."
-    echo "   Vérifie dans le portail Azure ou avec la commande suivante :"
-    kubectl get svc traefik
-    echo ""
+    echo "Impossible de récupérer l'IP publique Azure."
+    echo "Vérifie dans le portail Azure ou avec la commande suivante :"
+    echo "  az network public-ip list -g \"$MC_RG\" -o table"
     read -r -p "Souhaites-tu continuer malgré tout ? (Y/n) : " choice
-    echo ""
     if [[ "$choice" =~ ^[Nn]$ ]]; then
       echo "Arrêt du script à ta demande."
       exit 0
     else
-      echo "Poursuite du script sans IP publique explicite..."
       WorkshopIngIP="Non détectée"
     fi
   else
-    echo "IP publique détectée automatiquement : $WorkshopIngIP"
-    echo ""
+    echo "IP publique statique détectée : $WorkshopIngIP"
     read -r -p "Souhaites-tu continuer avec cette IP ? (Y/n) : " choice
-    echo ""
     if [[ "$choice" =~ ^[Nn]$ ]]; then
       echo "Arrêt du script à ta demande."
       exit 0
     fi
   fi
 
-  # echo "Attente de l'attribution d'une IP publique Azure pour Traefik..."
-  # for i in {1..24}; do
-  #   WorkshopIngIP=$(kubectl get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-  #   if [[ $WorkshopIngIP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  #     echo "IP publique détectée : $WorkshopIngIP"
-  #     break
-  #   fi
-  #   echo "En attente d'une IP publique (tentative $i/24)..."
-  #   sleep 5
-  # done
+  # Remplacement dynamique de l’adresse IP dans le fichier Traefik
+  sed "s|__PUBLIC_IP__|$WorkshopIngIP|g" traefik-config.yaml > traefik-config-final.yaml
+
+
+  # echo "Récupération de l'adresse IP publique Azure associée au cluster..."
+
+  # # On tente de récupérer l'adresse IP publique de Traefik depuis le service LoadBalancer
+  # WorkshopIngIP=$(kubectl get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
 
   # if [[ -z "$WorkshopIngIP" ]]; then
-  #   echo "Aucune IP publique n’a été attribuée après 2 minutes."
+  #   echo "Aucune IP publique détectée automatiquement via Traefik."
+  #   echo "   Vérifie dans le portail Azure ou avec la commande suivante :"
   #   kubectl get svc traefik
-  #   exit 1
+  #   echo ""
+  #   read -r -p "Souhaites-tu continuer malgré tout ? (Y/n) : " choice
+  #   echo ""
+  #   if [[ "$choice" =~ ^[Nn]$ ]]; then
+  #     echo "Arrêt du script à ta demande."
+  #     exit 0
+  #   else
+  #     echo "Poursuite du script sans IP publique explicite..."
+  #     WorkshopIngIP="Non détectée"
+  #   fi
+  # else
+  #   echo "IP publique détectée automatiquement : $WorkshopIngIP"
+  #   echo ""
+  #   read -r -p "Souhaites-tu continuer avec cette IP ? (Y/n) : " choice
+  #   echo ""
+  #   if [[ "$choice" =~ ^[Nn]$ ]]; then
+  #     echo "Arrêt du script à ta demande."
+  #     exit 0
+  #   fi
   # fi
 
   echo ""
@@ -186,7 +218,12 @@ deploy_workshop() {
 
   separator
   echo "Application des configurations Traefik et HTTPS..."
-  kubectl apply -f traefik-config.yaml
+  kubectl apply -f traefik-config-final.yaml
+
+  # separator
+  # echo "Application des configurations Traefik et HTTPS..."
+  # kubectl apply -f traefik-config-final.yaml
+  # rm -f traefik-config-final.yaml
 
   separator
   echo "Installation de cert-manager..."
