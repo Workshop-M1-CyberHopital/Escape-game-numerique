@@ -126,19 +126,33 @@ deploy_workshop() {
   separator
   echo "Récupération de l'adresse IP publique Azure associée au cluster..."
 
-  # On cherche l'adresse IP publique la plus récente dans le resource group managé par AKS
-  WorkshopIngIP=$(az network public-ip list \
-    --resource-group "MC_${rgname}_${aksname}_${rgloc}" \
-    --query "sort_by([].{ip: ipAddress, t: timeCreated}, &t)[-1].ip" \
-    -o tsv)
+  # On tente de récupérer l'adresse IP publique de Traefik depuis le service LoadBalancer
+  WorkshopIngIP=$(kubectl get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
 
   if [[ -z "$WorkshopIngIP" ]]; then
-    echo "Impossible de trouver une adresse IP publique dans le groupe de ressources MC_${rgname}_${aksname}_${rgloc}"
-    echo "Vérifie dans le portail Azure si la ressource d'IP publique existe bien."
-    exit 1
+    echo "Aucune IP publique détectée automatiquement via Traefik."
+    echo "   Vérifie dans le portail Azure ou avec la commande suivante :"
+    kubectl get svc traefik
+    echo ""
+    read -r -p "Souhaites-tu continuer malgré tout ? (Y/n) : " choice
+    echo ""
+    if [[ "$choice" =~ ^[Nn]$ ]]; then
+      echo "Arrêt du script à ta demande."
+      exit 0
+    else
+      echo "Poursuite du script sans IP publique explicite..."
+      WorkshopIngIP="Non détectée"
+    fi
+  else
+    echo "IP publique détectée automatiquement : $WorkshopIngIP"
+    echo ""
+    read -r -p "Souhaites-tu continuer avec cette IP ? (Y/n) : " choice
+    echo ""
+    if [[ "$choice" =~ ^[Nn]$ ]]; then
+      echo "Arrêt du script à ta demande."
+      exit 0
+    fi
   fi
-
-  echo " IP publique détectée automatiquement : $WorkshopIngIP"
 
   # echo "Attente de l'attribution d'une IP publique Azure pour Traefik..."
   # for i in {1..24}; do
@@ -156,7 +170,6 @@ deploy_workshop() {
   #   kubectl get svc traefik
   #   exit 1
   # fi
-  
 
   echo ""
   echo "Étape DNS : configure ton domaine sur Gandi"
@@ -215,6 +228,9 @@ deploy_workshop() {
 
   echo "Attente de 2 minutes pour la génération des certificats Let's Encrypt..."
   sleep 120
+
+  # # Application autoscaling
+  # kubectl apply -f autoscaling.yaml
 
   separator
   echo "Vérification des ressources..."
