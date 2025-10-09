@@ -311,44 +311,25 @@ const playTestSound = async () => {
 
 // Son de battements cardiaques
 const playHeartbeatSound = async (duration) => {
-    // Créer plusieurs oscillateurs pour un son plus puissant
-    const oscillators = []
-    const gainNodes = []
-    
-    // Fréquences multiples pour un son plus audible
-    const frequencies = [60, 80, 100] // Harmoniques pour plus de volume
-    const amplitudes = [0.8, 0.6, 0.4] // Amplitudes décroissantes
-    
-    for (let i = 0; i < frequencies.length; i++) {
-        const osc = audioContext.value.createOscillator()
-        const gain = audioContext.value.createGain()
+    try {
+        // Créer un élément audio pour jouer le MP3
+        const audio = new Audio('/battement_de_coeur.mp3')
+        audio.volume = 0.8 // Volume élevé
+        audio.loop = true // Boucle pour la durée du test
         
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(frequencies[i], audioContext.value.currentTime)
-        gain.gain.setValueAtTime(0, audioContext.value.currentTime)
+        // Jouer l'audio
+        await audio.play()
         
-        osc.connect(gain)
-        gain.connect(audioContext.value.destination)
+        // Arrêter après la durée spécifiée
+        setTimeout(() => {
+            audio.pause()
+            audio.currentTime = 0
+        }, duration * 1000)
         
-        oscillators.push(osc)
-        gainNodes.push(gain)
+    } catch (error) {
+        console.error('Erreur lecture MP3:', error)
+        showError("ERREUR AUDIO", "Impossible de jouer le fichier audio.")
     }
-    
-    // Créer un rythme de battements avec volume maximum
-    for (let i = 0; i < duration * 1.2; i++) {
-        const time = audioContext.value.currentTime + i * 0.8
-        
-        gainNodes.forEach((gain, index) => {
-            gain.gain.setValueAtTime(amplitudes[index], time) // Volume maximum
-            gain.gain.setValueAtTime(amplitudes[index] * 0.3, time + 0.1) // Pause entre battements
-        })
-    }
-    
-    // Démarrer tous les oscillateurs
-    oscillators.forEach(osc => {
-        osc.start()
-        osc.stop(audioContext.value.currentTime + duration)
-    })
 }
 
 // Son de respiration
