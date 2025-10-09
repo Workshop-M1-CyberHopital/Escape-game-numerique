@@ -15,7 +15,7 @@ L’objectif est de permettre :
 
 Architecture globale de l'infrastructure Escape Game déployée sur AKS, sécurisée via Traefik et TLS Let’s Encrypt.
 
-![Architecture diagram of Escape Game infrastructure on AKS with Traefik, Redis, MariaDB, and HTTPS.](https://user-gen-media-assets.s3.amazonaws.com/seedream_images/ad2a8052-1146-418d-a320-6e8ddf5aa084.png)
+![Architecture diagram of Escape Game infrastructure on AKS with Traefik, Redis, MariaDB, and HTTPS.](./cluster/topologie_infra_workshop.png)
 
 Topologie détaillée comme suit :
 
