@@ -213,6 +213,6 @@ spec:
     port: 80
     protocol: TCP
     # 🚀 Redirection interne vers le vrai port exposé par l’app
-    targetPort: 3001
+    targetPort: 80
   selector:
     app: escape-app
