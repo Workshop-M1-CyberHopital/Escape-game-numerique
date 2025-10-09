@@ -245,14 +245,13 @@ deploy_workshop() {
   separator
   echo "Installation du webhook Gandi (version custom produn)..."
   helm uninstall cert-manager-webhook-gandi -n cert-manager --ignore-not-found
-  helm repo add cert-manager-webhook-gandi https://gandi.github.io/cert-manager-webhook-gandi
-  helm repo update
-  helm install cert-manager-webhook-gandi \
-    cert-manager-webhook-gandi/cert-manager-webhook-gandi \
-    --namespace cert-manager \
-    --set image.repository=docker.io/produn/cert-manager-webhook-gandi \
-    --set image.tag=v0.3.0 \
-    --set groupName=acme.bwolf.me
+
+  separator
+  echo "Déploiement du webhook Gandi (image custom produn)..."
+  kubectl apply -f webhook-gandi.yaml
+
+  echo "Attente de la disponibilité du webhook..."
+  kubectl rollout status deployment/cert-manager-webhook-gandi -n cert-manager --timeout=120s || true
 
   separator
   echo "Application de la configuration Let's Encrypt (Issuer)..."
