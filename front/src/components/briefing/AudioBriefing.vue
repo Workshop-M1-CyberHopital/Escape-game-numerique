@@ -68,15 +68,15 @@
                   Les données médicales de plus de <span class="text-yellow-400">50 000 patients</span> sont en danger.
                 </p>
                 <p class="mb-4">
-                  <span class="text-cyber-blue">Votre mission :</span> infiltrer et réparer quatre zones critiques du réseau hospitalier.
+                  <span class="text-cyber-blue">Votre mission :</span> infiltrer et réparer sept zones critiques du réseau hospitalier.
                 </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                   <div class="bg-red-900/20 border border-red-500/50 rounded p-3">
                     <div class="text-red-400 font-bold text-sm">SALLE DU SERVEUR</div>
                     <div class="text-gray-300 text-xs">Pare-feu principal corrompu</div>
                   </div>
-                  <div class="bg-blue-900/20 border border-blue-500/50 rounded p-3">
-                    <div class="text-blue-400 font-bold text-sm">LABORATOIRE ADN</div>
+                  <div class="bg-cyan-900/20 border border-cyan-500/50 rounded p-3">
+                    <div class="text-cyan-400 font-bold text-sm">LABORATOIRE ADN</div>
                     <div class="text-gray-300 text-xs">Séquences génétiques brouillées</div>
                   </div>
                   <div class="bg-green-900/20 border border-green-500/50 rounded p-3">
@@ -86,6 +86,19 @@
                   <div class="bg-purple-900/20 border border-purple-500/50 rounded p-3">
                     <div class="text-purple-400 font-bold text-sm">SALLE DU CŒUR</div>
                     <div class="text-gray-300 text-xs">Monitoring cardiaque défaillant</div>
+                  </div>
+
+                  <div class="bg-yellow-900/20 border border-yellow-500/50 rounded p-3">
+                    <div class="text-yellow-400 font-bold text-sm">SALLE DES PATHOLOGIES</div>
+                    <div class="text-gray-300 text-xs">Diagnostic médical compromis</div>
+                  </div>
+                  <div class="bg-orange-900/20 border border-orange-500/50 rounded p-3">
+                    <div class="text-orange-400 font-bold text-sm">SALLE DES PROTHÈSES</div>
+                    <div class="text-gray-300 text-xs">Système orthopédique désynchronisé</div>
+                  </div>
+                  <div class="bg-violet-900/20 border border-violet-500/50 rounded p-3">
+                    <div class="text-violet-400 font-bold text-sm">SALLE DE L'AUDITION</div>
+                    <div class="text-gray-300 text-xs">Système audio ORL défaillant</div>
                   </div>
                 </div>
                 <p class="mt-6 text-cyber-blue">
