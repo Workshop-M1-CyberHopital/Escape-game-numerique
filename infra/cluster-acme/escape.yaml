@@ -168,8 +168,9 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
+        # ⚙️ L’application écoute en réalité sur le port 3001, pas 80
         ports:
-        - containerPort: 80
+        - containerPort: 3001
         env:
         - name: REDIS
           value: "redis-service"
@@ -211,6 +212,7 @@ spec:
   - name: http
     port: 80
     protocol: TCP
+    # 🚀 Redirection interne vers le vrai port exposé par l’app
     targetPort: 80
   selector:
     app: escape-app
