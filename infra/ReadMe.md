@@ -42,7 +42,7 @@ Chaque énigme réussie **débloque une clé** pour restaurer une partie du syst
 * **Stockage / sauvegarde** : localStorage ou Firebase.
 * **Stockage persistant** : Redis et MariaDB
 * **Déploiement de l'app** : Image Docker déployée par cluster AKS
-* **Connexion à l'aa** : url <https://escape.eisi-dune.eu>
+* **Connexion à l'app** : url <https://escape.eisi-dune.eu>
 * **Sécurité** : chiffrer les échanges simples (hash, base64, pas de vraies données personnelles).
 
 Option bonus 💡 :

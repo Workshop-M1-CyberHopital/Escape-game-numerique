@@ -6,12 +6,32 @@
 
 set -Eeuo pipefail
 
+# Chargement des variables d’environnement depuis un fichier .env local (non versionné)
+# -----------------------------------------------------------------
+# Le fichier .env doit être placé à la racine du projet (même dossier que ce script)
+# Exemple de contenu :
+#   GANDI_API_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#   REDIS_PASSWORD=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# -----------------------------------------------------------------
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo "Fichier .env introuvable. Créez un fichier .env avec vos variables sensibles (ex: GANDI_API_TOKEN)."
+  exit 1
+fi
+
 # Variables principales
 rgname="workshop-EISI"
 aksname="AKSClusterWorkshop"
 rgloc="germanywestcentral"
-apitoken="e9534d0da979a255469024a375909df5a3824a99"
-redpass="password_redis_519"
+
+# Les mots de passe sensibles sont lus depuis le fichier .env
+if [ -z "${REDIS_PASSWORD:-}" ]; then
+  echo "Erreur : la variable REDIS_PASSWORD n'est pas définie dans le fichier .env."
+  exit 1
+fi
+redpass="$REDIS_PASSWORD"
+
 
 separator() {
   echo "-----------------------------------------------"
@@ -39,15 +59,21 @@ deploy_workshop() {
   kubectl create secret generic redis-secret-traefik \
     --from-literal=password="$redpass" --dry-run=client -o yaml | kubectl apply -f -
 
-  kubectl create secret generic mariadb-secret \
-    --from-literal=root_password=root123 \
-    --from-literal=user=escape \
-    --from-literal=password=escape123 \
-    --from-literal=database=escape_db \
-    --dry-run=client -o yaml | kubectl apply -f -
+if [ -z "${MARIADB_ROOT_PASSWORD:-}" ] || [ -z "${MARIADB_USER:-}" ] || [ -z "${MARIADB_PASSWORD:-}" ] || [ -z "${MARIADB_DATABASE:-}" ]; then
+  echo "Erreur : certaines variables MariaDB ne sont pas définies dans le fichier .env."
+  exit 1
+fi
 
+kubectl create secret generic mariadb-secret \
+  --from-literal=root_password="$MARIADB_ROOT_PASSWORD" \
+  --from-literal=user="$MARIADB_USER" \
+  --from-literal=password="$MARIADB_PASSWORD" \
+  --from-literal=database="$MARIADB_DATABASE" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+  # Secret Gandi, lecture du token depuis la variable d’environnement GANDI_API_TOKEN
   kubectl create secret generic gandi-credentials \
-    --from-literal=api-token="$apitoken" \
+    --from-literal=api-token="$GANDI_API_TOKEN" \
     --dry-run=client -o yaml | kubectl apply -f -
 
   separator
@@ -172,7 +198,7 @@ deploy_workshop() {
 
   helm upgrade --install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
     --namespace cert-manager --create-namespace \
-    --set gandiApiToken="$apitoken" \
+    --set gandiApiToken="$GANDI_API_TOKEN" \
     --set image.repository="smartgic/cert-manager-webhook-gandi" \
     --set image.tag="latest" \
     --set tls.enabled=true \
@@ -181,18 +207,6 @@ deploy_workshop() {
     --set resources.requests.memory="64Mi" \
     --set resources.limits.cpu="200m" \
     --set resources.limits.memory="256Mi"
-
-  # helm install cert-manager-webhook-gandi cert-manager-webhook-gandi/cert-manager-webhook-gandi \
-  #   --namespace cert-manager --create-namespace \
-  #   --set gandiApiToken="$apitoken" \
-  #   --set image.repository="ghcr.io/sintef/cert-manager-webhook-gandi" \
-  #   --set image.tag="v0.5.2" \
-  #   --set tls.enabled=true \
-  #   --set tls.secretName="cert-manager-webhook-tls" \
-  #   --set resources.requests.cpu="50m" \
-  #   --set resources.requests.memory="64Mi" \
-  #   --set resources.limits.cpu="200m" \
-  #   --set resources.limits.memory="256Mi"
 
   echo "Attente de la disponibilité du webhook..."
   kubectl rollout status deployment/cert-manager-webhook-gandi -n cert-manager --timeout=120s || true
