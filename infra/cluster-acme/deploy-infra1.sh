@@ -6,12 +6,30 @@
 
 set -Eeuo pipefail
 
+# Chargement des variables d’environnement depuis un fichier .env local (non versionné)
+# -----------------------------------------------------------------
+# Le fichier .env doit être placé à la racine du projet (même dossier que ce script)
+# Exemple de contenu :
+#   REDIS_PASSWORD=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# -----------------------------------------------------------------
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo "Fichier .env introuvable. Créez un fichier .env avec vos variables sensibles (ex: GANDI_API_TOKEN)."
+  exit 1
+fi
+
 # Variables principales
 rgname="workshop-EISI"
 aksname="AKSClusterWorkshop"
 rgloc="germanywestcentral"
-apitoken="e9534d0da979a255469024a375909df5a3824a99"
-redpass="password_redis_519"
+
+# Les mots de passe sensibles sont lus depuis le fichier .env
+if [ -z "${REDIS_PASSWORD:-}" ]; then
+  echo "Erreur : la variable REDIS_PASSWORD n'est pas définie dans le fichier .env."
+  exit 1
+fi
+redpass="$REDIS_PASSWORD"
 
 separator() {
   echo "-----------------------------------------------"
@@ -35,19 +53,15 @@ deploy_workshop() {
   az aks get-credentials --resource-group "$rgname" --name "$aksname" --overwrite-existing
 
   separator
-  echo "Création des secrets Redis, MariaDB et Gandi..."
+  echo "Création des secrets Redis et MariaDB..."
   kubectl create secret generic redis-secret-traefik \
     --from-literal=password="$redpass" --dry-run=client -o yaml | kubectl apply -f -
 
   kubectl create secret generic mariadb-secret \
-    --from-literal=root_password=root123 \
-    --from-literal=user=escape \
-    --from-literal=password=escape123 \
-    --from-literal=database=escape_db \
-    --dry-run=client -o yaml | kubectl apply -f -
-
-  kubectl create secret generic gandi-credentials \
-    --from-literal=api-token="$apitoken" \
+    --from-literal=root_password="$MARIADB_ROOT_PASSWORD" \
+    --from-literal=user="$MARIADB_USER" \
+    --from-literal=password="$MARIADB_PASSWORD" \
+    --from-literal=database="$MARIADB_DATABASE" \
     --dry-run=client -o yaml | kubectl apply -f -
 
   separator
@@ -88,7 +102,7 @@ deploy_workshop() {
     fi
   fi
 
-  WorkshopIngIP=$(az network public-ip show --resource-group "$MC_RG" --name "$IP_NAME" --query "ipAddress" -o tsv)
+  WorkshopIngIP=$(az network.public-ip show --resource-group "$MC_RG" --name "$IP_NAME" --query "ipAddress" -o tsv)
 
   if [[ -z "$WorkshopIngIP" ]]; then
     echo "Impossible de récupérer l'IP publique Azure."
@@ -111,6 +125,35 @@ deploy_workshop() {
   fi
 
   sed "s|__PUBLIC_IP__|$WorkshopIngIP|g" traefik-config.yaml > traefik-config-final.yaml
+
+  # -----------------------------------------------------------------
+  # Configuration réseau Azure — NSG et ouverture des ports nécessaires
+  # -----------------------------------------------------------------
+  separator
+  echo "Vérification et configuration du groupe de sécurité réseau (NSG)..."
+  NSG_NAME=$(az network nsg list --resource-group "$MC_RG" --query "[0].name" -o tsv)
+
+  if [[ -z "$NSG_NAME" ]]; then
+    echo "Aucun NSG trouvé dans le groupe de ressources $MC_RG"
+  else
+    echo "NSG détecté : $NSG_NAME"
+    echo "Vérification des règles existantes..."
+    az network nsg rule list --resource-group "$MC_RG" --nsg-name "$NSG_NAME" --output table
+
+    echo "Création (ou mise à jour) de la règle pour Let's Encrypt (port 80)..."
+    az network nsg rule create \
+      --resource-group "$MC_RG" \
+      --nsg-name "$NSG_NAME" \
+      --name Allow-HTTP-LetsEncrypt \
+      --protocol Tcp \
+      --priority 150 \
+      --destination-port-ranges 80 \
+      --access Allow \
+      --direction Inbound \
+      --source-address-prefixes Internet \
+      --description "Temporary: allow Let's Encrypt HTTP-01 challenge"
+  fi
+  # -----------------------------------------------------------------
 
   echo ""
   echo "Étape DNS : configure ton domaine sur Gandi"
