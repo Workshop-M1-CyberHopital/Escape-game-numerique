@@ -136,7 +136,7 @@
                               <span
                                   class="px-3 py-1 border border-cyber-blue text-cyber-blue font-tech text-sm rounded"
                               >
-                                  4 Salles Virtuelles
+                                  {{ totalRooms }} Salles Virtuelles
                               </span>
                               <span
                                   class="px-3 py-1 border border-cyber-green text-cyber-green font-tech text-sm rounded"
@@ -171,8 +171,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { drawHeartbeat } from "../utils/vitalSigns";
+import { ROOM_IDS } from "../composables/useGameState";
 
 const emit = defineEmits(["start-mission"]);
 
@@ -180,6 +181,9 @@ const glitchTitle = ref(null);
 const vitalCanvas = ref(null);
 let glitchInterval = null;
 let stopHeartbeat = null;
+
+// Nombre de salles calculé dynamiquement depuis la source unique
+const totalRooms = computed(() => ROOM_IDS.length);
 
 onMounted(() => {
   // Initialize Lucide Icons
