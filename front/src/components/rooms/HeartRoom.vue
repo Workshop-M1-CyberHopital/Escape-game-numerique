@@ -567,7 +567,7 @@ const startBeatTimer = () => {
 };
 
 const handleKeyPress = (event) => {
-    if (event.code === "Space" && isRunning.value) {
+    if ((event.code === "Space" || event.code === "Enter") && isRunning.value) {
         event.preventDefault();
         isCompressing.value = true;
 
