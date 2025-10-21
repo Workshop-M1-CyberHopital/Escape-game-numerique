@@ -5,6 +5,19 @@ const PENALTY_PER_ERROR = 30; // Secondes par erreur
 const PENALTY_PER_HINT = 1; // Points retirés par indice
 const MAX_SCORE = 20; // Score maximum
 
+// Liste des salles du jeu (source unique de vérité)
+export const ROOM_IDS = [
+  "server",
+  "dna-lab",
+  "imaging",
+  "heart",
+  "prosthesis",
+  "pathology",
+  "audition",
+  "eye",
+  "final",
+];
+
 // État global du jeu
 const gameState = reactive({
   isGameStarted: false,
@@ -88,17 +101,7 @@ export function useGameState() {
   };
 
   const unlockAllRooms = () => {
-    gameState.unlockedRooms = [
-      "server",
-      "dna-lab",
-      "imaging",
-      "heart",
-      "prosthesis",
-      "pathology",
-      "audition",
-      "eye",
-      "final",
-    ];
+    gameState.unlockedRooms = [...ROOM_IDS];
   };
 
   const resetGame = () => {
