@@ -161,6 +161,7 @@ spec:
       containers:
       - name: escape
         image: produn/escape-workshop:latest
+        imagePullPolicy: Always
         resources:
           requests:
             cpu: 100m

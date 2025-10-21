@@ -170,17 +170,79 @@ Le déploiement utilise un Personal Access Token (PAT) pour remplacer l’ancien
 
 - Donner les droits :  
 
-`
+```
 chmod +x infra_creation.sh
 chmod +x infra_deploy2.sh
-`
+```
 
 - Lancer le script voulu :  
 
-`
+```
 ./infra_creation.sh # Version simple sans helm chart local
 ./infra_deploy2.sh # Version avec Helm chart et values.yaml
-`
+```
+
+### Création de l'image Docker multi-architecture
+
+#### 1 - Activer le builder multi-architecture  
+
+```
+docker buildx create --name multiarch-builder --use
+docker buildx inspect --bootstrap
+```
+
+Cette commande crée un builder multi-plateforme et le sélectionne par défaut.  
+
+
+#### 2 - Construire et pousser l'image multi-arch  
+
+Remplacer produn/escape-workshop par le nom exact sur Docker Hub si nécessaire.  
+
+```
+docker buildx build \  
+  --platform linux/amd64,linux/arm64 \  
+  -t produn/escape-workshop:latest \  
+  --push . 
+```
+
+💡 Détails :  
+
+`--platform` → construit deux images séparées (AMD64 & ARM64).  
+
+`--push` → envoie directement la multi-image vers Docker Hub (pas besoin de docker push ensuite).  
+
+`.` → build à partir du Dockerfile dans le dossier courant.  
+
+#### 3 - Vérifier que tout est bon  
+
+```docker manifest inspect produn/escape-workshop:latest | grep architecture```
+
+On doit voir :  
+
+```
+"architecture": "amd64"
+"architecture": "arm64"
+```
+
+#### 4 - Forcer le redéploiement AKS
+
+```
+kubectl rollout restart deployment/escape-app
+kubectl rollout status deployment/escape-app
+```
+
+#### 5 - Tirer la nouvelle image latest depuis Docker Hub 
+
+Pour tirer la nouvelle image latest depuis Docker Hub il faut ajouter `imagePullPolicy: Always` dans le fichier de déploiement AKS :
+
+```
+      containers:
+      - name: escape
+        image: produn/escape-workshop:latest
+        imagePullPolicy: Always
+```
+
+kubectl apply -f escape.yaml
 
 ## Vérifications post-déploiement
 
@@ -195,17 +257,16 @@ chmod +x infra_deploy2.sh
 
 - Logs app Escape Game :  
 
-`kubectl logs -n default -l app=escape-app --tail=50`
+```kubectl logs -n default -l app=escape-app --tail=50```
 
 - Accès shell pod :  
   
-`kubectl exec -it -n default deploy/escape-app -- /bin/bash`
+```kubectl exec -it -n default deploy/escape-app -- /bin/bash```
 
 - Liste objets Kubernetes :  
 
-`kubectl get all -n default`
-
+```kubectl get all -n default```
 
 - Nettoyage Azure :  
 
-`az group delete -n workshop-EISI --yes --no-wait`
+```az group delete -n workshop-EISI --yes --no-wait```
