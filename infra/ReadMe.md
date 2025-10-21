@@ -134,7 +134,12 @@ Dans le dossier cluster-acme :
 - `traefik-config.yaml` : Configuration Traefik dashboard + auth + IP  
 
 Dans infra directement :
+
 - Scripts auxiliaires : Nettoyage et vérification infra  
+
+En local sur l'ordinateur : Fichier `.env` avec les variables nécessaires au déploiement de Redis, MariaDB et le token PAT Gandi (même si ACME utilisé au final) afin de ne pas mettre de données sensibles sur le repo Github. 
+
+Le fichier `.env` est ajouté dans le `.gitignore` afin qu'il ne soit pas poussé sur Github et qu'aucune des données des fichiers du `.gitignore` ne soient dans l'historique des commits.
 
 ## Documentation PAT Gandi
 
