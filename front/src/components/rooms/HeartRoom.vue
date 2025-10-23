@@ -367,7 +367,7 @@
                                 <div
                                     class="text-xs text-gray-500 mt-3 text-center font-tech"
                                 >
-                                    <span class="text-cyber-blue font-bold">Appuyez sur votre BOUTON USB</span>
+                                    <span class="text-cyber-blue font-bold">Appuyez sur ESPACE</span>
                                     <span class="text-cyber-red font-bold"> quand la zone rouge s'illumine</span>
                                 </div>
                                 
@@ -424,15 +424,6 @@
                             RESET
                         </button>
                     </div>
-
-                    <!-- Bouton de secours visible pour test -->
-                    <button
-                        v-if="isRunning"
-                        @click="triggerCompression"
-                        class="w-full px-6 py-4 bg-cyber-red hover:bg-red-500 text-white font-cyber font-bold text-xl rounded-lg transition-all border-2 border-red-400 shadow-lg hover:shadow-red-500/25"
-                    >
-                        🖱️ COMPRESSION ! (CLIC SECOURS)
-                    </button>
                 </div>
             </div>
         </div>
@@ -462,7 +453,7 @@
                         Bee Gees
                     </div>
                     <div v-if="hintsShown >= 3" class="fade-in">
-                        💡 Appuyez sur votre BOUTON USB quand la zone rouge s'illumine pour compter comme
+                        💡 Appuyez sur ESPACE quand la zone rouge s'illumine pour compter comme
                         compression correcte
                     </div>
                     <div v-if="hintsShown >= 4" class="fade-in">
