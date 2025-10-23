@@ -107,10 +107,9 @@
                                 </p>
                                 <p class="mb-4">
                                     <span class="text-cyber-blue"
-                                        >Votre mission :</span
+                                        >Mission :</span
                                     >
-                                    infiltrer et réparer sept zones critiques du
-                                    réseau hospitalier.
+                                    réparer neuf zones critiques du réseau.
                                 </p>
                                 <div
                                     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"
@@ -124,7 +123,7 @@
                                             SALLE DU SERVEUR
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Pare-feu principal corrompu
+                                            Pare-feu corrompu. Décoder les logs
                                         </div>
                                     </div>
                                     <div
@@ -136,7 +135,7 @@
                                             LABORATOIRE ADN
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Séquences génétiques brouillées
+                                            Séquences brouillées. Reconstituer ADN
                                         </div>
                                     </div>
                                     <div
@@ -148,7 +147,7 @@
                                             SALLE D'IMAGERIE
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Scanners médicaux hors service
+                                            Scanners défaillants. Restaurer images
                                         </div>
                                     </div>
                                     <div
@@ -160,7 +159,7 @@
                                             SALLE DU CŒUR
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Monitoring cardiaque défaillant
+                                            Monitoring défaillant. Synchroniser rythmes
                                         </div>
                                     </div>
 
@@ -173,7 +172,7 @@
                                             SALLE DES PATHOLOGIES
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Diagnostic médical compromis
+                                            Diagnostic compromis. Associer pathologies
                                         </div>
                                     </div>
                                     <div
@@ -185,7 +184,7 @@
                                             SALLE DES PROTHÈSES
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Système orthopédique désynchronisé
+                                            Système désynchronisé. Réaligner articulations
                                         </div>
                                     </div>
                                     <div
@@ -197,7 +196,7 @@
                                             SALLE DE L'AUDITION
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Système audio ORL défaillant
+                                            Système audio défaillant. Ajuster fréquences
                                         </div>
                                     </div>
                                     <div
@@ -209,7 +208,7 @@
                                             SALLE DES YEUX
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Système ophtalmologique défaillant
+                                            Diagnostic visuel corrompu. Recalibrer ophtalmo
                                         </div>
                                     </div>
                                     <div
@@ -221,7 +220,7 @@
                                             SALLE DE FIN
                                         </div>
                                         <div class="text-gray-300 text-xs">
-                                            Fin de la mission
+                                            Patient critique. Diagnostiquer et sécuriser
                                         </div>
                                     </div>
                                 </div>
@@ -234,8 +233,12 @@
                                 <p
                                     class="mt-4 text-center text-cyber-blue font-bold"
                                 >
-                                    Sélectionnez votre première cible et
-                                    commencez la mission.
+                                    Chaque salle débloquée rapproche la restauration.
+                                </p>
+                                <p
+                                    class="text-center text-cyber-blue font-bold mt-2"
+                                >
+                                    Sélectionnez votre première cible et commencez.
                                 </p>
                                 <p
                                     class="text-center text-green-400 font-bold mt-2"
@@ -278,7 +281,7 @@ const props = defineProps({
     },
     duration: {
         type: Number,
-        default: 60000, // 60 seconds
+        default: 70000, // 70 seconds
     },
 });
 

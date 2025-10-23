@@ -1,0 +1,114 @@
+# ===========================================
+# Webhook Gandi pour cert-manager
+# Image custom : docker.io/produn/cert-manager-webhook-gandi:v0.3.0
+# ===========================================
+
+# 1. ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cert-manager-webhook-gandi
+  namespace: cert-manager
+---
+# 2. ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-webhook-gandi
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+---
+# 3. ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-webhook-gandi
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-manager-webhook-gandi
+subjects:
+  - kind: ServiceAccount
+    name: cert-manager-webhook-gandi
+    namespace: cert-manager
+---
+# 4. Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-gandi
+  namespace: cert-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cert-manager-webhook-gandi
+  template:
+    metadata:
+      labels:
+        app: cert-manager-webhook-gandi
+    spec:
+      serviceAccountName: cert-manager-webhook-gandi
+      containers:
+        - name: cert-manager-webhook-gandi
+          image: docker.io/produn/cert-manager-webhook-gandi:v0.3.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --tls-cert-file=/tls/tls.crt
+            - --tls-private-key-file=/tls/tls.key
+            - --secure-port=443
+          ports:
+            - containerPort: 443
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+            - name: certs
+              mountPath: /tls
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: cert-manager-webhook-tls
+---
+# 5. Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: cert-manager-webhook-gandi
+  namespace: cert-manager
+spec:
+  ports:
+    - port: 443
+      targetPort: 443
+  selector:
+    app: cert-manager-webhook-gandi
+---
+# 6. ValidatingWebhookConfiguration
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: cert-manager-webhook-gandi
+webhooks:
+  - name: webhook.cert-manager-webhook-gandi.cert-manager.svc
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    clientConfig:
+      service:
+        name: cert-manager-webhook-gandi
+        namespace: cert-manager
+        path: /validate
+        port: 443
+      caBundle: "" # rempli automatiquement
+    rules:
+      - apiGroups: ["acme.gandi.net"]
+        apiVersions: ["v1alpha1"]
+        operations: ["*"]
+        resources: ["*"]
+    failurePolicy: Fail

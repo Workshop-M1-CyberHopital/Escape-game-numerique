@@ -3,10 +3,12 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: traefik.eisi-dune.eu
+  namespace: default
 spec:
   dnsNames:
   - traefik.eisi-dune.eu
+  - escape.eisi-dune.eu
   issuerRef:
-    name: letsencrypt
-    kind: Issuer
+    name: letsencrypt-http
+    kind: ClusterIssuer
   secretName: secret-tls-workshop

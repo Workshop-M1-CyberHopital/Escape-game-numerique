@@ -90,4 +90,28 @@ const { audioState, setVolume, toggleMute } = useAudio();
         0 0 4px #00ffff,
         0 0 8px #00ffff;
 }
+
+.cursor-move:hover {
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.select-none {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.cursor-move::before {
+  content: "⋮⋮";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 8px;
+  color: rgba(0, 255, 255, 0.5);
+  line-height: 1;
+  pointer-events: none;
+}
 </style>

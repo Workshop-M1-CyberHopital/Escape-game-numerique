@@ -1,19 +1,18 @@
 # escape.yaml
 # ===============================================
-# Déploiement de l'application Escape Game - Workshop EISI 2025–2026
+# Déploiement de l'application Escape Game - Workshop EISI 2025–2026 - version stockage local K8S
 # ===============================================
-# Contenu :
-#  - Redis (cache + volume persistant)
-#  - MariaDB (base locale avec persistance)
+#  - Redis (cache avec stockage local éphémère)
+#  - MariaDB (base locale avec stockage K8S hostpath)
 #  - Application Escape Game (connexion Redis + MariaDB)
 # ===============================================
 
-# --- Redis (cache avec volume persistant) ---
+
+# --- Redis (cache avec stockage local éphémère) ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: workshop
 spec:
   replicas: 1
   selector:
@@ -26,8 +25,7 @@ spec:
     spec:
       volumes:
         - name: redis-vol
-          persistentVolumeClaim:
-            claimName: redis-pvc
+          emptyDir: {}   # stockage géré par K8S, non persistant
       containers:
       - name: redis
         image: redis:latest
@@ -61,7 +59,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-service
-  namespace: workshop
 spec:
   ports:
   - port: 6379
@@ -70,12 +67,11 @@ spec:
 
 ---
 
-# --- MariaDB (base de données locale avec persistance) ---
+# --- MariaDB (base locale avec stockage sur le disque du nœud AKS) ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mariadb
-  namespace: workshop
 spec:
   serviceName: mariadb
   replicas: 1
@@ -87,6 +83,11 @@ spec:
       labels:
         app: mariadb
     spec:
+      volumes:
+        - name: mariadb-storage
+          hostPath:
+            path: /mnt/data/mariadb  # chemin local sur le nœud
+            type: DirectoryOrCreate   # créé si absent
       containers:
       - name: mariadb
         image: mariadb:11.4
@@ -123,15 +124,6 @@ spec:
         volumeMounts:
         - name: mariadb-storage
           mountPath: /var/lib/mysql
-  volumeClaimTemplates:   # au même niveau que template
-  - metadata:
-      name: mariadb-storage
-    spec:
-      accessModes: ["ReadWriteMany"]
-      storageClassName: azurefile-csi     # ✅ utilisation du StorageClass officiel Azure
-      resources:
-        requests:
-          storage: 5Gi
 
 ---
 
@@ -140,7 +132,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mariadb
-  namespace: workshop
 spec:
   selector:
     app: mariadb
@@ -155,7 +146,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: escape-app
-  namespace: workshop
 spec:
   replicas: 2
   selector:
@@ -170,7 +160,8 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: escape
-        image: gaetandev/espace-workshop:latest   # Image Docker
+        image: produn/escape-workshop:latest
+        imagePullPolicy: Always
         resources:
           requests:
             cpu: 100m
@@ -178,8 +169,9 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
+        # ⚙️ L’application écoute en réalité sur le port 3001, pas 80
         ports:
-        - containerPort: 80
+        - containerPort: 3001
         env:
         - name: REDIS
           value: "redis-service"
@@ -213,7 +205,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: escape-service
-  namespace: workshop
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
 spec:
@@ -222,22 +213,7 @@ spec:
   - name: http
     port: 80
     protocol: TCP
+    # 🚀 Redirection interne vers le vrai port exposé par l’app
     targetPort: 80
   selector:
     app: escape-app
-
----
-
-# --- Volume persistant Redis ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-pvc
-  namespace: workshop
-spec:
-  storageClassName: azurefile-csi       # ✅ StorageClass officiel Azure (plus sûr)
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 3Gi

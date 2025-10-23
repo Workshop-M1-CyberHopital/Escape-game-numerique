@@ -2,11 +2,36 @@
 # Traefik Configuration - Workshop EISI 2025–2026
 # ----------------------------------------------------------
 # Contient :
+#  - Service LoadBalancer avec IP publique statique Azure
 #  - Middleware de restriction d’accès IP
 #  - Secret BasicAuth sécurisé pour le Dashboard
 #  - Middleware d’authentification BasicAuth
 #  - Ingress Traefik (HTTPS + Auth + Whitelist)
 # ==========================================================
+
+---
+# === Service : Traefik LoadBalancer =========================
+# Expose Traefik avec une IP publique statique créée sur Azure
+# ==========================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: default
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: "MC_workshop-EISI_AKSClusterWorkshop_germanywestcentral"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: __PUBLIC_IP__   # remplacée par le script au moment du déploiement
+  selector:
+    app.kubernetes.io/name: traefik
+  ports:
+    - name: web
+      port: 80
+      targetPort: 80
+    - name: websecure
+      port: 443
+      targetPort: 443
 
 ---
 # === Middleware : IP Whitelisting =========================
@@ -16,7 +41,6 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: workshop-whitelist
-  namespace: workshop
 spec:
   ipWhiteList:
     sourceRange:
@@ -35,7 +59,6 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: traefik-dashboard-auth
-  namespace: workshop
 type: Opaque
 data:
   users: YWRtaW46JDJ5JDA1JFZ0M29BYkNqSjFQcExaMHk5blprWnVxaFEuLi4=
@@ -48,7 +71,6 @@ apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: traefik-dashboard-auth
-  namespace: workshop
 spec:
   basicAuth:
     secret: traefik-dashboard-auth
@@ -62,7 +84,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: traefik-dashboard
-  namespace: workshop
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: workshop-whitelist@kubernetescrd,traefik-dashboard-auth@kubernetescrd

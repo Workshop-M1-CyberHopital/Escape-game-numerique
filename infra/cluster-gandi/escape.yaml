@@ -1,0 +1,522 @@
+# escape.yaml
+# ===============================================
+# Déploiement de l'application Escape Game - Workshop EISI 2025–2026 - version stockage local K8S
+# ===============================================
+#  - Redis (cache avec stockage local éphémère)
+#  - MariaDB (base locale avec stockage K8S hostpath)
+#  - Application Escape Game (connexion Redis + MariaDB)
+# ===============================================
+
+
+# --- Redis (cache avec stockage local éphémère) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      volumes:
+        - name: redis-vol
+          emptyDir: {}   # stockage géré par K8S, non persistant
+      containers:
+      - name: redis
+        image: redis:latest
+        args: ["--requirepass", "$(REDIS_PWD)"]
+        volumeMounts:
+        - name: redis-vol
+          mountPath: /data
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "no"
+        - name: REDIS_PWD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret-traefik
+              key: password
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 6379
+          name: redis
+
+---
+
+# --- Service Redis ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+
+---
+
+# --- MariaDB (base locale avec stockage sur le disque du nœud AKS) ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb
+spec:
+  serviceName: mariadb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      volumes:
+        - name: mariadb-storage
+          hostPath:
+            path: /mnt/data/mariadb  # chemin local sur le nœud
+            type: DirectoryOrCreate   # créé si absent
+      containers:
+      - name: mariadb
+        image: mariadb:11.4
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: root_password
+        - name: MARIADB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: database
+        - name: MARIADB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: user
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: password
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mariadb-storage
+          mountPath: /var/lib/mysql
+
+---
+
+# --- Service MariaDB ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+
+# # --- MariaDB (base locale avec stockage K8S éphémère) ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: mariadb
+# spec:
+#   serviceName: mariadb
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: mariadb
+#   template:
+#     metadata:
+#       labels:
+#         app: mariadb
+#     spec:
+#       volumes:
+#         - name: mariadb-storage
+#           emptyDir: {}   # stockage local sur le pod
+#       containers:
+#       - name: mariadb
+#         image: mariadb:11.4
+#         resources:
+#           requests:
+#             cpu: 100m
+#             memory: 128Mi
+#           limits:
+#             cpu: 250m
+#             memory: 256Mi
+#         env:
+#         - name: MARIADB_ROOT_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: root_password
+#         - name: MARIADB_DATABASE
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: database
+#         - name: MARIADB_USER
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: user
+#         - name: MARIADB_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: password
+#         ports:
+#         - containerPort: 3306
+#         volumeMounts:
+#         - name: mariadb-storage
+#           mountPath: /var/lib/mysql
+
+# ---
+
+# # --- Service MariaDB ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: mariadb
+# spec:
+#   selector:
+#     app: mariadb
+#   ports:
+#     - port: 3306
+#       targetPort: 3306
+
+---
+
+# --- Application Escape Game ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: escape-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: escape-app
+  template:
+    metadata:
+      labels:
+        app: escape-app
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: escape
+        image: produn/escape-workshop:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "redis-service"
+        - name: REDIS_PWD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret-traefik
+              key: password
+        - name: MARIADB_HOST
+          value: "mariadb"
+        - name: MARIADB_DB
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: database
+        - name: MARIADB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: user
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: password
+
+---
+
+# --- Service Escape Game (pour Traefik) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: escape-service
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: escape-app
+
+# ===============================================
+# Déploiement de l'application Escape Game - Workshop EISI 2025–2026
+# ===============================================
+# Contenu :
+#  - Redis (cache + volume persistant) avec Azurefile
+#  - MariaDB (base locale avec persistance)
+#  - Application Escape Game (connexion Redis + MariaDB)
+# ===============================================
+# # --- Redis (cache avec volume persistant) ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: redis
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: redis
+#   template:
+#     metadata:
+#       labels:
+#         app: redis
+#     spec:
+#       volumes:
+#         - name: redis-vol
+#           persistentVolumeClaim:
+#             claimName: redis-pvc
+#       containers:
+#       - name: redis
+#         image: redis:latest
+#         args: ["--requirepass", "$(REDIS_PWD)"]
+#         volumeMounts:
+#         - name: redis-vol
+#           mountPath: /data
+#         env:
+#         - name: ALLOW_EMPTY_PASSWORD
+#           value: "no"
+#         - name: REDIS_PWD
+#           valueFrom:
+#             secretKeyRef:
+#               name: redis-secret-traefik
+#               key: password
+#         resources:
+#           requests:
+#             cpu: 100m
+#             memory: 128Mi
+#           limits:
+#             cpu: 250m
+#             memory: 256Mi
+#         ports:
+#         - containerPort: 6379
+#           name: redis
+
+# ---
+
+# # --- Service Redis ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: redis-service
+# spec:
+#   ports:
+#   - port: 6379
+#   selector:
+#     app: redis
+
+# ---
+
+# # --- MariaDB (base de données locale avec persistance) ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: mariadb
+# spec:
+#   serviceName: mariadb
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: mariadb
+#   template:
+#     metadata:
+#       labels:
+#         app: mariadb
+#     spec:
+#       containers:
+#       - name: mariadb
+#         image: mariadb:11.4
+#         resources:
+#           requests:
+#             cpu: 100m
+#             memory: 128Mi
+#           limits:
+#             cpu: 250m
+#             memory: 256Mi
+#         env:
+#         - name: MARIADB_ROOT_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: root_password
+#         - name: MARIADB_DATABASE
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: database
+#         - name: MARIADB_USER
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: user
+#         - name: MARIADB_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: password
+#         ports:
+#         - containerPort: 3306
+#         volumeMounts:
+#         - name: mariadb-storage
+#           mountPath: /var/lib/mysql
+#   volumeClaimTemplates:
+#   - metadata:
+#       name: mariadb-storage
+#     spec:
+#       accessModes: ["ReadWriteMany"]
+#       storageClassName: azurefile
+#       resources:
+#         requests:
+#           storage: 5Gi
+
+# ---
+
+# # --- Service MariaDB ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: mariadb
+# spec:
+#   selector:
+#     app: mariadb
+#   ports:
+#     - port: 3306
+#       targetPort: 3306
+
+# ---
+
+# # --- Application Escape Game ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: escape-app
+# spec:
+#   replicas: 2
+#   selector:
+#     matchLabels:
+#       app: escape-app
+#   template:
+#     metadata:
+#       labels:
+#         app: escape-app
+#     spec:
+#       nodeSelector:
+#         "kubernetes.io/os": linux
+#       containers:
+#       - name: escape
+#         image: produn/escape-workshop:latest # image Docker
+#         resources:
+#           requests:
+#             cpu: 100m
+#             memory: 128Mi
+#           limits:
+#             cpu: 250m
+#             memory: 256Mi
+#         ports:
+#         - containerPort: 80
+#         env:
+#         - name: REDIS
+#           value: "redis-service"
+#         - name: REDIS_PWD
+#           valueFrom:
+#             secretKeyRef:
+#               name: redis-secret-traefik
+#               key: password
+#         - name: MARIADB_HOST
+#           value: "mariadb"
+#         - name: MARIADB_DB
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: database
+#         - name: MARIADB_USER
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: user
+#         - name: MARIADB_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: mariadb-secret
+#               key: password
+
+# ---
+
+# # --- Service Escape Game (pour Traefik) ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: escape-service
+#   annotations:
+#     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+# spec:
+#   type: ClusterIP
+#   ports:
+#   - name: http
+#     port: 80
+#     protocol: TCP
+#     targetPort: 80
+#   selector:
+#     app: escape-app
+
+# ---
+
+# # --- Volume persistant Redis ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: redis-pvc
+# spec:
+#   storageClassName: azurefile # StorageClass Azure azurefile-csi pour les comptes payants, azurefile pour les comptes gratuits
+#   accessModes:
+#     - ReadWriteMany
+#   resources:
+#     requests:
+#       storage: 3Gi
