@@ -1,4 +1,3 @@
-Escape-game-numerique/front/src/components/rooms/CPRRoom.vue
 <template>
     <GameRoom :room-data="roomData" @exit-room="$emit('exit-room')">
         <!-- Score en temps réel -->
@@ -368,7 +367,7 @@ Escape-game-numerique/front/src/components/rooms/CPRRoom.vue
                                 <div
                                     class="text-xs text-gray-500 mt-3 text-center font-tech"
                                 >
-                                    <span class="text-cyber-blue font-bold">Appuyez sur ESPACE</span>
+                                    <span class="text-cyber-blue font-bold">Appuyez sur votre BOUTON USB</span>
                                     <span class="text-cyber-red font-bold"> quand la zone rouge s'illumine</span>
                                 </div>
                                 
@@ -426,7 +425,14 @@ Escape-game-numerique/front/src/components/rooms/CPRRoom.vue
                         </button>
                     </div>
 
-
+                    <!-- Bouton de secours visible pour test -->
+                    <button
+                        v-if="isRunning"
+                        @click="triggerCompression"
+                        class="w-full px-6 py-4 bg-cyber-red hover:bg-red-500 text-white font-cyber font-bold text-xl rounded-lg transition-all border-2 border-red-400 shadow-lg hover:shadow-red-500/25"
+                    >
+                        🖱️ COMPRESSION ! (CLIC SECOURS)
+                    </button>
                 </div>
             </div>
         </div>
@@ -456,7 +462,7 @@ Escape-game-numerique/front/src/components/rooms/CPRRoom.vue
                         Bee Gees
                     </div>
                     <div v-if="hintsShown >= 3" class="fade-in">
-                        💡 Appuyez sur ESPACE quand la zone rouge s'illumine pour compter comme
+                        💡 Appuyez sur votre BOUTON USB quand la zone rouge s'illumine pour compter comme
                         compression correcte
                     </div>
                     <div v-if="hintsShown >= 4" class="fade-in">
@@ -507,7 +513,7 @@ const isCompressing = ref(false);
 const isBeating = ref(false);
 const beatProgress = ref(0);
 const isInBeatWindow = ref(false);
-const lastCompressionSuccess = ref(null); // null = pas encore de compression, true = succès, false = échec
+const lastCompressionSuccess = ref(null);
 
 // Rythme : 100 BPM = 600ms par compression (rythme réaliste)
 const beatInterval = 600;
@@ -515,22 +521,30 @@ const beatWindow = 150; // Tolérance ±150ms
 let beatTimer = null;
 let compressTimer = null;
 let lastBeatTime = 0;
+let gamepadInterval = null;
+let lastGamepadButtonState = false;
 
 const startSimulation = () => {
     if (isRunning.value) return;
 
+    console.log('🎮 SIMULATION DÉMARRÉE');
     isRunning.value = true;
     correctCompressions.value = 0;
     lastBeatTime = Date.now();
 
     // Démarrer le rythme
     startBeatTimer();
+    
+    // Démarrer le polling gamepad
+    startGamepadPolling();
 };
 
 const stopSimulation = () => {
+    console.log('🛑 SIMULATION ARRÊTÉE');
     isRunning.value = false;
     clearInterval(beatTimer);
     clearTimeout(compressTimer);
+    clearInterval(gamepadInterval);
     isBeating.value = false;
     beatProgress.value = 0;
     isInBeatWindow.value = false;
@@ -563,197 +577,149 @@ const startBeatTimer = () => {
 
             beatProgress.value = 0;
         }
-    }, 50); // Mise à jour fréquente pour l'animation
+    }, 50);
+};
+
+const startGamepadPolling = () => {
+    console.log('🎮 Démarrage du polling gamepad...');
+    gamepadInterval = setInterval(() => {
+        const gamepads = navigator.getGamepads();
+        for (let i = 0; i < gamepads.length; i++) {
+            const gamepad = gamepads[i];
+            if (gamepad) {
+                // Vérifier tous les boutons
+                for (let j = 0; j < gamepad.buttons.length; j++) {
+                    const button = gamepad.buttons[j];
+                    if (button.pressed && !lastGamepadButtonState) {
+                        console.log(`🎮 GAMEPAD BUTTON ${j} PRESSED!`, {
+                            gamepadIndex: i,
+                            buttonIndex: j,
+                            value: button.value,
+                            gamepadId: gamepad.id
+                        });
+                        lastGamepadButtonState = true;
+                        triggerCompression();
+                        break;
+                    }
+                }
+                if (!gamepad.buttons.some(b => b.pressed)) {
+                    lastGamepadButtonState = false;
+                }
+            }
+        }
+    }, 50); // Poll rapide pour détecter les pressions
+};
+
+const triggerCompression = () => {
+    if (!isRunning.value) {
+        console.log('⚠️ Simulation non démarrée, compression ignorée');
+        return;
+    }
+
+    console.log('💓 COMPRESSION DÉCLENCHÉE!');
+    isCompressing.value = true;
+
+    // Vérifier si dans la fenêtre de rythme
+    const now = Date.now();
+    const timeSinceLastBeat = now - lastBeatTime;
+    const isCorrectTiming =
+        Math.abs(timeSinceLastBeat - beatInterval / 2) < beatWindow;
+
+    console.log('⏱️ Timing check:', {
+        timeSinceLastBeat,
+        targetTime: beatInterval / 2,
+        tolerance: beatWindow,
+        isCorrect: isCorrectTiming
+    });
+
+    if (isCorrectTiming) {
+        correctCompressions.value++;
+        lastCompressionSuccess.value = true;
+        
+        console.log('✅ COMPRESSION CORRECTE!', {
+            total: correctCompressions.value,
+            required: requiredCompressions
+        });
+        
+        showSuccess(
+            "COMPRESSION CORRECTE",
+            `+1 compression (${correctCompressions.value}/${requiredCompressions})`,
+        );
+
+        if (correctCompressions.value >= requiredCompressions) {
+            completeSimulation();
+        }
+    } else {
+        addError("heart");
+        lastCompressionSuccess.value = false;
+        
+        console.log('❌ COMPRESSION RATÉE!');
+        
+        showError(
+            "RYTHME INCORRECT",
+            `Compression hors rythme. Continuez ! +${PENALTY_PER_ERROR}s de pénalité`,
+        );
+    }
+
+    // Reset compression après un instant
+    setTimeout(() => {
+        isCompressing.value = false;
+    }, 200);
+
+    // Reset le feedback après 2 secondes
+    setTimeout(() => {
+        lastCompressionSuccess.value = null;
+    }, 2000);
 };
 
 const handleKeyPress = (event) => {
-    console.log('Key pressed:', {
+    console.log('⌨️ KEY EVENT DETECTED:', {
+        type: event.type,
         code: event.code,
         key: event.key,
         keyCode: event.keyCode,
         which: event.which,
-        type: event.type,
-        isTrusted: event.isTrusted
+        isTrusted: event.isTrusted,
+        target: event.target?.tagName,
+        targetId: event.target?.id,
+        timestamp: event.timeStamp
     });
     
-    if ((event.code === "Space" || event.code === "Enter" || event.key === "Enter" || event.keyCode === 13 || event.which === 13) && isRunning.value) {
+    const validKeys = [
+        'Space', 'Enter', 'NumpadEnter',
+        ' ', 'Enter',
+        13, 32 // keyCodes
+    ];
+    
+    const isValidKey = 
+        validKeys.includes(event.code) ||
+        validKeys.includes(event.key) ||
+        validKeys.includes(event.keyCode) ||
+        validKeys.includes(event.which);
+    
+    if (isValidKey && isRunning.value) {
+        console.log('✅ TOUCHE VALIDE DÉTECTÉE - Déclenchement compression');
         event.preventDefault();
-        isCompressing.value = true;
-
-        // Vérifier si dans la fenêtre de rythme
-        const now = Date.now();
-        const timeSinceLastBeat = now - lastBeatTime;
-        const isCorrectTiming =
-            Math.abs(timeSinceLastBeat - beatInterval / 2) < beatWindow;
-
-        if (isCorrectTiming) {
-            correctCompressions.value++;
-            lastCompressionSuccess.value = true;
-            
-            // Feedback visuel central (garder les toasts pour l'audio)
-            showSuccess(
-                "COMPRESSION CORRECTE",
-                `+1 compression (${correctCompressions.value}/${requiredCompressions})`,
-            );
-
-            if (correctCompressions.value >= requiredCompressions) {
-                completeSimulation();
-            }
-        } else {
-            addError("heart");
-            lastCompressionSuccess.value = false;
-            
-            // Feedback visuel central (garder les toasts pour l'audio)
-            showError(
-                "RYTHME INCORRECT",
-                `Compression hors rythme. Continuez ! +${PENALTY_PER_ERROR}s de pénalité`,
-            );
-        }
-
-        // Reset compression après un instant
-        setTimeout(() => {
-            isCompressing.value = false;
-        }, 200);
-
-        // Reset le feedback après 2 secondes pour permettre de voir le résultat
-        setTimeout(() => {
-            lastCompressionSuccess.value = null;
-        }, 2000);
+        triggerCompression();
+    } else {
+        console.log('⚠️ Touche ignorée:', {
+            isValidKey,
+            isRunning: isRunning.value
+        });
     }
 };
 
-const completeSimulation = () => {
-    stopSimulation();
-    puzzleSolved.value = true;
-    isCompleted.value = true;
-    createFireworks(3000);
-
-    showSuccess(
-        "PATIENT SAUVÉ !",
-        "Excellent ! Vous avez effectué un massage cardiaque parfait. Le patient est stabilisé.",
-    );
-
-    // Petit délai pour permettre au briefing de fin de s'afficher
-    setTimeout(() => {
-        completeRoom("heart");
-        emit("room-completed", "heart");
-    }, 300);
-};
-
-const showHint = () => {
-    hintsShown.value++;
-    addHint("heart");
-};
-
+// Attacher les listeners et nettoyer au démontage
 onMounted(() => {
-    window.addEventListener("keydown", handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress, { passive: false });
+    window.addEventListener('keyup', handleKeyPress, { passive: false });
 });
 
 onUnmounted(() => {
-    stopSimulation();
-    window.removeEventListener("keydown", handleKeyPress);
+    window.removeEventListener('keydown', handleKeyPress);
+    window.removeEventListener('keyup', handleKeyPress);
+    clearInterval(beatTimer);
+    clearTimeout(compressTimer);
+    clearInterval(gamepadInterval);
 });
 </script>
-
-<style scoped>
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.scanline {
-    position: relative;
-    overflow: hidden;
-}
-
-.scanline::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #dc2626, transparent);
-    animation: scan 3s linear infinite;
-}
-
-@keyframes scan {
-    0% {
-        left: -100%;
-    }
-    100% {
-        left: 100%;
-    }
-}
-
-/* Animations personnalisées pour le feedback */
-@keyframes heartbeat {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-@keyframes compressionPulse {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.2);
-        opacity: 0.8;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes successFlash {
-    0%, 100% {
-        background-color: rgba(34, 197, 94, 0.1);
-        border-color: rgb(34, 197, 94);
-    }
-    50% {
-        background-color: rgba(34, 197, 94, 0.3);
-        border-color: rgb(34, 197, 94);
-    }
-}
-
-@keyframes errorFlash {
-    0%, 100% {
-        background-color: rgba(239, 68, 68, 0.1);
-        border-color: rgb(239, 68, 68);
-    }
-    50% {
-        background-color: rgba(239, 68, 68, 0.3);
-        border-color: rgb(239, 68, 68);
-    }
-}
-
-.heartbeat {
-    animation: heartbeat 0.6s ease-in-out infinite;
-}
-
-.compression-pulse {
-    animation: compressionPulse 0.2s ease-in-out;
-}
-
-.success-flash {
-    animation: successFlash 0.5s ease-in-out;
-}
-
-.error-flash {
-    animation: errorFlash 0.5s ease-in-out;
-}
-</style>
