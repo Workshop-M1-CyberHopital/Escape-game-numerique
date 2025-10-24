@@ -384,15 +384,79 @@ const playHeartbeatSound = async (duration) => {
     }
 }
 
-// Son de respiration
+// Son de respiration sifflante
 const playBreathingSound = async (duration) => {
-    // Créer plusieurs oscillateurs pour un son plus complexe et réaliste
+    const breathCycles = Math.floor(duration * 0.6)
+    
+    for (let i = 0; i < breathCycles; i++) {
+        const cycleStart = audioContext.value.currentTime + i * 1.6
+        
+        // Créer du bruit blanc pour chaque cycle
+        const bufferSize = audioContext.value.sampleRate * 1.6
+        const noiseBuffer = audioContext.value.createBuffer(1, bufferSize, audioContext.value.sampleRate)
+        const output = noiseBuffer.getChannelData(0)
+        
+        // Générer du bruit blanc
+        for (let j = 0; j < bufferSize; j++) {
+            output[j] = Math.random() * 2 - 1
+        }
+        
+        const noiseSource = audioContext.value.createBufferSource()
+        noiseSource.buffer = noiseBuffer
+        
+        // Filtre passe-bande pour le sifflement (1500-4000 Hz)
+        const bandpass = audioContext.value.createBiquadFilter()
+        bandpass.type = 'bandpass'
+        bandpass.frequency.setValueAtTime(2500, cycleStart)
+        bandpass.Q.setValueAtTime(3, cycleStart) // Q élevé pour un son sifflant
+        
+        // Gain pour contrôler l'enveloppe
+        const gainNode = audioContext.value.createGain()
+        gainNode.gain.setValueAtTime(0, cycleStart)
+        
+        // Inspiration (2 secondes) - montée progressive
+        gainNode.gain.linearRampToValueAtTime(0.4, cycleStart + 0.3)
+        gainNode.gain.linearRampToValueAtTime(0.5, cycleStart + 1.0)
+        gainNode.gain.linearRampToValueAtTime(0.3, cycleStart + 2.0)
+        
+        // Pause (0.3 secondes)
+        gainNode.gain.setValueAtTime(0.05, cycleStart + 2.0)
+        gainNode.gain.setValueAtTime(0.05, cycleStart + 2.3)
+        
+        // Expiration (1.3 secondes) - descente progressive
+        gainNode.gain.linearRampToValueAtTime(0.45, cycleStart + 2.5)
+        gainNode.gain.linearRampToValueAtTime(0.35, cycleStart + 3.2)
+        gainNode.gain.linearRampToValueAtTime(0, cycleStart + 3.6)
+        
+        // Variation de la fréquence du filtre pour plus de réalisme
+        bandpass.frequency.linearRampToValueAtTime(2800, cycleStart + 1.0) // Inspiration
+        bandpass.frequency.linearRampToValueAtTime(2200, cycleStart + 3.6) // Expiration
+        
+        // Connexions
+        noiseSource.connect(bandpass)
+        bandpass.connect(gainNode)
+        gainNode.connect(masterGainNode.value)
+        
+        noiseSource.start(cycleStart)
+        noiseSource.stop(cycleStart + 1.6)
+    }
+}
+
+// Son d'acouphènes
+const playEarSound = async (duration) => {
+    // S'assurer que currentAudioElement est null pour ce test (pas de MP3)
+    currentAudioElement.value = null
+    
     const oscillators = []
     const gainNodes = []
     
-    // Fréquences multiples pour simuler le bruit de respiration
-    const frequencies = [80, 120, 160, 200] // Harmoniques naturelles
-    const amplitudes = [0.3, 0.2, 0.15, 0.1] // Amplitudes décroissantes
+    // Plusieurs fréquences pour un acouphène plus réaliste
+    const frequencies = [
+        8000,  // Tonalité principale
+        8005,  // Légère variation pour créer un "battement"
+        12000  // Harmonique plus aiguë
+    ]
+    const amplitudes = [0.4, 0.35, 0.15]
     
     for (let i = 0; i < frequencies.length; i++) {
         const osc = audioContext.value.createOscillator()
@@ -400,52 +464,29 @@ const playBreathingSound = async (duration) => {
         
         osc.type = 'sine'
         osc.frequency.setValueAtTime(frequencies[i], audioContext.value.currentTime)
+        
+        // Fade in progressif
         gain.gain.setValueAtTime(0, audioContext.value.currentTime)
+        gain.gain.linearRampToValueAtTime(
+            amplitudes[i], 
+            audioContext.value.currentTime + 0.5
+        )
+        
+        // Modulation TRÈS subtile de la fréquence (tremolo léger)
+        const lfoFreq = 0.3 + Math.random() * 0.2 // Entre 0.3 et 0.5 Hz
+        const lfoDepth = 3 + Math.random() * 2 // Variation de 3-5 Hz seulement
+        
+        for (let j = 0; j < duration * 10; j++) {
+            const time = audioContext.value.currentTime + j * 0.1
+            const modulation = Math.sin(time * lfoFreq * 2 * Math.PI) * lfoDepth
+            osc.frequency.setValueAtTime(frequencies[i] + modulation, time)
+        }
         
         osc.connect(gain)
-        gain.connect(masterGainNode.value) // Connecter au gain node principal au lieu de destination
+        gain.connect(masterGainNode.value)
         
         oscillators.push(osc)
         gainNodes.push(gain)
-    }
-    
-    // Créer un cycle de respiration réaliste
-    const breathCycles = Math.floor(duration * 0.6) // 0.6 cycles par seconde (plus lent)
-    for (let i = 0; i < breathCycles; i++) {
-        const cycleStart = audioContext.value.currentTime + i * 1.6 // 1.6 secondes par cycle
-        
-        // Inspiration (2 secondes)
-        for (let j = 0; j < 20; j++) {
-            const time = cycleStart + j * 0.1
-            const progress = j / 20
-            const breathIntensity = Math.sin(progress * Math.PI) // Courbe sinusoïdale
-            
-            gainNodes.forEach((gain, index) => {
-                gain.gain.setValueAtTime(
-                    amplitudes[index] * breathIntensity * 0.4, 
-                    time
-                )
-            })
-        }
-        
-        // Pause (0.3 secondes)
-        gainNodes.forEach(gain => {
-            gain.gain.setValueAtTime(0.02, cycleStart + 2.0)
-        })
-        
-        // Expiration (1.3 secondes)
-        for (let j = 0; j < 13; j++) {
-            const time = cycleStart + 2.3 + j * 0.1
-            const progress = j / 13
-            const breathIntensity = Math.sin(progress * Math.PI) // Courbe sinusoïdale
-            
-            gainNodes.forEach((gain, index) => {
-                gain.gain.setValueAtTime(
-                    amplitudes[index] * breathIntensity * 0.3, 
-                    time
-                )
-            })
-        }
     }
     
     // Démarrer tous les oscillateurs
@@ -453,29 +494,6 @@ const playBreathingSound = async (duration) => {
         osc.start()
         osc.stop(audioContext.value.currentTime + duration)
     })
-}
-
-// Son d'acouphènes
-const playEarSound = async (duration) => {
-    const oscillator = audioContext.value.createOscillator()
-    const gainNode = audioContext.value.createGain()
-    
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(8000, audioContext.value.currentTime) // Fréquence aiguë
-    gainNode.gain.setValueAtTime(0, audioContext.value.currentTime)
-    
-    // Variation de fréquence pour simuler les acouphènes
-    for (let i = 0; i < duration * 10; i++) {
-        const time = audioContext.value.currentTime + i * 0.1
-        oscillator.frequency.setValueAtTime(7500 + Math.random() * 1000, time)
-        gainNode.gain.setValueAtTime(0.15, time)
-    }
-    
-    oscillator.connect(gainNode)
-    gainNode.connect(masterGainNode.value) // Connecter au gain node principal au lieu de destination
-    
-    oscillator.start()
-    oscillator.stop(audioContext.value.currentTime + duration)
 }
 
 // Sélectionner une réponse
