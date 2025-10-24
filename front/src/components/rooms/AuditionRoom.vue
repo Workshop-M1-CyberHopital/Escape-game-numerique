@@ -174,12 +174,12 @@ import GameRoom from '../GameRoom.vue'
 import { createFireworks } from '../../utils/fireworks'
 import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
-import { useAudio } from '../../composables/useAudio' // Ajouter cet import
+import { useAudio } from '../../composables/useAudio'
 
 const emit = defineEmits(['exit-room', 'room-completed'])
 const { completeRoom, addError, addHint, PENALTY_PER_ERROR } = useGameState()
 const { showSuccess, showError, showWarning, showInfo } = useToast()
-const { audioState } = useAudio() // Ajouter cette ligne
+const { audioState } = useAudio()
 
 const roomData = {
     title: "SALLE DE L'AUDITION",
@@ -199,7 +199,8 @@ const showResults = ref(false)
 const isPlaying = ref(false)
 const hintsShown = ref(0)
 const correctAnswers = ref(0)
-const masterGainNode = ref(null) // Ajouter un gain node principal
+const masterGainNode = ref(null)
+const currentAudioElement = ref(null) // Ajouter une référence pour l'élément audio en cours
 
 // Données des tests d'audiogramme
 const testData = ref([
@@ -266,6 +267,15 @@ const updateMasterVolume = () => {
             masterGainNode.value.gain.setValueAtTime(0, audioContext.value.currentTime)
         } else {
             masterGainNode.value.gain.setValueAtTime(audioState.volume, audioContext.value.currentTime)
+        }
+    }
+    
+    // Mettre à jour aussi l'élément audio HTML s'il existe
+    if (currentAudioElement.value) {
+        if (audioState.isMuted) {
+            currentAudioElement.value.volume = 0
+        } else {
+            currentAudioElement.value.volume = audioState.volume * 0.8
         }
     }
 }
@@ -346,12 +356,13 @@ const playHeartbeatSound = async (duration) => {
     try {
         // Créer un élément audio pour jouer le MP3
         const audio = new Audio('/battement_de_coeur.mp3')
+        currentAudioElement.value = audio // Stocker la référence
         
         // Appliquer le volume et l'état mute
         if (audioState.isMuted) {
             audio.volume = 0
         } else {
-            audio.volume = audioState.volume * 0.8 // 0.8 pour garder le même niveau relatif
+            audio.volume = audioState.volume * 0.8
         }
         
         audio.loop = true // Boucle pour la durée du test
@@ -363,11 +374,13 @@ const playHeartbeatSound = async (duration) => {
         setTimeout(() => {
             audio.pause()
             audio.currentTime = 0
+            currentAudioElement.value = null // Nettoyer la référence
         }, duration * 1000)
         
     } catch (error) {
         console.error('Erreur lecture MP3:', error)
         showError("ERREUR AUDIO", "Impossible de jouer le fichier audio.")
+        currentAudioElement.value = null
     }
 }
 
@@ -549,6 +562,10 @@ onMounted(() => {
 
 onUnmounted(() => {
     // Nettoyer l'audio
+    if (currentAudioElement.value) {
+        currentAudioElement.value.pause()
+        currentAudioElement.value = null
+    }
     if (masterGainNode.value) {
         masterGainNode.value.disconnect()
         masterGainNode.value = null
