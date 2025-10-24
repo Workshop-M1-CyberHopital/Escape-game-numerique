@@ -169,15 +169,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import GameRoom from '../GameRoom.vue'
 import { createFireworks } from '../../utils/fireworks'
 import { useGameState } from '../../composables/useGameState'
 import { useToast } from '../../composables/useToast'
+import { useAudio } from '../../composables/useAudio' // Ajouter cet import
 
 const emit = defineEmits(['exit-room', 'room-completed'])
 const { completeRoom, addError, addHint, PENALTY_PER_ERROR } = useGameState()
 const { showSuccess, showError, showWarning, showInfo } = useToast()
+const { audioState } = useAudio() // Ajouter cette ligne
 
 const roomData = {
     title: "SALLE DE L'AUDITION",
@@ -197,6 +199,7 @@ const showResults = ref(false)
 const isPlaying = ref(false)
 const hintsShown = ref(0)
 const correctAnswers = ref(0)
+const masterGainNode = ref(null) // Ajouter un gain node principal
 
 // Données des tests d'audiogramme
 const testData = ref([
@@ -243,11 +246,39 @@ const audioBars = ref(Array(20).fill(0))
 const initAudioContext = async () => {
     if (!audioContext.value) {
         audioContext.value = new (window.AudioContext || window.webkitAudioContext)()
+        
+        // Créer un gain node principal pour contrôler le volume global
+        masterGainNode.value = audioContext.value.createGain()
+        masterGainNode.value.connect(audioContext.value.destination)
+        
+        // Appliquer le volume initial et l'état mute
+        updateMasterVolume()
     }
     if (audioContext.value.state === 'suspended') {
         await audioContext.value.resume()
     }
 }
+
+// Fonction pour mettre à jour le volume principal
+const updateMasterVolume = () => {
+    if (masterGainNode.value) {
+        if (audioState.isMuted) {
+            masterGainNode.value.gain.setValueAtTime(0, audioContext.value.currentTime)
+        } else {
+            masterGainNode.value.gain.setValueAtTime(audioState.volume, audioContext.value.currentTime)
+        }
+    }
+}
+
+// Watcher pour synchroniser le volume avec AudioControls
+watch(() => audioState.volume, () => {
+    updateMasterVolume()
+})
+
+// Watcher pour synchroniser le mute avec AudioControls
+watch(() => audioState.isMuted, () => {
+    updateMasterVolume()
+})
 
 // Activer l'audio
 const activateAudio = async () => {
@@ -315,7 +346,14 @@ const playHeartbeatSound = async (duration) => {
     try {
         // Créer un élément audio pour jouer le MP3
         const audio = new Audio('/battement_de_coeur.mp3')
-        audio.volume = 0.8 // Volume élevé
+        
+        // Appliquer le volume et l'état mute
+        if (audioState.isMuted) {
+            audio.volume = 0
+        } else {
+            audio.volume = audioState.volume * 0.8 // 0.8 pour garder le même niveau relatif
+        }
+        
         audio.loop = true // Boucle pour la durée du test
         
         // Jouer l'audio
@@ -352,7 +390,7 @@ const playBreathingSound = async (duration) => {
         gain.gain.setValueAtTime(0, audioContext.value.currentTime)
         
         osc.connect(gain)
-        gain.connect(audioContext.value.destination)
+        gain.connect(masterGainNode.value) // Connecter au gain node principal au lieu de destination
         
         oscillators.push(osc)
         gainNodes.push(gain)
@@ -421,7 +459,7 @@ const playEarSound = async (duration) => {
     }
     
     oscillator.connect(gainNode)
-    gainNode.connect(audioContext.value.destination)
+    gainNode.connect(masterGainNode.value) // Connecter au gain node principal au lieu de destination
     
     oscillator.start()
     oscillator.stop(audioContext.value.currentTime + duration)
@@ -511,6 +549,10 @@ onMounted(() => {
 
 onUnmounted(() => {
     // Nettoyer l'audio
+    if (masterGainNode.value) {
+        masterGainNode.value.disconnect()
+        masterGainNode.value = null
+    }
     if (audioContext.value) {
         audioContext.value.close()
     }
