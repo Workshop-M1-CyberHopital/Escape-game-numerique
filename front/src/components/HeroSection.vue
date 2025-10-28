@@ -1,8 +1,13 @@
 <template>
   <section
-      class="min-h-screen flex flex-col items-center justify-center px-4 py-20"
+      class="min-h-screen flex flex-col items-center justify-center px-4 py-20 relative"
   >
-      <div class="text-center space-y-8 max-w-5xl mx-auto fade-in">
+      <!-- Mascotte décorative en arrière-plan (ne touche pas au layout, pointer-events none) -->
+      <div class="mascot-bg" aria-hidden="true">
+          <img src="/mascotte/mascotte_coeur.webp" alt="" />
+      </div>
+
+      <div class="hero-content text-center space-y-8 max-w-5xl mx-auto fade-in">
           <!-- Alert Badge -->
           <div class="scale-in">
               <span
@@ -249,5 +254,64 @@ onUnmounted(() => {
 
 .glitch.active .glitch-layer {
   opacity: 1;
+}
+
+/* Mascotte décorative : grande mais non intrusive, n'augmente pas la hauteur */
+.mascot-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 0;
+
+  /* Décalage vers la droite pour éviter la superposition avec la carte centrale */
+  justify-content: flex-end;
+  padding-right: clamp(1rem, 8vw, 6rem);
+}
+
+/* Image : agrandie/plus visible, déplacée vers la droite, conserve le comportement responsive */
+.mascot-bg img {
+  width: clamp(320px, 44vw, 880px);
+  max-height: 82vh;
+  object-fit: contain;
+  opacity: 0.30; /* augmenté pour meilleure visibilité */
+  transform: translateX(8%) translateY(6%) scale(1.06);
+  filter: brightness(1.35) saturate(1.35) drop-shadow(0 30px 64px rgba(0,0,0,0.72)) drop-shadow(0 0 32px rgba(34,197,94,0.20));
+  mix-blend-mode: screen;
+  transition: transform 240ms ease, opacity 200ms ease, filter 240ms ease;
+  border-radius: 8px;
+  z-index: 0;
+}
+
+/* Légère mise en valeur au hover (sensible uniquement si l'utilisateur passe la souris) */
+.mascot-bg img:hover {
+  opacity: 0.36; /* un peu plus visible au survol */
+  transform: translateX(6%) translateY(4%) scale(1.08);
+  filter: brightness(1.45) saturate(1.45) drop-shadow(0 36px 72px rgba(0,0,0,0.78)) drop-shadow(0 0 40px rgba(34,197,94,0.26));
+}
+
+/* Assurer que le contenu reste au-dessus de la mascotte */
+.hero-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* Masquer sur petits écrans pour ne pas gêner la lisibilité */
+@media (max-width: 640px) {
+  .mascot-bg { display: none; }
+}
+
+/* Ajustement sur très grands écrans pour rester en dehors des cartes centrales */
+@media (min-width: 1400px) {
+  .mascot-bg {
+    padding-right: clamp(3rem, 12vw, 14rem);
+  }
+  .mascot-bg img {
+    width: clamp(420px, 36vw, 980px);
+    opacity: 0.34; /* ajusté pour grands écrans */
+    transform: translateX(14%) translateY(4%) scale(1.08);
+  }
 }
 </style>

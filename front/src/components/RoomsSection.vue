@@ -1,6 +1,10 @@
 <template>
-    <section class="px-4 py-20">
-        <div class="max-w-7xl mx-auto">
+    <section class="px-4 py-20 relative">
+        <!-- Mascotte décorative à gauche (même style que HeroSection, ne touche pas au layout) -->
+        <div class="mascot-bg-left" aria-hidden="true">
+            <img src="/mascotte/mascotte.png" alt="" />
+        </div>
+        <div class="max-w-7xl mx-auto rooms-content">
             <div class="text-center mb-16">
                 <h2
                     class="text-4xl md:text-6xl font-cyber font-bold text-white mb-4"
@@ -803,3 +807,68 @@ onMounted(() => {
     }
 });
 </script>
+
+<style scoped>
+/* Positionner le contenu au-dessus de la mascotte */
+.rooms-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* Mascotte décorative à gauche : pousse visuellement vers la gauche sans impacter la hauteur */
+.mascot-bg-left {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: flex-start; /* alignée à gauche */
+  align-items: center;
+  pointer-events: none;
+  /* augmenter pour être visible au premier plan (mais l'image se fondra vers la droite) */
+  z-index: 18;
+  padding-left: clamp(0.5rem, 6vw, 4rem);
+}
+
+/* Rendre la mascotte plus visible et éviter qu'elle masque le contenu grâce à un mask gradient */
+.mascot-bg-left img {
+  width: clamp(280px, 36vw, 760px); /* un peu plus compacte pour ne pas être complètement derrière les cards */
+  max-height: 82vh;
+  object-fit: contain;
+  opacity: 0.46; /* augmenté pour meilleure visibilité */
+  transform: translateX(-14%) translateY(6%) scale(1.06); /* plus à gauche */
+  filter: brightness(1.48) saturate(1.4) drop-shadow(0 30px 64px rgba(0,0,0,0.72)) drop-shadow(0 0 40px rgba(34,197,94,0.22));
+  mix-blend-mode: screen;
+  transition: transform 240ms ease, opacity 200ms ease, filter 240ms ease;
+  border-radius: 8px;
+  z-index: 18;
+
+  /* Fade vers la droite pour ne pas masquer les cartes centrales */
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 58%, transparent 92%);
+  mask-image: linear-gradient(to right, black 0%, black 58%, transparent 92%);
+}
+
+/* Interaction : accentuation au hover (toujours pointer-events none pour ne pas bloquer) */
+.mascot-bg-left img:hover {
+  opacity: 0.5;
+  transform: translateX(-12%) translateY(4%) scale(1.08);
+  filter: brightness(1.55) saturate(1.45) drop-shadow(0 36px 72px rgba(0,0,0,0.78)) drop-shadow(0 0 44px rgba(34,197,94,0.26));
+}
+
+/* Masquer sur petits écrans pour ne pas gêner la lisibilité */
+@media (max-width: 640px) {
+  .mascot-bg-left { display: none; }
+}
+
+/* Ajustements pour très grands écrans : plus visible hors des cartes */
+@media (min-width: 1400px) {
+  .mascot-bg-left {
+    padding-left: clamp(2rem, 10vw, 12rem);
+  }
+  .mascot-bg-left img {
+    width: clamp(360px, 32vw, 920px);
+    opacity: 0.52;
+    transform: translateX(-20%) translateY(4%) scale(1.08);
+    -webkit-mask-image: linear-gradient(to right, black 0%, black 64%, transparent 96%);
+    mask-image: linear-gradient(to right, black 0%, black 64%, transparent 96%);
+  }
+}
+</style>

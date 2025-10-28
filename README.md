@@ -7,22 +7,27 @@ Les dossiers médicaux des patients sont corrompus par un **virus informatique i
 Votre équipe (les joueurs) est une **unité spéciale de cybersécurité médicale** chargée de rétablir le système avant que les patients ne soient en danger.
 
 🎯 **Objectif du jeu** :
-Réparer les systèmes vitaux (4 salles virtuelles) en résolvant des énigmes liées à :
+Réparer les systèmes vitaux (**9 salles virtuelles**) en résolvant des énigmes liées à :
 
 * la **cybersécurité médicale**,
-* la **santé humaine (données, ADN, IRM, rythme cardiaque)**,
+* la **santé humaine (données, ADN, IRM, rythme cardiaque, etc.)**,
 * la **collaboration et la logique**.
 
 ---
 
 ## 🧩 Structure du jeu (Escape game numérique)
 
-| Salle                   | Nom                    | Enigme principale                                                                | Objectif pédagogique                                       |
-| ----------------------- | ---------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| **1. Salle du Serveur** | “Le pare-feu corrompu” | Décoder un mot de passe à partir d’un log chiffré (substitution, base64, etc.)   | Sensibiliser à la sécurité des données de santé            |
-| **2. Laboratoire ADN**  | “Les gènes brouillés”  | Reconstituer une séquence ADN (mini puzzle logique)                              | Comprendre la logique de l’ADN et des données biomédicales |
-| **3. Salle d’Imagerie** | “IRM fantôme”          | Reconstituer une image médicale corrompue (pixels manquants ou puzzle à glisser) | Découvrir le rôle de l’imagerie médicale                   |
-| **4. Salle du Cœur**    | “Rythme vital”         | Mini-jeu basé sur la synchronisation : cliquer ou respirer au bon rythme         | Sensibiliser au stress et à la régulation cardiaque        |
+| Salle                      | Nom                        | Enigme principale                                             | Objectif pédagogique                                      |
+| -------------------------- | -------------------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
+| **1. Salle du Serveur**    | Pare-feu corrompu          | Décoder des logs chiffrés                                     | Sensibiliser à la sécurité des données de santé           |
+| **2. Laboratoire ADN**     | Gènes brouillés            | Reconstituer une séquence ADN                                 | Comprendre la logique ADN et la gestion des données bio   |
+| **3. Salle d’Imagerie**    | IRM fantôme                | Restaurer une image médicale corrompue                        | Découvrir le rôle de l’imagerie médicale                  |
+| **4. Salle du Cœur**       | Rythme vital               | Mini-jeu de synchronisation (cliquer/respirer au bon rythme)  | Sensibiliser au stress et à la régulation cardiaque       |
+| **5. Salle des Pathologies**| Diagnostic compromis       | Associer pathologies et symptômes                             | Apprendre la logique médicale et les diagnostics          |
+| **6. Salle des Prothèses** | Articulations désynchronisées| Réaligner des prothèses/articulations                        | Comprendre la biomécanique et les dispositifs médicaux    |
+| **7. Salle de l’Audition** | Fréquences brouillées      | Ajuster des fréquences audio                                  | Sensibiliser à l’audition et au traitement du signal      |
+| **8. Salle des Yeux**      | Vision brouillée           | Recalibrer un diagnostic visuel/ophtalmo                      | Comprendre l’importance du dépistage visuel               |
+| **9. Salle de Fin**        | Patient critique           | Diagnostiquer et sécuriser un patient en urgence              | Synthèse des apprentissages, gestion de crise             |
 
 Chaque énigme réussie **débloque une clé** pour restaurer une partie du système.
 À la fin, un **débriefing** montre ce qu’ils ont appris (protection des données, santé, émotion, etc.).
