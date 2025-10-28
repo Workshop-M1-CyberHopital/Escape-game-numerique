@@ -204,10 +204,11 @@ Cette commande crée un builder multi-plateforme et le sélectionne par défaut.
 Remplacer produn/escape-workshop par le nom exact sur Docker Hub si nécessaire.  
 
 ```
-docker buildx build \  
-  --platform linux/amd64,linux/arm64 \  
-  -t produn/escape-workshop:latest \  
-  --push . 
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --provenance=false --sbom=false \
+  -t produn/escape-workshop:latest \
+  --push .
 ```
 
 💡 Détails :  
