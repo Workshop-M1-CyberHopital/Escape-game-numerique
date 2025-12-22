@@ -1,7 +1,7 @@
 // Configuration de l'application
 export const config = {
   // Mode développement - changer à false en production
-  DEV_MODE: true,
+  DEV_MODE: false,
   
   // Autres configurations
   APP_NAME: "Cyber-Hôpital Escape Game",
