@@ -43,12 +43,14 @@
                                 {{ gameState.hintsUsed }}
                             </span>
                         </div>
-                        <i
-                            :data-lucide="
-                                isStatsExpanded ? 'chevron-up' : 'chevron-down'
-                            "
-                            class="w-4 h-4 text-cyber-blue transition-transform"
-                        ></i>
+                        <ChevronUp
+                            v-if="isStatsExpanded"
+                            class="w-4 h-4 text-cyber-blue"
+                        />
+                        <ChevronDown
+                            v-else
+                            class="w-4 h-4 text-cyber-blue"
+                        />
                     </button>
                 </div>
             </div>
@@ -69,10 +71,7 @@
                             class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
                         >
                             <div class="flex items-center gap-2">
-                                <i
-                                    data-lucide="clock"
-                                    class="w-5 h-5 text-cyber-blue"
-                                ></i>
+                                <Clock class="w-5 h-5 text-cyber-blue" />
                                 <span class="font-tech text-sm text-gray-400"
                                     >Temps écoulé</span
                                 >
@@ -89,10 +88,7 @@
                             class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
                         >
                             <div class="flex items-center gap-2">
-                                <i
-                                    data-lucide="x-circle"
-                                    class="w-5 h-5 text-red-500"
-                                ></i>
+                                <XCircle class="w-5 h-5 text-red-500" />
                                 <span class="font-tech text-sm text-gray-400"
                                     >Erreurs</span
                                 >
@@ -109,10 +105,7 @@
                             class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
                         >
                             <div class="flex items-center gap-2">
-                                <i
-                                    data-lucide="lightbulb"
-                                    class="w-5 h-5 text-yellow-500"
-                                ></i>
+                                <Lightbulb class="w-5 h-5 text-yellow-500" />
                                 <span class="font-tech text-sm text-gray-400"
                                     >Indices utilisés</span
                                 >
@@ -129,10 +122,7 @@
                             class="flex items-center justify-between bg-gray-700/30 rounded-lg p-4"
                         >
                             <div class="flex items-center gap-2">
-                                <i
-                                    data-lucide="users"
-                                    class="w-5 h-5 text-cyber-green"
-                                ></i>
+                                <Users class="w-5 h-5 text-cyber-green" />
                                 <span class="font-tech text-sm text-gray-400"
                                     >Équipe</span
                                 >
@@ -154,10 +144,7 @@
                             class="flex items-center justify-between bg-orange-900/20 border border-orange-500/30 rounded-lg p-4"
                         >
                             <div class="flex items-center gap-2">
-                                <i
-                                    data-lucide="alert-triangle"
-                                    class="w-5 h-5 text-orange-500"
-                                ></i>
+                                <AlertTriangle class="w-5 h-5 text-orange-500" />
                                 <span class="font-tech text-sm text-gray-400"
                                     >Pénalités</span
                                 >
@@ -173,10 +160,7 @@
                             class="flex items-center justify-between bg-cyber-red/20 border border-cyber-red/30 rounded-lg p-4"
                         >
                             <div class="flex items-center gap-2">
-                                <i
-                                    data-lucide="timer"
-                                    class="w-5 h-5 text-cyber-red"
-                                ></i>
+                                <Timer class="w-5 h-5 text-cyber-red" />
                                 <span
                                     class="font-tech text-sm text-gray-300 font-bold"
                                     >Temps Total</span
@@ -301,12 +285,17 @@ import { useGameState } from "../composables/useGameState";
 import {
     ArrowLeft,
     Clock,
+    XCircle,
+    Lightbulb,
     Users,
+    AlertTriangle,
+    Timer,
+    ChevronDown,
+    ChevronUp,
     Server,
     Dna,
     ScanLine,
     Heart,
-    BarChart3,
     Volume2,
     HeartPulse,
     Settings,
@@ -330,11 +319,6 @@ const isStatsExpanded = ref(false);
 
 const toggleStatsMenu = () => {
     isStatsExpanded.value = !isStatsExpanded.value;
-    setTimeout(() => {
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
-    }, 50);
 };
 
 const getRoomName = (roomId) => {
@@ -343,6 +327,11 @@ const getRoomName = (roomId) => {
         "dna-lab": "LAB ADN",
         imaging: "IMAGERIE",
         heart: "CŒUR",
+        prosthesis: "PROTHÈSES",
+        pathology: "PATHOLOGIE",
+        audition: "AUDITION",
+        eye: "YEUX",
+        final: "SALLE FINALE",
     };
     return names[roomId] || roomId;
 };
@@ -365,12 +354,6 @@ const iconMap = {
 const getIconComponent = (iconName) => {
     return iconMap[iconName] || Server;
 };
-
-onMounted(() => {
-    if (window.lucide) {
-        window.lucide.createIcons();
-    }
-});
 </script>
 
 <style scoped>

@@ -3,8 +3,10 @@ export const ENV_CONFIG = {
     // URL de l'API Backend
     API_URL: import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:3001/api`,
     
-    // Mode de développement
-    DEV_MODE: import.meta.env.VITE_DEV_MODE === 'true' || import.meta.env.DEV,
+    // Mode de développement : activé par défaut (true) si rien n'est spécifié dans les variables d'environnement
+    DEV_MODE: import.meta.env.VITE_DEV_MODE !== undefined
+        ? import.meta.env.VITE_DEV_MODE === 'true' || import.meta.env.VITE_DEV_MODE === true
+        : true,
     
     // Configuration de l'application
     APP_NAME: import.meta.env.VITE_APP_NAME || 'Cyber-Hôpital Escape Game',

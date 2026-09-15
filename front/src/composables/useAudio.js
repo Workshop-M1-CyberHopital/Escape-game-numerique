@@ -1,283 +1,143 @@
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue';
 
 // État global de l'audio
-const audioState = reactive({
+export const audioState = reactive({
   isEnabled: false,
   volume: 0.7,
   isMuted: false,
   hasPermission: false
-})
+});
 
-// Sons disponibles
-const sounds = {
-  roomSelection: new Audio('/RoomSelection.mp3'),
-  serverRoom: new Audio('/ServerRoom.mp3'),
-  // Ajouter d'autres sons ici
-}
+// Registre des fichiers audio réels existants
+const SOUND_PATHS = {
+  roomSelection: '/RoomSelection.mp3',
+  serverRoom: '/ServerRoom.mp3',
+  dnaRoom: '/DNARoom.mp3',
+  imagingRoom: '/ImagingRoom.mp3',
+  finishServerRoom: '/FinishServerRoom.mp3',
+  finishDNARoom: '/FinishDNARoom.mp3',
+  finishImagingRoom: '/FinishImagingRoom.mp3',
+  heartbeat: '/battement_de_coeur.mp3'
+};
 
-// Fonction pour initialiser les sons avec gestion d'erreur
-const initializeSounds = () => {
-  try {
-    // Utiliser le bon chemin avec gestion d'erreur
-    sounds.roomSelection = new Audio('/RoomSelection.mp3')
-    sounds.roomSelection.preload = 'none' // Changé de 'auto' à 'none' pour éviter les erreurs
-    sounds.roomSelection.volume = audioState.volume
-    
-    sounds.serverRoom = new Audio('/ServerRoom.mp3')
-    sounds.serverRoom.preload = 'none'
-    sounds.serverRoom.volume = audioState.volume
-    
-    sounds.dnaRoom = new Audio('/DNARoom.mp3')
-    sounds.dnaRoom.preload = 'none'
-    sounds.dnaRoom.volume = audioState.volume
-    
-    sounds.finishServerRoom = new Audio('/FinishServerRoom.mp3')
-    sounds.finishServerRoom.preload = 'none'
-    sounds.finishServerRoom.volume = audioState.volume
-    
-    sounds.finishDNARoom = new Audio('/FinishDNARoom.mp3')
-    sounds.finishDNARoom.preload = 'none'
-    sounds.finishDNARoom.volume = audioState.volume
-    
-    sounds.imagingRoom = new Audio('/ImagingRoom.mp3')
-    sounds.imagingRoom.preload = 'none'
-    sounds.imagingRoom.volume = audioState.volume
-    
-    sounds.finishImagingRoom = new Audio('/FinishImagingRoom.mp3')
-    sounds.finishImagingRoom.preload = 'none'
-    sounds.finishImagingRoom.volume = audioState.volume
-    
-    // Gestion des erreurs de chargement
-    sounds.roomSelection.addEventListener('error', (e) => {
-      console.error('Erreur de chargement du son roomSelection:', e)
-    })
-    
-    sounds.roomSelection.addEventListener('canplaythrough', () => {
-      console.log('Son roomSelection prêt à être joué')
-    })
-    
-    sounds.roomSelection.addEventListener('loadstart', () => {
-      console.log('Début du chargement du son roomSelection')
-    })
-    
-    sounds.serverRoom.addEventListener('error', (e) => {
-      console.error('Erreur de chargement du son serverRoom:', e)
-    })
-    
-    sounds.serverRoom.addEventListener('canplaythrough', () => {
-      console.log('Son serverRoom prêt à être joué')
-    })
-    
-    sounds.serverRoom.addEventListener('loadstart', () => {
-      console.log('Début du chargement du son serverRoom')
-    })
-    
-    sounds.dnaRoom.addEventListener('error', (e) => {
-      console.error('Erreur de chargement du son dnaRoom:', e)
-    })
-    
-    sounds.dnaRoom.addEventListener('canplaythrough', () => {
-      console.log('Son dnaRoom prêt à être joué')
-    })
-    
-    sounds.dnaRoom.addEventListener('loadstart', () => {
-      console.log('Début du chargement du son dnaRoom')
-    })
-    
-    sounds.finishServerRoom.addEventListener('error', (e) => {
-      console.error('Erreur de chargement du son finishServerRoom:', e)
-    })
-    
-    sounds.finishServerRoom.addEventListener('canplaythrough', () => {
-      console.log('Son finishServerRoom prêt à être joué')
-    })
-    
-    sounds.finishServerRoom.addEventListener('loadstart', () => {
-      console.log('Début du chargement du son finishServerRoom')
-    })
-    
-    sounds.finishDNARoom.addEventListener('error', (e) => {
-      console.error('Erreur de chargement du son finishDNARoom:', e)
-    })
-    
-    sounds.finishDNARoom.addEventListener('canplaythrough', () => {
-      console.log('Son finishDNARoom prêt à être joué')
-    })
-    
-    sounds.finishDNARoom.addEventListener('loadstart', () => {
-      console.log('Début du chargement du son finishDNARoom')
-    })
-    
-    sounds.imagingRoom.addEventListener('error', (e) => {
-      console.error('Erreur de chargement du son imagingRoom:', e)
-    })
-    
-    sounds.imagingRoom.addEventListener('canplaythrough', () => {
-      console.log('Son imagingRoom prêt à être joué')
-    })
-    
-    sounds.imagingRoom.addEventListener('loadstart', () => {
-      console.log('Début du chargement du son imagingRoom')
-    })
-    
-    sounds.finishImagingRoom.addEventListener('error', (e) => {
-      console.error('Erreur de chargement du son finishImagingRoom:', e)
-    })
-    
-    sounds.finishImagingRoom.addEventListener('canplaythrough', () => {
-      console.log('Son finishImagingRoom prêt à être joué')
-    })
-    
-    sounds.finishImagingRoom.addEventListener('loadstart', () => {
-      console.log('Début du chargement du son finishImagingRoom')
-    })
-  } catch (error) {
-    console.error('Erreur lors de l\'initialisation des sons:', error)
-    // Ne pas bloquer l'interface si les sons ne se chargent pas
-    console.log('Interface continue sans audio')
+// Cache d'instances HTMLAudioElement
+const audioCache = new Map();
+
+// Récupère ou instancie un élément Audio à la demande
+const getOrCreateAudio = (soundName) => {
+  if (audioCache.has(soundName)) {
+    return audioCache.get(soundName);
   }
-}
 
-// Initialiser les sons
-initializeSounds()
+  const path = SOUND_PATHS[soundName];
+  if (!path) {
+    return null;
+  }
+
+  try {
+    const audio = new Audio(path);
+    audio.preload = 'none';
+    audio.volume = audioState.isMuted ? 0 : audioState.volume;
+    audio.muted = audioState.isMuted;
+
+    audio.addEventListener('error', (e) => {
+      console.warn(`[useAudio] Erreur de lecture sur le son "${soundName}":`, e);
+    });
+
+    audioCache.set(soundName, audio);
+    return audio;
+  } catch (error) {
+    console.warn(`[useAudio] Impossible de créer l'élément Audio pour "${soundName}":`, error);
+    return null;
+  }
+};
 
 export function useAudio() {
   const requestAudioPermission = async () => {
     try {
-      console.log('🎵 Tentative de demande de permission audio...')
-      
-      // Créer un son de test avec un fichier audio réel
-      const testAudio = new Audio('/RoomSelection.mp3')
-      testAudio.volume = 0.01 // Volume très faible
-      testAudio.muted = false
-      
-      // Ajouter des listeners pour le debug
-      testAudio.addEventListener('play', () => {
-        console.log('✅ Son de test en cours de lecture')
-      })
-      
-      testAudio.addEventListener('error', (e) => {
-        console.error('❌ Erreur lors du test audio:', e)
-      })
-      
-      // Tenter de jouer le son pour déclencher la permission
-      const playPromise = testAudio.play()
-      
+      const testAudio = new Audio(SOUND_PATHS.roomSelection);
+      testAudio.volume = 0.01;
+      testAudio.muted = false;
+
+      const playPromise = testAudio.play();
       if (playPromise !== undefined) {
-        await playPromise
-        console.log('✅ Permission audio accordée - Son joué')
-        testAudio.pause()
-        testAudio.currentTime = 0
-        
-        audioState.hasPermission = true
-        audioState.isEnabled = true
-        return true
-      } else {
-        console.log('✅ Permission audio accordée - Pas de promesse')
-        audioState.hasPermission = true
-        audioState.isEnabled = true
-        return true
+        await playPromise;
+        testAudio.pause();
+        testAudio.currentTime = 0;
       }
+
+      audioState.hasPermission = true;
+      audioState.isEnabled = true;
+      return true;
     } catch (error) {
-      console.warn('❌ Permission audio refusée:', error)
-      audioState.hasPermission = false
-      audioState.isEnabled = false
-      return false
+      console.warn('[useAudio] Permission audio non accordée:', error);
+      audioState.hasPermission = false;
+      audioState.isEnabled = false;
+      return false;
     }
-  }
+  };
 
   const playSound = async (soundName, options = {}) => {
-    console.log(`Tentative de lecture du son: ${soundName}`)
-    console.log('État audio:', { 
-      isEnabled: audioState.isEnabled, 
-      isMuted: audioState.isMuted, 
-      hasPermission: audioState.hasPermission 
-    })
-    
-    // Permettre la lecture même si l'audio n'est pas activé (pour Docker)
     if (audioState.isMuted) {
-      console.log('Audio muet, lecture annulée')
-      return
+      return;
     }
 
-    const audio = sounds[soundName]
+    const audio = getOrCreateAudio(soundName);
     if (!audio) {
-      console.warn(`Son "${soundName}" non trouvé`)
-      return
+      // Le son n'a pas de fichier mp3 associé (normal pour certaines salles sans audio)
+      return;
     }
 
     try {
-      // Réinitialiser le son
-      audio.currentTime = 0
-      audio.volume = options.volume || audioState.volume
-      
-      if (options.loop) {
-        audio.loop = true
-      }
-      
-      console.log('Lecture du son en cours...')
-      await audio.play()
-      console.log('Son joué avec succès')
+      audio.currentTime = 0;
+      audio.volume = options.volume !== undefined ? options.volume : audioState.volume;
+      audio.muted = audioState.isMuted;
+      audio.loop = Boolean(options.loop);
+
+      await audio.play();
     } catch (error) {
-      console.error('Erreur lors de la lecture audio:', error)
+      console.warn(`[useAudio] Échec lecture audio "${soundName}":`, error);
     }
-  }
+  };
 
   const stopSound = (soundName) => {
-    console.log(`🛑 Arrêt du son: ${soundName}`)
-    const audio = sounds[soundName]
+    const audio = audioCache.get(soundName);
     if (audio) {
-      console.log(`🛑 État avant arrêt:`, {
-        paused: audio.paused,
-        currentTime: audio.currentTime,
-        volume: audio.volume,
-        muted: audio.muted
-      })
-      
-      // Arrêt agressif pour Safari
-      audio.pause()
-      audio.currentTime = 0
-      audio.volume = 0
-      audio.muted = true
-      
-      // Forcer l'arrêt en réinitialisant complètement
-      audio.load()
-      
-      console.log(`🛑 État après arrêt:`, {
-        paused: audio.paused,
-        currentTime: audio.currentTime,
-        volume: audio.volume,
-        muted: audio.muted
-      })
-    } else {
-      console.warn(`🛑 Son "${soundName}" non trouvé pour l'arrêt`)
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (error) {
+        console.warn(`[useAudio] Erreur lors de l'arrêt du son "${soundName}":`, error);
+      }
     }
-  }
+  };
 
   const setVolume = (volume) => {
-    audioState.volume = Math.max(0, Math.min(1, volume))
-    Object.values(sounds).forEach(audio => {
-      audio.volume = audioState.volume
-    })
-  }
+    const normalized = Math.max(0, Math.min(1, Number(volume) || 0));
+    audioState.volume = normalized;
+    audioCache.forEach((audio) => {
+      audio.volume = audioState.isMuted ? 0 : normalized;
+    });
+  };
 
   const toggleMute = () => {
-    audioState.isMuted = !audioState.isMuted
-    Object.values(sounds).forEach(audio => {
-      audio.muted = audioState.isMuted
-    })
-  }
+    audioState.isMuted = !audioState.isMuted;
+    audioCache.forEach((audio) => {
+      audio.muted = audioState.isMuted;
+      audio.volume = audioState.isMuted ? 0 : audioState.volume;
+    });
+  };
 
   const stopAllSounds = () => {
-    console.log('🛑 Arrêt de tous les sons')
-    Object.values(sounds).forEach(audio => {
-      audio.pause()
-      audio.currentTime = 0
-      audio.volume = 0
-      audio.muted = true
-      audio.load()
-    })
-  }
+    audioCache.forEach((audio) => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (e) {
+        // Ignorer les erreurs d'arrêt
+      }
+    });
+  };
 
   return {
     audioState,
@@ -287,5 +147,7 @@ export function useAudio() {
     setVolume,
     toggleMute,
     stopAllSounds
-  }
+  };
 }
+
+export default useAudio;

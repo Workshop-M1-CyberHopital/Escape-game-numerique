@@ -1,9 +1,11 @@
-// Configuration de l'application
+import { ENV_CONFIG } from './config/environment';
+
+// Configuration de l'application (compatibilité descendante)
 export const config = {
-  // Mode développement - changer à false en production
-  DEV_MODE: true,
-  
-  // Autres configurations
-  APP_NAME: "Cyber-Hôpital Escape Game",
-  VERSION: "1.0.0"
-}
+  DEV_MODE: ENV_CONFIG.DEV_MODE,
+  APP_NAME: ENV_CONFIG.APP_NAME,
+  VERSION: ENV_CONFIG.APP_VERSION,
+  API_URL: ENV_CONFIG.API_URL,
+};
+
+export default config;
