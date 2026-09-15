@@ -48,7 +48,16 @@ const apiRequest = async (endpoint, options = {}) => {
         });
 
         clearTimeout(timeoutId);
-        const data = await response.json();
+        
+        let data = {};
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                data = await response.json();
+            } catch (jsonErr) {
+                data = {};
+            }
+        }
         
         console.log('📡 API Response:', {
             status: response.status,

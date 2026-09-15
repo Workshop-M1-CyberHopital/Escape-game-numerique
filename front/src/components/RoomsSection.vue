@@ -1,864 +1,248 @@
 <template>
-    <section class="px-4 py-20 relative">
-        <!-- Mascotte décorative à gauche (même style que HeroSection, ne touche pas au layout) -->
-        <div class="mascot-bg-left" aria-hidden="true">
-            <img src="/mascotte/mascotte.png" alt="" />
+  <section class="px-4 py-20 relative">
+    <!-- Mascotte décorative à gauche -->
+    <div class="mascot-bg-left" aria-hidden="true">
+      <img src="/mascotte/mascotte.png" alt="" />
+    </div>
+
+    <div class="max-w-7xl mx-auto rooms-content">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-6xl font-cyber font-bold text-white mb-4">
+          LES <span class="text-cyber-red">SALLES</span> VIRTUELLES
+        </h2>
+        <p class="text-gray-400 font-tech text-lg">
+          Réparez les systèmes vitaux en résolvant les énigmes
+        </p>
+
+        <!-- Barre de progression -->
+        <div class="mt-8 max-w-2xl mx-auto">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-tech text-sm text-gray-400">PROGRESSION</span>
+            <span class="font-cyber text-lg text-cyber-blue font-bold">
+              {{ completedRooms.length }} / {{ ROOMS_CONFIG.length }}
+            </span>
+          </div>
+
+          <div class="w-full bg-gray-800 rounded-full h-4 border-2 border-gray-700 overflow-hidden">
+            <div
+              class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
+              :style="{ width: `${progressPercentage}%` }"
+            >
+              <span v-if="completedRooms.length > 0" class="text-xs font-bold text-black font-tech">
+                {{ progressPercentage }}%
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-5 md:grid-cols-9 gap-1 mt-2 text-[10px] md:text-xs font-tech text-gray-500 text-center">
+            <span
+              v-for="room in ROOMS_CONFIG"
+              :key="room.id"
+              :class="{ 'text-cyber-green font-bold': isCompleted(room.id), 'text-gray-300': isUnlocked(room.id) && !isCompleted(room.id) }"
+            >
+              {{ room.shortName }}
+            </span>
+          </div>
         </div>
-        <div class="max-w-7xl mx-auto rooms-content">
-            <div class="text-center mb-16">
-                <h2
-                    class="text-4xl md:text-6xl font-cyber font-bold text-white mb-4"
-                >
-                    LES <span class="text-cyber-red">SALLES</span> VIRTUELLES
-                </h2>
-                <p class="text-gray-400 font-tech text-lg">
-                    Réparez les systèmes vitaux en résolvant les énigmes
-                </p>
+      </div>
 
-                <!-- Barre de progression -->
-                <div class="mt-8 max-w-2xl mx-auto">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="font-tech text-sm text-gray-400">
-                            PROGRESSION
-                        </span>
-                        <span
-                            class="font-cyber text-lg text-cyber-blue font-bold"
-                        >
-                            {{ completedRooms.length }} / 9
-                        </span>
-                    </div>
-                    <div
-                        class="w-full bg-gray-800 rounded-full h-4 border-2 border-gray-700 overflow-hidden"
-                    >
-                        <div
-                            class="h-full bg-gradient-to-r from-cyber-blue to-cyber-green transition-all duration-500 ease-out flex items-center justify-end pr-2"
-                            :style="`width: ${(completedRooms.length / 6) * 100}%`"
-                        >
-                            <span
-                                v-if="completedRooms.length > 0"
-                                class="text-xs font-bold text-black"
-                            >
-                                {{
-                                    Math.round(
-                                        (completedRooms.length / 6) * 100,
-                                    )
-                                }}%
-                            </span>
-                        </div>
-                    </div>
-                    <div
-                        class="flex justify-between mt-2 text-xs font-tech text-gray-500"
-                    >
-                        <span>SERVEUR</span>
-                        <span>LAB ADN</span>
-                        <span>IMAGERIE</span>
-                        <span>PROTHÈSES</span>
-                        <span>YEUX</span>
-                        <span>CŒUR</span>
-                    </div>
-                </div>
+      <!-- Grille des salles -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="room in ROOMS_CONFIG"
+          :key="room.id"
+          @click="handleRoomClick(room.id)"
+          :class="[
+            'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
+            isUnlocked(room.id)
+              ? `${room.borderClass} cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/10`
+              : 'border-gray-600 opacity-60 cursor-not-allowed',
+          ]"
+        >
+          <!-- Cadenas Statut -->
+          <div class="absolute top-4 right-4">
+            <Unlock v-if="isUnlocked(room.id)" class="w-6 h-6 text-green-400" />
+            <Lock v-else class="w-6 h-6 text-gray-500" />
+          </div>
+
+          <div class="p-0">
+            <!-- Icône de la salle -->
+            <div
+              class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
+              :style="{
+                backgroundColor: `${room.color}20`,
+                border: `2px solid ${room.color}`
+              }"
+            >
+              <component
+                :is="getIconComponent(room.icon)"
+                class="w-8 h-8"
+                :style="{ color: room.color }"
+              />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Room 1: Server -->
-                <div
-                    @click="handleRoomClick('server')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('server')
-                            ? 'border-cyber-red cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-red/20 hover:border-cyber-red/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('server') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('server')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(255, 0, 85, 0.2);
-                                border: 2px solid #ff0055;
-                            "
-                        >
-                            <i
-                                data-lucide="server"
-                                class="w-8 h-8 text-cyber-red"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #ff0055"
-                        >
-                            SALLE DU SERVEUR
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Le pare-feu corrompu
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Décoder un mot de passe à partir d'un log chiffré
-                            (substitution, base64, etc.)
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-cyber-red text-cyber-red font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Sensibiliser à la sécurité des données de santé
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('server')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('server')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #ff0055"
-                    ></div>
-                </div>
+            <h3
+              class="text-2xl font-cyber font-bold mb-2"
+              :style="{ color: room.color }"
+            >
+              {{ room.title }}
+            </h3>
 
-                <!-- Room 2: DNA Lab -->
-                <div
-                    @click="handleRoomClick('dna-lab')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('dna-lab')
-                            ? 'border-cyber-blue cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-blue/20 hover:border-cyber-blue/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('dna-lab') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('dna-lab')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(0, 255, 255, 0.2);
-                                border: 2px solid #00ffff;
-                            "
-                        >
-                            <i
-                                data-lucide="dna"
-                                class="w-8 h-8 text-cyber-blue"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #00ffff"
-                        >
-                            LABORATOIRE ADN
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Les gènes brouillés
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Reconstituer une séquence ADN (mini puzzle logique)
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-cyber-blue text-cyber-blue font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Comprendre la logique de l'ADN et des données
-                                biomédicales
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('dna-lab')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('dna-lab')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #00ffff"
-                    ></div>
-                </div>
+            <p class="text-sm font-tech text-gray-400 mb-3">
+              {{ room.subtitle }}
+            </p>
 
-                <!-- Room 3: Imaging -->
-                <div
-                    @click="handleRoomClick('imaging')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('imaging')
-                            ? 'border-cyber-green cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-green/20 hover:border-cyber-green/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('imaging') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('imaging')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(0, 255, 136, 0.2);
-                                border: 2px solid #00ff88;
-                            "
-                        >
-                            <i
-                                data-lucide="scan-line"
-                                class="w-8 h-8 text-cyber-green"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #00ff88"
-                        >
-                            SALLE D'IMAGERIE
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            IRM fantôme
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Reconstituer une image médicale corrompue (pixels
-                            manquants ou puzzle)
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-cyber-green text-cyber-green font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Découvrir le rôle de l'imagerie médicale
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('imaging')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('imaging')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #00ff88"
-                    ></div>
-                </div>
+            <p class="text-sm text-gray-300 mb-4">
+              {{ room.description }}
+            </p>
 
-                <!-- Room 4: Heart -->
-                <div
-                    @click="handleRoomClick('heart')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('heart')
-                            ? 'border-cyber-purple cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-purple/20 hover:border-cyber-purple/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('heart') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('heart')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(255, 0, 255, 0.2);
-                                border: 2px solid #ff00ff;
-                            "
-                        >
-                            <i
-                                data-lucide="heart"
-                                class="w-8 h-8 text-cyber-purple"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #ff00ff"
-                        >
-                            SALLE DU CŒUR
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Rythme vital
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Mini-jeu basé sur la synchronisation : cliquer ou
-                            respirer au bon rythme
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-cyber-purple text-cyber-purple font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Sensibiliser au stress et à la régulation
-                                cardiaque
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('heart')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('heart')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #ff00ff"
-                    ></div>
-                </div>
-
-                <!-- Room 5: Prosthesis -->
-                <div
-                    @click="handleRoomClick('prosthesis')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('prosthesis')
-                            ? 'border-orange-500 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 hover:border-orange-500/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('prosthesis') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('prosthesis')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(249, 115, 22, 0.2);
-                                border: 2px solid #f97316;
-                            "
-                        >
-                            <i
-                                data-lucide="settings"
-                                class="w-8 h-8 text-orange-500"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #f97316"
-                        >
-                            SALLE DES PROTHÈSES
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Système orthopédique désynchronisé
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Réaligner les articulations virtuelles en résolvant
-                            une énigme de mécanique logique
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-orange-500 text-orange-500 font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Comprendre la biomécanique et les technologies
-                                IoT médicales
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('prosthesis')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('prosthesis')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #f97316"
-                    ></div>
-                </div>
-
-                <!-- Room 6: Pathology -->
-                <div
-                    @click="handleRoomClick('pathology')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('pathology')
-                            ? 'border-cyber-red cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-red/20 hover:border-cyber-red/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('pathology') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('pathology')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(255, 0, 85, 0.2);
-                                border: 2px solid #ff0055;
-                            "
-                        >
-                            <i
-                                data-lucide="heart-pulse"
-                                class="w-8 h-8 text-cyber-red"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #ff0055"
-                        >
-                            SALLE DES PATHOLOGIES
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Diagnostic médical
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Associez chaque pathologie à sa guérison
-                            correspondante
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-cyber-red text-cyber-red font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Sensibiliser aux pathologies médicales et leurs
-                                traitements
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('pathology')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('pathology')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #ff0055"
-                    ></div>
-                </div>
-
-                <!-- Room 7: Audition -->
-                <div
-                    @click="handleRoomClick('audition')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('audition')
-                            ? 'border-cyber-purple cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-purple/20 hover:border-cyber-purple/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('audition') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('audition')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(139, 92, 246, 0.2);
-                                border: 2px solid #8b5cf6;
-                            "
-                        >
-                            <i
-                                data-lucide="volume-2"
-                                class="w-8 h-8"
-                                style="color: #8b5cf6"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #8b5cf6"
-                        >
-                            SALLE DE L'AUDITION
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Réparation audiométrique
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Ajustez l'égaliseur audio pour restaurer les
-                            fréquences sonores
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border font-tech text-xs rounded"
-                                style="border-color: #8b5cf6; color: #8b5cf6"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Sensibiliser aux troubles auditifs et à
-                                l'audiométrie
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('audition')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez la salle des pathologies pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('audition')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #8b5cf6"
-                    ></div>
-                </div>
-
-                <!-- Room 6: Eye -->
-                <div
-                    @click="handleRoomClick('eye')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('eye')
-                            ? 'border-cyan-500 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/20 hover:border-cyan-500/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="isUnlocked('eye') ? 'unlock' : 'lock'"
-                            :class="
-                                isUnlocked('eye')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(34, 211, 238, 0.2);
-                                border: 2px solid #22d3ee;
-                            "
-                        >
-                            <i
-                                data-lucide="eye"
-                                class="w-8 h-8 text-cyan-500"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #22d3ee"
-                        >
-                            SALLE DES YEUX
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Diagnostic visuel corrompu
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Recalibrer le système de diagnostic ophtalmologique
-                            avec des tests d'acuité visuelle
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-cyan-500 text-cyan-500 font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Comprendre l'importance des tests visuels en
-                                médecine
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('eye')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour
-                                débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('eye')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #22d3ee"
-                    ></div>
-                </div>
-
-                <!-- Room 9: Final -->
-                <div
-                    @click="handleRoomClick('final')"
-                    :class="[
-                        'room-card bg-gray-900/80 backdrop-blur-md border-2 rounded-lg p-6 scanline relative overflow-hidden transition-all duration-300 ease-out',
-                        isUnlocked('final')
-                            ? 'border-cyber-green cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-cyber-green/20 hover:border-cyber-green/80'
-                            : 'border-gray-600 opacity-60 cursor-not-allowed',
-                    ]"
-                >
-                    <div class="absolute top-4 right-4">
-                        <i
-                            :data-lucide="
-                                isUnlocked('final') ? 'unlock' : 'lock'
-                            "
-                            :class="
-                                isUnlocked('final')
-                                    ? 'w-6 h-6 text-green-400'
-                                    : 'w-6 h-6 text-gray-500'
-                            "
-                        >
-                        </i>
-                    </div>
-                    <div class="p-0">
-                        <div
-                            class="w-16 h-16 mb-4 rounded-lg flex items-center justify-center"
-                            style="
-                                background-color: rgba(16, 185, 129, 0.2);
-                                border: 2px solid #10b981;
-                            "
-                        >
-                            <i
-                                data-lucide="shield-check"
-                                class="w-8 h-8 text-cyber-green"
-                            ></i>
-                        </div>
-                        <h3
-                            class="text-2xl font-cyber font-bold mb-2"
-                            style="color: #10b981"
-                        >
-                            SALLE DE FIN
-                        </h3>
-                        <p class="text-sm font-tech text-gray-400 mb-3">
-                            Diagnostic final - Patient critique
-                        </p>
-                        <p class="text-sm text-gray-300 mb-4">
-                            Diagnostiquez et traitez ce patient en état critique, puis sécurisez son dossier médical.
-                        </p>
-                        <div class="space-y-2">
-                            <span
-                                class="inline-block px-3 py-1 border border-cyber-green text-cyber-green font-tech text-xs rounded"
-                            >
-                                OBJECTIF
-                            </span>
-                            <p class="text-xs text-gray-400">
-                                Diagnostiquer le patient et sécuriser son dossier médical
-                            </p>
-                        </div>
-                        <div
-                            v-if="!isUnlocked('final')"
-                            class="mt-4 pt-4 border-t border-gray-700"
-                        >
-                            <p class="text-xs font-tech text-yellow-500">
-                                🔒 Complétez les salles précédentes pour débloquer
-                            </p>
-                        </div>
-                    </div>
-                    <div
-                        v-if="isUnlocked('final')"
-                        class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
-                        style="background-color: #10b981"
-                    ></div>
-                </div>
+            <div class="space-y-2">
+              <span
+                class="inline-block px-3 py-1 border font-tech text-xs rounded"
+                :style="{ borderColor: room.color, color: room.color }"
+              >
+                OBJECTIF
+              </span>
+              <p class="text-xs text-gray-400">
+                {{ room.objective }}
+              </p>
             </div>
 
-            <!-- Final Message -->
-            <div class="mt-16">
-                <div
-                    class="bg-gray-900/60 backdrop-blur-md border-2 border-cyber-green rounded-lg p-8 max-w-3xl mx-auto"
-                >
-                    <h3
-                        class="text-2xl font-cyber font-bold text-cyber-green mb-4"
-                    >
-                        🎯 OBJECTIF FINAL
-                    </h3>
-                    <p class="text-gray-300 leading-relaxed">
-                        Chaque énigme réussie débloque une clé pour restaurer
-                        une partie du système. À la fin, un débriefing montre ce
-                        qu'ils ont appris : protection des données, santé,
-                        émotion, et travail d'équipe.
-                    </p>
-                </div>
+            <div
+              v-if="!isUnlocked(room.id)"
+              class="mt-4 pt-4 border-t border-gray-700"
+            >
+              <p class="text-xs font-tech text-yellow-500">
+                {{ room.lockMessage }}
+              </p>
             </div>
+          </div>
+
+          <div
+            v-if="isUnlocked(room.id)"
+            class="absolute inset-0 opacity-0 hover:opacity-10 transition-opacity pointer-events-none"
+            :style="{ backgroundColor: room.color }"
+          ></div>
         </div>
-    </section>
+      </div>
+
+      <!-- Objectif Final -->
+      <div class="mt-16">
+        <div class="bg-gray-900/60 backdrop-blur-md border-2 border-cyber-green rounded-lg p-8 max-w-3xl mx-auto">
+          <h3 class="text-2xl font-cyber font-bold text-cyber-green mb-4">
+            🎯 OBJECTIF FINAL
+          </h3>
+          <p class="text-gray-300 leading-relaxed font-tech">
+            Chaque énigme réussie débloque une clé pour restaurer
+            une partie du système. À la fin, un débriefing montre ce
+            qu'ils ont appris : protection des données, santé,
+            émotion, et travail d'équipe.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { onMounted } from "vue";
+import { computed } from 'vue';
+import {
+  Lock,
+  Unlock,
+  Server,
+  Dna,
+  ScanLine,
+  Heart,
+  Settings,
+  HeartPulse,
+  Volume2,
+  Eye,
+  ShieldCheck
+} from 'lucide-vue-next';
+import { ROOMS_CONFIG } from '../config/roomsConfig';
 
 const props = defineProps({
-    unlockedRooms: {
-        type: Array,
-        default: () => [],
-    },
-    completedRooms: {
-        type: Array,
-        default: () => [],
-    },
+  unlockedRooms: {
+    type: Array,
+    default: () => [],
+  },
+  completedRooms: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-const emit = defineEmits(["enter-room"]);
+const emit = defineEmits(['enter-room']);
 
-const isUnlocked = (roomId) => {
-    return props.unlockedRooms.includes(roomId);
-};
+const progressPercentage = computed(() => {
+  if (ROOMS_CONFIG.length === 0) return 0;
+  return Math.min(100, Math.round((props.completedRooms.length / ROOMS_CONFIG.length) * 100));
+});
 
-const isCompleted = (roomId) => {
-    return props.completedRooms.includes(roomId);
-};
+const isUnlocked = (roomId) => props.unlockedRooms.includes(roomId);
+const isCompleted = (roomId) => props.completedRooms.includes(roomId);
 
 const handleRoomClick = (roomId) => {
-    // Toujours émettre l'événement, même si la salle est verrouillée
-    // Le composant parent gérera l'affichage du toast d'erreur
-    emit("enter-room", roomId);
+  emit('enter-room', roomId);
 };
 
-onMounted(() => {
-    // Initialize Lucide Icons
-    if (window.lucide) {
-        window.lucide.createIcons();
-    }
-});
+const iconMap = {
+  server: Server,
+  dna: Dna,
+  'scan-line': ScanLine,
+  heart: Heart,
+  settings: Settings,
+  'heart-pulse': HeartPulse,
+  'volume-2': Volume2,
+  eye: Eye,
+  'shield-check': ShieldCheck,
+};
+
+const getIconComponent = (iconName) => iconMap[iconName] || Server;
 </script>
 
 <style scoped>
-/* Positionner le contenu au-dessus de la mascotte */
 .rooms-content {
   position: relative;
   z-index: 10;
 }
 
-/* Mascotte décorative à gauche : pousse visuellement vers la gauche sans impacter la hauteur */
 .mascot-bg-left {
   position: absolute;
   inset: 0;
   display: flex;
-  justify-content: flex-start; /* alignée à gauche */
+  justify-content: flex-start;
   align-items: center;
   pointer-events: none;
-  /* augmenter pour être visible au premier plan (mais l'image se fondra vers la droite) */
   z-index: 18;
   padding-left: clamp(0.5rem, 6vw, 4rem);
 }
 
-/* Rendre la mascotte plus visible et éviter qu'elle masque le contenu grâce à un mask gradient */
 .mascot-bg-left img {
-  width: clamp(280px, 36vw, 760px); /* un peu plus compacte pour ne pas être complètement derrière les cards */
+  width: clamp(280px, 36vw, 760px);
   max-height: 82vh;
   object-fit: contain;
-  opacity: 0.46; /* augmenté pour meilleure visibilité */
-  transform: translateX(-14%) translateY(6%) scale(1.06); /* plus à gauche */
+  opacity: 0.46;
+  transform: translateX(-14%) translateY(6%) scale(1.06);
   filter: brightness(1.48) saturate(1.4) drop-shadow(0 30px 64px rgba(0,0,0,0.72)) drop-shadow(0 0 40px rgba(34,197,94,0.22));
   mix-blend-mode: screen;
   transition: transform 240ms ease, opacity 200ms ease, filter 240ms ease;
   border-radius: 8px;
   z-index: 18;
-
-  /* Fade vers la droite pour ne pas masquer les cartes centrales */
   -webkit-mask-image: linear-gradient(to right, black 0%, black 58%, transparent 92%);
   mask-image: linear-gradient(to right, black 0%, black 58%, transparent 92%);
 }
 
-/* Interaction : accentuation au hover (toujours pointer-events none pour ne pas bloquer) */
 .mascot-bg-left img:hover {
   opacity: 0.5;
   transform: translateX(-12%) translateY(4%) scale(1.08);
   filter: brightness(1.55) saturate(1.45) drop-shadow(0 36px 72px rgba(0,0,0,0.78)) drop-shadow(0 0 44px rgba(34,197,94,0.26));
 }
 
-/* Masquer sur petits écrans pour ne pas gêner la lisibilité */
 @media (max-width: 640px) {
   .mascot-bg-left { display: none; }
 }
 
-/* Ajustements pour très grands écrans : plus visible hors des cartes */
 @media (min-width: 1400px) {
   .mascot-bg-left {
     padding-left: clamp(2rem, 10vw, 12rem);

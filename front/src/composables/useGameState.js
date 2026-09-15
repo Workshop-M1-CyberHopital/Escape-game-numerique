@@ -1,25 +1,35 @@
-import { ref, reactive, watch } from "vue";
+import { reactive } from "vue";
+import { ROOM_IDS, getNextRoomId } from "../config/roomsConfig";
+
+export { ROOM_IDS, getNextRoomId };
 
 // Constantes pour le système de notation
-const PENALTY_PER_ERROR = 30; // Secondes par erreur
-const PENALTY_PER_HINT = 1; // Points retirés par indice
-const MAX_SCORE = 20; // Score maximum
+export const PENALTY_PER_ERROR = 30; // Secondes par erreur
+export const PENALTY_PER_HINT = 1; // Points retirés par indice
+export const MAX_SCORE = 20; // Score maximum
 
-// Liste des salles du jeu (source unique de vérité)
-export const ROOM_IDS = [
-  "server",
-  "dna-lab",
-  "imaging",
-  "heart",
-  "prosthesis",
-  "pathology",
-  "audition",
-  "eye",
-  "final",
-];
+// Liste exhaustive de tous les briefings
+const INITIAL_BRIEFINGS_SHOWN = {
+  audio: false,
+  serverRoom: false,
+  dnaRoom: false,
+  imagingRoom: false,
+  heartRoom: false,
+  prosthesisRoom: false,
+  pathologyRoom: false,
+  auditionRoom: false,
+  finalRoom: false,
+  finishServerRoom: false,
+  finishDNARoom: false,
+  finishImagingRoom: false,
+  finishProsthesisRoom: false,
+  finishPathologyRoom: false,
+  finishAuditionRoom: false,
+  finishFinalRoom: false,
+};
 
 // État global du jeu
-const gameState = reactive({
+export const gameState = reactive({
   isGameStarted: false,
   teamName: "",
   players: [],
@@ -27,41 +37,32 @@ const gameState = reactive({
   unlockedRooms: ["server"], // Salle du serveur débloquée par défaut
   startTime: null,
   timer: 0,
-  // Nouvelles propriétés pour le système de notation
-  errors: 0, // Compteur d'erreurs global
-  penaltyTime: 0, // Temps de pénalité cumulé
-  roomErrors: {}, // Erreurs par salle
-  hintsUsed: 0, // Compteur d'indices global
-  roomHints: {}, // Indices par salle
-  roomTimes: {}, // Temps passé par salle
-  roomStartTime: null, // Timestamp de début de salle
-  completedRooms: [], // Liste des salles complétées
-  finalScore: null, // Score final calculé
+  // Système de notation
+  errors: 0,
+  penaltyTime: 0,
+  roomErrors: {},
+  hintsUsed: 0,
+  roomHints: {},
+  roomTimes: {},
+  roomStartTime: null,
+  completedRooms: [],
+  finalScore: null,
   // États des briefings
-  briefingsShown: {
-    audio: false,
-    serverRoom: false,
-    dnaRoom: false,
-    imagingRoom: false,
-    pathologyRoom: false,
-    auditionRoom: false,
-    finishServerRoom: false,
-    finishDNARoom: false,
-    finishImagingRoom: false,
-  },
+  briefingsShown: { ...INITIAL_BRIEFINGS_SHOWN },
 });
 
 // Timer
 let timerInterval = null;
 
-// Fonction pour démarrer le timer
 const startTimer = () => {
+  if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => {
-    gameState.timer = Math.floor((Date.now() - gameState.startTime) / 1000);
+    if (gameState.startTime) {
+      gameState.timer = Math.floor((Date.now() - gameState.startTime) / 1000);
+    }
   }, 1000);
 };
 
-// Fonction pour arrêter le timer
 const stopTimer = () => {
   if (timerInterval) {
     clearInterval(timerInterval);
@@ -76,14 +77,8 @@ export function useGameState() {
     gameState.players = teamData.players;
     gameState.startTime = Date.now();
     gameState.roomStartTime = Date.now();
-
-    // Démarrer le timer
     startTimer();
-
-    // Pas de sauvegarde - le jeu repart de zéro à chaque refresh
   };
-
-  // Fonction supprimée - pas de chargement d'état sauvegardé
 
   const enterRoom = (roomId) => {
     gameState.currentRoom = roomId;
@@ -95,9 +90,17 @@ export function useGameState() {
   };
 
   const unlockRoom = (roomId) => {
-    if (!gameState.unlockedRooms.includes(roomId)) {
+    if (roomId && !gameState.unlockedRooms.includes(roomId)) {
       gameState.unlockedRooms.push(roomId);
     }
+  };
+
+  const unlockNextRoom = (currentRoomId) => {
+    const nextRoom = getNextRoomId(currentRoomId);
+    if (nextRoom) {
+      unlockRoom(nextRoom);
+    }
+    return nextRoom;
   };
 
   const unlockAllRooms = () => {
@@ -105,6 +108,7 @@ export function useGameState() {
   };
 
   const resetGame = () => {
+    stopTimer();
     gameState.isGameStarted = false;
     gameState.teamName = "";
     gameState.players = [];
@@ -121,25 +125,17 @@ export function useGameState() {
     gameState.roomStartTime = null;
     gameState.completedRooms = [];
     gameState.finalScore = null;
-    // Réinitialiser les briefings
-    gameState.briefingsShown = {
-      audio: false,
-      serverRoom: false,
-      dnaRoom: false,
-      imagingRoom: false,
-      pathologyRoom: false,
-      auditionRoom: false,
-      finishServerRoom: false,
-      finishDNARoom: false,
-      finishImagingRoom: false,
-    };
-    stopTimer();
+    gameState.briefingsShown = { ...INITIAL_BRIEFINGS_SHOWN };
   };
 
+  // Alias pour éviter tout crash si clearGameState est appelé
+  const clearGameState = resetGame;
+
   const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const s = Math.max(0, Math.floor(seconds || 0));
+    const hours = Math.floor(s / 3600);
+    const minutes = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
 
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -147,31 +143,27 @@ export function useGameState() {
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Nouvelles fonctions pour le système de notation
   const addError = (roomId) => {
     gameState.errors++;
     gameState.penaltyTime += PENALTY_PER_ERROR;
-    if (!gameState.roomErrors[roomId]) {
-      gameState.roomErrors[roomId] = 0;
+    if (roomId) {
+      gameState.roomErrors[roomId] = (gameState.roomErrors[roomId] || 0) + 1;
     }
-    gameState.roomErrors[roomId]++;
   };
 
   const addHint = (roomId) => {
     gameState.hintsUsed++;
-    if (!gameState.roomHints[roomId]) {
-      gameState.roomHints[roomId] = 0;
+    if (roomId) {
+      gameState.roomHints[roomId] = (gameState.roomHints[roomId] || 0) + 1;
     }
-    gameState.roomHints[roomId]++;
   };
 
   const completeRoom = (roomId) => {
-    if (!gameState.completedRooms.includes(roomId)) {
+    if (roomId && !gameState.completedRooms.includes(roomId)) {
       gameState.completedRooms.push(roomId);
-      // Calculer le temps passé dans cette salle
-      const roomTime = Math.floor(
-        (Date.now() - gameState.roomStartTime) / 1000,
-      );
+      const roomTime = gameState.roomStartTime
+        ? Math.floor((Date.now() - gameState.roomStartTime) / 1000)
+        : 0;
       gameState.roomTimes[roomId] = roomTime;
     }
   };
@@ -199,30 +191,17 @@ export function useGameState() {
   };
 
   const isGameComplete = () => {
-    // Vérifier si les 9 salles sont complétées
-    const allRooms = [
-      "server",
-      "dna-lab",
-      "imaging",
-      "heart",
-      "prosthesis",
-      "pathology",
-      "audition",
-      "eye",
-      "final",
-    ];
-    return allRooms.every((room) => gameState.completedRooms.includes(room));
+    return ROOM_IDS.every((room) => gameState.completedRooms.includes(room));
   };
 
-  // Fonctions pour gérer les briefings
   const markBriefingAsShown = (briefingType) => {
-    if (gameState.briefingsShown.hasOwnProperty(briefingType)) {
+    if (briefingType) {
       gameState.briefingsShown[briefingType] = true;
     }
   };
 
   const isBriefingShown = (briefingType) => {
-    return gameState.briefingsShown[briefingType] || false;
+    return Boolean(gameState.briefingsShown[briefingType]);
   };
 
   return {
@@ -232,8 +211,10 @@ export function useGameState() {
     enterRoom,
     exitRoom,
     unlockRoom,
+    unlockNextRoom,
     unlockAllRooms,
     resetGame,
+    clearGameState,
     formatTime,
     addError,
     addHint,
@@ -246,5 +227,6 @@ export function useGameState() {
     PENALTY_PER_ERROR,
     PENALTY_PER_HINT,
     MAX_SCORE,
+    ROOM_IDS,
   };
 }

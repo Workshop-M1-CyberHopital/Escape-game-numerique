@@ -403,7 +403,6 @@
 
 <script setup>
 import { onMounted } from "vue";
-import { jsPDF } from "jspdf";
 
 const props = defineProps({
     scoreData: {
@@ -476,6 +475,7 @@ const getComment = () => {
 };
 
 const generateDiploma = async () => {
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ orientation: "landscape" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -590,10 +590,13 @@ const generateDiploma = async () => {
 
     try {
         const response = await fetch("/Signature.png");
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onload = () => {
-            const base64 = reader.result;
+        if (response.ok) {
+            const blob = await response.blob();
+            const base64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
             doc.addImage(
                 base64,
                 "PNG",
@@ -602,17 +605,13 @@ const generateDiploma = async () => {
                 80,
                 30,
             );
-            doc.save(
-                `diplome_${props.scoreData.teamName.replace(/\s+/g, "_")}.pdf`,
-            );
-        };
-        reader.readAsDataURL(blob);
+        }
     } catch (error) {
-        console.error("Erreur chargement signature:", error);
-        doc.save(
-            `diplome_${props.scoreData.teamName.replace(/\s+/g, "_")}.pdf`,
-        );
+        console.warn("Erreur chargement signature:", error);
     }
+
+    const safeTeamName = (props.scoreData.teamName || "equipe").replace(/\s+/g, "_");
+    doc.save(`diplome_${safeTeamName}.pdf`);
 };
 
 // Fonctions pour le message de fin de mission
