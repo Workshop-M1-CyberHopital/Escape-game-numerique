@@ -4,16 +4,14 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-// Charger la configuration
-require('dotenv').config({ path: './config.env' });
+const fs = require('fs');
+const path = require('path');
 
-// Initialiser les données au démarrage
-const { execSync } = require('child_process');
-try {
-    execSync('node scripts/init-data.js', { stdio: 'inherit' });
-} catch (error) {
-    console.log('⚠️  Initialisation des données ignorée (déjà fait)');
-}
+// Charger la configuration (.env en priorité, sinon config.env)
+const envPath = fs.existsSync(path.resolve(__dirname, '.env'))
+    ? path.resolve(__dirname, '.env')
+    : path.resolve(__dirname, 'config.env');
+require('dotenv').config({ path: envPath });
 
 const app = express();
 const PORT = process.env.PORT || 3001;

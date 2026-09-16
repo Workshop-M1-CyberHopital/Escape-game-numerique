@@ -6,27 +6,9 @@ const dataStore = require('../storage/dataStore');
 
 const router = express.Router();
 
-// Configuration JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'escape-game-super-secret-key';
+// Middleware et configuration d'authentification
+const { authenticateToken, JWT_SECRET } = require('../middleware/auth');
 const JWT_EXPIRES_IN = '24h';
-
-// Middleware d'authentification
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'Token d\'accès requis' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Token invalide' });
-        }
-        req.user = user;
-        next();
-    });
-};
 
 // Inscription d'un nouvel utilisateur
 router.post('/register', async (req, res) => {

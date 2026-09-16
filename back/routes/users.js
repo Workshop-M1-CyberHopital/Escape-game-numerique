@@ -5,25 +5,7 @@ const dataStore = require('../storage/dataStore');
 const router = express.Router();
 
 // Middleware d'authentification
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'Token d\'accès requis' });
-    }
-
-    const jwt = require('jsonwebtoken');
-    const JWT_SECRET = process.env.JWT_SECRET || 'escape-game-super-secret-key';
-    
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Token invalide' });
-        }
-        req.user = user;
-        next();
-    });
-};
+const { authenticateToken } = require('../middleware/auth');
 
 // Le stockage est maintenant géré par dataStore
 

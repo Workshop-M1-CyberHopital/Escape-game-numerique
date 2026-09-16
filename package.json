@@ -1,0 +1,29 @@
+{
+  "name": "escape-game-cyber-hopital",
+  "version": "1.0.0",
+  "description": "Escape Game Numérique Cyber-Hôpital - Mission Résilience",
+  "private": true,
+  "scripts": {
+    "install:all": "pnpm --prefix front install && pnpm --prefix back install",
+    "dev:front": "pnpm --prefix front dev",
+    "dev:back": "pnpm --prefix back dev",
+    "build:front": "pnpm --prefix front build",
+    "start:back": "pnpm --prefix back start",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [
+    "escape-game",
+    "cybersecurity",
+    "vue3",
+    "nodejs",
+    "docker",
+    "kubernetes"
+  ],
+  "author": "Équipe EPSI M1",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
