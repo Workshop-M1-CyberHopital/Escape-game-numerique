@@ -1,81 +1,188 @@
-## ⚙️ Projet : **Cyber-Hôpital – Mission Résilience**
+# 🏥 Cyber-Hôpital – Mission Résilience
 
-### 🎬 Concept général
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Une cyberattaque a frappé un grand hôpital connecté.
-Les dossiers médicaux des patients sont corrompus par un **virus informatique intelligent**.
-Votre équipe (les joueurs) est une **unité spéciale de cybersécurité médicale** chargée de rétablir le système avant que les patients ne soient en danger.
-
-🎯 **Objectif du jeu** :
-Réparer les systèmes vitaux (**9 salles virtuelles**) en résolvant des énigmes liées à :
-
-* la **cybersécurité médicale**,
-* la **santé humaine (données, ADN, IRM, rythme cardiaque, etc.)**,
-* la **collaboration et la logique**.
+> **Escape Game Numérique et Pédagogique sur la Cybersécurité Médicale.**  
+> Projet réalisé dans le cadre du Workshop M1 EISI / EPSI.
 
 ---
 
-## 🧩 Structure du jeu (Escape game numérique)
+## 🎬 Synopsis de la Mission
 
-| Salle                      | Nom                        | Enigme principale                                             | Objectif pédagogique                                      |
-| -------------------------- | -------------------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
-| **1. Salle du Serveur**    | Pare-feu corrompu          | Décoder des logs chiffrés                                     | Sensibiliser à la sécurité des données de santé           |
-| **2. Laboratoire ADN**     | Gènes brouillés            | Reconstituer une séquence ADN                                 | Comprendre la logique ADN et la gestion des données bio   |
-| **3. Salle d’Imagerie**    | IRM fantôme                | Restaurer une image médicale corrompue                        | Découvrir le rôle de l’imagerie médicale                  |
-| **4. Salle du Cœur**       | Rythme vital               | Mini-jeu de synchronisation (cliquer/respirer au bon rythme)  | Sensibiliser au stress et à la régulation cardiaque       |
-| **5. Salle des Pathologies**| Diagnostic compromis       | Associer pathologies et symptômes                             | Apprendre la logique médicale et les diagnostics          |
-| **6. Salle des Prothèses** | Articulations désynchronisées| Réaligner des prothèses/articulations                        | Comprendre la biomécanique et les dispositifs médicaux    |
-| **7. Salle de l’Audition** | Fréquences brouillées      | Ajuster des fréquences audio                                  | Sensibiliser à l’audition et au traitement du signal      |
-| **8. Salle des Yeux**      | Vision brouillée           | Recalibrer un diagnostic visuel/ophtalmo                      | Comprendre l’importance du dépistage visuel               |
-| **9. Salle de Fin**        | Patient critique           | Diagnostiquer et sécuriser un patient en urgence              | Synthèse des apprentissages, gestion de crise             |
+Une cyberattaque coordonnée a frappé un grand centre hospitalier connecté. Les dossiers médicaux des patients et les systèmes biomédicaux vitaux ont été corrompus par un **malware d'intrusion**.
 
-Chaque énigme réussie **débloque une clé** pour restaurer une partie du système.
-À la fin, un **débriefing** montre ce qu’ils ont appris (protection des données, santé, émotion, etc.).
+Votre équipe d'intervention rapide en cybersécurité médicale est déployée en urgence pour neutraliser l'attaque, sécuriser les données de santé et sauver les patients avant l'échéance critique.
 
 ---
 
-## 🧑‍💻 Partie technique
+## 🧩 Les 9 Salles Virtuelles
 
-**Technos recommandées :**
+Chaque salle résolue débloque une clé cryptographique de restauration.
 
-* **Front-end** : Vue.js (interface claire, chronomètre, navigation entre salles).
-* **Back-end** : Node.js pour la logique serveur.
-* **Communication multi-joueurs** : Firebase Realtime DB ou WebSocket simple.
-* **Hébergement rapide** : Vercel ou Netlify.
-* **Stockage / sauvegarde** : localStorage ou Firebase.
-* **Sécurité** : chiffrer les échanges simples (hash, base64, pas de vraies données personnelles).
+| # | Salle | Intitulé de la mission | Compétences & Thématiques abordées |
+|---|---|---|---|
+| **1** | 🖥️ **Salle du Serveur** | *Pare-feu corrompu* | Décodage de logs d'accès chiffrés, sécurité des accès réseau |
+| **2** | 🧬 **Laboratoire ADN** | *Gènes brouillés* | Reconstitution de séquences génétiques, intégrité des données bio |
+| **3** | 🩻 **Salle d’Imagerie** | *IRM fantôme* | Reconstruction d'imagerie médicale corrompue, formats DICOM |
+| **4** | ❤️ **Salle du Cœur** | *Rythme vital* | Synchronisation cardiaque sous stress, capteurs biomédicaux |
+| **5** | 🔬 **Salle des Pathologies** | *Diagnostic compromis* | Corrélation symptômes / pathologies, logique clinique |
+| **6** | 🦾 **Salle des Prothèses** | *Articulations désynchronisées* | Calibrage d'implants bioniques et biomécanique |
+| **7** | 🎧 **Salle de l’Audition** | *Fréquences brouillées* | Traitement du signal audio, fréquences et spectrogrammes |
+| **8** | 👁️ **Salle des Yeux** | *Vision brouillée* | Rétablissement des optotypes, recalibrage visuel |
+| **9** | 🚨 **Salle de Fin** | *Patient critique* | Gestion de crise, diagnostic final et stabilisation d'urgence |
 
-Option bonus 💡 :
-👉 connecter un **capteur cardiaque Arduino** (ou simulateur via micro) pour la salle du Cœur.
-Exemple : si le joueur calme son rythme → LED verte, sinon rouge.
-
----
-
-## 🎨 UX / UI
-
-* Interface “terminal médical futuriste” (fond sombre, verts/bleus lumineux).
-* Sons d’alerte, sirène, battement de cœur.
-* Chronomètre visible (compte à rebours 20-30 minutes).
-* Indices progressifs (chat intégré ou bouton “Help”).
+À l'issue des salles, un **débriefing pédagogique complet**, une **note sur 20** détaillée et un **diplôme officiel en PDF** téléchargeable sont délivrés aux participants.
 
 ---
 
-## 🧠 Message éducatif final
+## 🏗️ Architecture du Projet
 
-À la fin du jeu, un **écran de débriefing** explique :
-
-* Pourquoi la cybersécurité médicale est cruciale,
-* Les dangers des fuites de données de santé,
-* L’importance de la gestion du stress pour la performance cognitive.
+```
+Escape-game-numerique/
+├── front/                  # Application Frontend Vue 3 (Vite + Tailwind/Cyber CSS)
+│   ├── src/
+│   │   ├── components/     # Composants UI, salles, modales et DevTools
+│   │   ├── composables/    # Logique d'état (useGameState, useAudio, useApi, useAuth...)
+│   │   └── config/         # Définition des salles, endpoints, briefings
+│   ├── nginx.conf          # Configuration serveur Nginx pour conteneurisation
+│   └── package.json
+│
+├── back/                   # API REST Backend (Node.js + Express)
+│   ├── routes/             # Endpoints /api/auth, /api/users, /api/scores
+│   ├── middleware/         # Middleware d'authentification JWT réutilisable
+│   ├── storage/            # DataStore avec persistance fichiers JSON
+│   ├── config.js           # Configuration centralisée du serveur
+│   └── package.json
+│
+├── infra/                  # Déploiements Kubernetes AKS & configurations Traefik
+│   ├── cluster-acme/       # Manifests Kubernetes avec certificats Let's Encrypt ACME
+│   ├── cluster-gandi/      # Manifests avec webhook DNS Gandi
+│   └── doc_projet.md       # Documentation d'architecture infrastructure détaillée
+│
+├── docs/                   # Documentation de référence & Sujet d'évaluation
+│   └── SYSTEME_NOTATION.md # Barème précis du calcul de la note sur 20
+│
+├── Dockerfile              # Multi-stage build Nginx + Node.js (production)
+├── docker-compose.yml      # Orchestration conteneurisée locale
+├── package.json            # Scripts de commande à la racine
+└── README.md
+```
 
 ---
 
-## 🎤 Présentation orale (5 min)
+## 🚀 Démarrage Rapide
 
-Plan conseillé :
+### Prérequis
+- [Node.js](https://nodejs.org/) v18.0.0 ou supérieur
+- [pnpm](https://pnpm.io/) recommandé (`npm install -g pnpm`)
+- [Docker](https://www.docker.com/) & Docker Compose (optionnel, pour l'exécution conteneurisée)
 
-1. **Intro (en anglais)** : présentation de l’équipe + mission.
-2. **Storytelling** : “Un hôpital attaqué, des patients en danger…”
-3. **Démonstration** du jeu (montrer 2-3 salles).
-4. **Apport pédagogique** : cybersécurité + santé mentale.
-5. **Conclusion & originalité** : “Notre jeu sensibilise en rendant l’éducation médicale interactive.”
+---
+
+### Option 1 : Développement Local (Sans Docker)
+
+1. **Cloner le dépôt :**
+   ```bash
+   git clone https://github.com/Workshop-M1-CyberHopital/Escape-game-numerique.git
+   cd Escape-game-numerique
+   ```
+
+2. **Installer les dépendances (Front + Back) :**
+   ```bash
+   pnpm run install:all
+   ```
+
+3. **Lancer le backend (Terminal 1) :**
+   ```bash
+   pnpm run dev:back
+   ```
+   *L'API démarre sur : `http://localhost:3001` (Health check : `http://localhost:3001/api/health`)*
+
+4. **Lancer le frontend (Terminal 2) :**
+   ```bash
+   pnpm run dev:front
+   ```
+   *L'application s'ouvre sur : `http://localhost:5173`*
+
+---
+
+### Option 2 : Lancement avec Docker Compose
+
+Pour exécuter l'image combinée (Frontend Nginx + API Node.js sous Supervisor) :
+
+```bash
+# Construire et démarrer le conteneur
+docker compose up -d --build
+
+# Consulter les logs
+docker compose logs -f
+
+# Arrêter l'application
+docker compose down
+```
+
+L'application est disponible sur :
+- **Frontend** : [http://localhost:80](http://localhost:80)
+- **API Backend** : [http://localhost:3001](http://localhost:3001)
+
+---
+
+## 🔧 Configuration & Variables d'Environnement
+
+Un fichier modèle `.env.example` est fourni à la racine et dans `back/.env.example`.
+
+Pour personnaliser la configuration :
+```bash
+cp .env.example .env
+cp back/.env.example back/.env
+```
+
+| Variable | Description | Défaut |
+|---|---|---|
+| `PORT` | Port d'écoute de l'API Node.js | `3001` |
+| `NODE_ENV` | Environnement d'exécution (`development` / `production`) | `development` |
+| `FRONTEND_URL` | Origine frontend autorisée pour CORS | `http://localhost:5173` |
+| `JWT_SECRET` | Clé secrète de signature des tokens d'authentification | *Clé par défaut de dev* |
+| `BCRYPT_ROUNDS` | Nombre de passes de hachage des mots de passe | `12` |
+
+> [!CAUTION]
+> En production, veillez à toujours définir une clé `JWT_SECRET` robuste et sécurisée.
+
+---
+
+## 📡 Endpoints Principaux de l'API
+
+- **Santé & Système** :
+  - `GET /api/health` : État du serveur et uptime
+- **Authentification (`/api/auth`)** :
+  - `POST /api/auth/register` : Inscription d'un nouveau compte
+  - `POST /api/auth/login` : Connexion et génération du token JWT
+  - `GET /api/auth/verify` : Vérification du token actif
+- **Utilisateurs & Profils (`/api/users`)** :
+  - `GET /api/users/profile` : Données du profil connecté
+  - `GET /api/users/leaderboard` : Classement des utilisateurs
+- **Système de Scores (`/api/scores`)** :
+  - `POST /api/scores/submit` : Enregistrement d'une note de fin de partie
+  - `GET /api/scores/leaderboard` : Tableau d'honneur des meilleures équipes
+
+---
+
+## 📊 Barème de Notation
+
+Le système évalue les joueurs sur **20 points** selon 3 composantes :
+- ⏱️ **Rapidité (8 pts)** : Temps d'exécution de la mission
+- 🎯 **Précision (7 pts)** : Nombre d'erreurs commises (-0.5 pt par erreur)
+- 💡 **Autonomie (5 pts)** : Recours aux indices (-1 pt par indice)
+
+Consultez [docs/SYSTEME_NOTATION.md](docs/SYSTEME_NOTATION.md) pour les formules et barèmes complets.
+
+---
+
+## 🛡️ Licence
+
+Ce projet est distribué sous licence MIT.
