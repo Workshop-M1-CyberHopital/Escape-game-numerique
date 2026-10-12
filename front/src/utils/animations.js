@@ -4,6 +4,14 @@ let isInitialized = false;
 let animationFrameId = null;
 let resizeHandler = null;
 
+const LINK_DISTANCE = 150;
+const LINK_DISTANCE_SQ = LINK_DISTANCE * LINK_DISTANCE;
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 export function initAnimations() {
   if (isInitialized) return;
   initAnimatedBackground();
@@ -13,14 +21,17 @@ export function initAnimatedBackground() {
   const canvas = document.getElementById('animated-bg');
   if (!canvas) return;
 
-  isInitialized = true;
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  isInitialized = true;
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
   const particles = [];
-  const particleCount = 80;
+  // Moins de particules sur petit écran (calcul en O(n²) des liaisons, téléphones/PC modestes)
+  const particleCount = window.innerWidth < 768 ? 40 : 80;
   const characters = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ</>{}[]()#@$%&*+-=';
   const colors = ['#ff0055', '#00ffff', '#00ff88', '#ff00ff', '#ffff00'];
 
@@ -31,6 +42,7 @@ export function initAnimatedBackground() {
       this.vx = (Math.random() - 0.5) * 0.5;
       this.vy = (Math.random() - 0.5) * 0.5;
       this.size = Math.random() * 3 + 1;
+      this.font = `${this.size * 8}px "Share Tech Mono", monospace`;
       this.char = characters[Math.floor(Math.random() * characters.length)];
       this.color = colors[Math.floor(Math.random() * colors.length)];
     }
@@ -47,7 +59,7 @@ export function initAnimatedBackground() {
 
     draw() {
       ctx.fillStyle = this.color;
-      ctx.font = `${this.size * 8}px "Share Tech Mono", monospace`;
+      ctx.font = this.font;
       ctx.fillText(this.char, this.x, this.y);
     }
   }
@@ -56,39 +68,52 @@ export function initAnimatedBackground() {
     particles.push(new Particle());
   }
 
-  function animate() {
+  function drawFrame() {
     ctx.fillStyle = 'rgba(10, 10, 30, 0.1)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    particles.forEach((particle, i) => {
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < particles.length; i++) {
+      const particle = particles[i];
       particle.update();
       particle.draw();
 
-      particles.slice(i + 1).forEach((otherParticle) => {
-        const dx = particle.x - otherParticle.x;
-        const dy = particle.y - otherParticle.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+      // Pas de particles.slice() ici : évitait ~80 allocations de tableau par image
+      for (let j = i + 1; j < particles.length; j++) {
+        const other = particles[j];
+        const dx = particle.x - other.x;
+        const dy = particle.y - other.y;
+        const distanceSq = dx * dx + dy * dy;
 
-        if (distance < 150) {
-          ctx.strokeStyle = `rgba(0, 255, 255, ${0.2 * (1 - distance / 150)})`;
-          ctx.lineWidth = 0.5;
+        if (distanceSq < LINK_DISTANCE_SQ) {
+          const distance = Math.sqrt(distanceSq);
+          ctx.strokeStyle = `rgba(0, 255, 255, ${0.2 * (1 - distance / LINK_DISTANCE)})`;
           ctx.beginPath();
           ctx.moveTo(particle.x, particle.y);
-          ctx.lineTo(otherParticle.x, otherParticle.y);
+          ctx.lineTo(other.x, other.y);
           ctx.stroke();
         }
-      });
-    });
+      }
+    }
+  }
 
+  function animate() {
+    drawFrame();
     animationFrameId = requestAnimationFrame(animate);
   }
 
-  animate();
+  if (prefersReducedMotion()) {
+    // Mouvement réduit : une seule image statique
+    drawFrame();
+  } else {
+    animate();
+  }
 
   if (!resizeHandler) {
     resizeHandler = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      if (!animationFrameId) drawFrame();
     };
     window.addEventListener('resize', resizeHandler);
   }

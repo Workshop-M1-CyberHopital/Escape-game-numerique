@@ -1,28 +1,57 @@
-version: '3.8'
+# ==============================================================================
+# Escape Game Cyber-Hôpital - lancement local du conteneur unique
+# (Nginx : frontend + proxy /api/  |  API Node.js  |  supervisord)
+# ==============================================================================
+# Prérequis : un fichier .env à la racine du dépôt, lu automatiquement par Docker Compose :
+#   cp .env.example .env      puis renseignez au minimum JWT_SECRET (openssl rand -hex 32)
+#
+#   docker compose up -d --build     # construire et démarrer
+#   docker compose logs -f           # logs Nginx + API
+#   docker compose down              # arrêter (les données restent dans le volume)
+# ==============================================================================
 
 services:
   escape-game:
-    image: gaetandev/escape-workshop:latest
+    # Même dépôt que push-to-hub.sh et les manifests Kubernetes (infra/cluster-*/escape.yaml).
+    # Sans --build, Compose télécharge cette image ; avec --build, il la reconstruit localement.
+    image: ${IMAGE_REPO:-produn/escape-workshop}:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Options de build du frontend (vides = comportement par défaut, cf. .env.example)
+        VITE_DEV_MODE: ${VITE_DEV_MODE:-}
+        VITE_API_URL: ${VITE_API_URL:-}
     container_name: escape-game-cyber-hospital
     ports:
-      - "80:80"      # Frontend (Nginx)
-      - "3001:3001"  # Backend API (Node.js)
+      # Application complète : frontend + API sur /api (proxy Nginx)
+      - "${HTTP_PORT:-80}:80"
+      # API Node.js en direct, accessible uniquement depuis cette machine (debug : curl localhost:3001/api/health)
+      - "127.0.0.1:${API_DEBUG_PORT:-3001}:3001"
     environment:
-      - NODE_ENV=production
-      - PORT=3001
-      - FRONTEND_URL=http://localhost:80
-      - JWT_SECRET=escape-game-super-secret-key-change-in-production
-      - BCRYPT_ROUNDS=12
+      NODE_ENV: production
+      PORT: "3001"
+      # Obligatoire : Compose refuse de démarrer si JWT_SECRET est absent ou vide dans .env
+      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET manquant - copiez .env.example en .env puis renseignez JWT_SECRET (openssl rand -hex 32)}"
+      JWT_EXPIRES_IN: "${JWT_EXPIRES_IN:-24h}"
+      BCRYPT_ROUNDS: "${BCRYPT_ROUNDS:-10}"
+      # Origines CORS supplémentaires (le frontend appelle /api sur la même origine, CORS est donc inutile par défaut)
+      CORS_ORIGIN: "${CORS_ORIGIN:-http://localhost}"
+      # 1 = Nginx est le seul proxy devant Node.js (mettre 2 derrière un Traefik / reverse proxy supplémentaire)
+      TRUST_PROXY: "${TRUST_PROXY:-1}"
+      RATE_LIMIT_WINDOW_MS: "${RATE_LIMIT_WINDOW_MS:-900000}"
+      RATE_LIMIT_MAX_REQUESTS: "${RATE_LIMIT_MAX_REQUESTS:-1000}"
+      AUTH_RATE_LIMIT_MAX: "${AUTH_RATE_LIMIT_MAX:-50}"
+      DATA_DIR: /app/back/data
     volumes:
-      # Persistance des données
+      # Persistance des comptes et des scores (users.json, scores.json) : UN seul volume
       - escape-game-data:/app/back/data
-      - escape-game-sessions:/app/back/data
     restart: unless-stopped
+    # Laisse supervisord arrêter proprement Nginx puis Node.js avant le SIGKILL
+    stop_grace_period: 30s
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      # Vérifie Nginx ET l'API (via le proxy /api/)
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -35,6 +64,4 @@ services:
 
 volumes:
   escape-game-data:
-    driver: local
-  escape-game-sessions:
     driver: local

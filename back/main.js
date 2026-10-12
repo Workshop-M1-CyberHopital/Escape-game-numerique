@@ -1,20 +1,17 @@
+// Charge les variables d'environnement et la configuration avant tout le reste.
+const config = require('./config');
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs');
-const path = require('path');
-
-// Charger la configuration (.env en priorité, sinon config.env)
-const envPath = fs.existsSync(path.resolve(__dirname, '.env'))
-    ? path.resolve(__dirname, '.env')
-    : path.resolve(__dirname, 'config.env');
-require('dotenv').config({ path: envPath });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+
+// Derrière nginx / un Ingress, req.ip (rate limiting, logs) doit refléter le vrai client.
+app.set('trust proxy', config.server.trustProxy);
 
 // Middleware de sécurité
 app.use(helmet({
@@ -29,80 +26,78 @@ app.use(helmet({
     },
 }));
 
-// Middleware CORS pour le frontend
-const corsOptions = process.env.NODE_ENV === 'production' 
-    ? {
-        origin: true, // Accepter toutes les origines en production
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-        optionsSuccessStatus: 200
+// --- CORS ----------------------------------------------------------------------------------------
+// En production, le front appelle /api sur la même origine (proxy nginx) : CORS n'est utile que pour
+// les origines listées dans CORS_ORIGIN / FRONTEND_URL. En développement, localhost et le LAN sont acceptés.
+const normalizeOrigin = (value) => {
+    try {
+        return new URL(value).origin;
+    } catch {
+        return null;
     }
-    : {
-        origin: [
-            'http://localhost:3000',
-            'http://127.0.0.1:3000',
-            'http://localhost:5173', // Vite dev server
-            'http://127.0.0.1:5173',
-            'https://escape-game-numerique.vercel.app', // Production Vercel
-            /^https:\/\/.*\.vercel\.app$/ // Tous les sous-domaines Vercel
-        ],
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-        optionsSuccessStatus: 200
-    };
+};
 
-app.use(cors(corsOptions));
+const allowAnyOrigin = config.cors.origins.includes('*');
+const allowedOrigins = new Set(config.cors.origins.map(normalizeOrigin).filter(Boolean));
+
+const PRIVATE_HOST = /^(localhost|127(?:\.\d{1,3}){3}|\[::1\]|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2}|169\.254(?:\.\d{1,3}){2}|[a-z0-9-]+\.local|[a-z0-9.-]+\.localhost)$/i;
+
+const isOriginAllowed = (origin) => {
+    if (allowAnyOrigin) return true;
+    const normalized = normalizeOrigin(origin);
+    if (!normalized) return false;
+    if (allowedOrigins.has(normalized)) return true;
+    if (config.cors.allowPrivateNetwork) {
+        const { protocol, hostname } = new URL(normalized);
+        return (protocol === 'http:' || protocol === 'https:') && PRIVATE_HOST.test(hostname);
+    }
+    return false;
+};
+
+app.use(cors({
+    // Pas d'en-tête Origin (curl, même origine en GET) : rien à autoriser.
+    origin: (origin, callback) => callback(null, !origin || isOriginAllowed(origin)),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    maxAge: 600,
+    optionsSuccessStatus: 204
+}));
 
 // Compression des réponses
 app.use(compression());
 
-// Logging des requêtes
-app.use(morgan('combined'));
+// Logging des requêtes (sans corps de requête ; les sondes de santé ne sont pas journalisées en production)
+app.use(morgan(config.logging.format, {
+    skip: (req) => config.isProduction && req.originalUrl === '/api/health',
+}));
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limite à 100 requêtes par IP par fenêtre
-    message: {
-        error: 'Trop de requêtes, veuillez réessayer plus tard.'
-    }
-});
-app.use('/api/', limiter);
+// --- Rate limiting -------------------------------------------------------------------------------
+// Limite globale large (une classe entière peut partager une IP), limite stricte sur les échecs de connexion.
+const rateLimitMessage = (message) => ({ error: 'Trop de requêtes', message, code: 'RATE_LIMITED' });
 
-// Middleware pour gérer les requêtes OPTIONS (preflight)
-app.options('*', (req, res) => {
-    const origin = req.headers.origin;
-    
-    // En production, accepter toutes les origines
-    if (process.env.NODE_ENV === 'production') {
-        res.header('Access-Control-Allow-Origin', origin || '*');
-    } else {
-        // En développement, vérifier les origines autorisées
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'http://127.0.0.1:3000',
-            'http://localhost:5173',
-            'http://127.0.0.1:5173',
-            'https://escape-game-numerique.vercel.app'
-        ];
-        
-        const isAllowedOrigin = allowedOrigins.includes(origin) || 
-                               (origin && origin.includes('.vercel.app'));
-        
-        res.header('Access-Control-Allow-Origin', isAllowedOrigin ? origin : '*');
-    }
-    
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.sendStatus(200);
+const apiLimiter = rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    limit: config.rateLimit.maxRequests,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    skip: (req) => req.path === '/health',
+    message: rateLimitMessage('Trop de requêtes depuis cette adresse, réessayez dans quelques minutes.')
 });
 
-// Parser JSON
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+const authLimiter = rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    limit: config.rateLimit.authMaxFailures,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    message: rateLimitMessage('Trop de tentatives de connexion échouées, réessayez dans quelques minutes.')
+});
+
+app.use('/api/', apiLimiter);
+app.use(['/api/auth/login', '/api/auth/register'], authLimiter);
+
+// Parser JSON (corps limités : seul le score et ses détails transitent)
+app.use(express.json({ limit: config.server.jsonLimit }));
 
 // Routes de l'API
 app.use('/api/auth', require('./routes/auth'));
@@ -143,34 +138,50 @@ app.use('*', (req, res) => {
 });
 
 // Gestionnaire d'erreurs global
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-    console.error('Erreur serveur:', err);
-    
-    res.status(err.status || 500).json({
-        error: process.env.NODE_ENV === 'production' 
-            ? 'Erreur interne du serveur' 
-            : err.message,
-        ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+    if (err.type === 'entity.parse.failed') {
+        return res.status(400).json({ error: 'JSON invalide', message: 'Le corps de la requête n\'est pas un JSON valide.', code: 'INVALID_JSON' });
+    }
+    if (err.type === 'entity.too.large') {
+        return res.status(413).json({ error: 'Requête trop volumineuse', message: 'Les données envoyées sont trop volumineuses.', code: 'PAYLOAD_TOO_LARGE' });
+    }
+
+    console.error('Erreur serveur:', err.message);
+    const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+    const publicMessage = status >= 500 ? 'Erreur interne du serveur' : 'Requête invalide';
+    res.status(status).json({
+        error: publicMessage,
+        ...(!config.isProduction && { details: err.message })
     });
 });
 
-// Démarrage du serveur
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Serveur Escape Game démarré sur le port ${PORT}`);
-    console.log(`📊 Environnement: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🌐 URL: http://0.0.0.0:${PORT}`);
-    console.log(`📋 Health check: http://0.0.0.0:${PORT}/api/health`);
-});
+// Démarrage du serveur (uniquement si lancé directement : `node main.js`, nodemon)
+if (require.main === module) {
+    const dataStore = require('./storage/dataStore');
+    const server = app.listen(config.server.port, config.server.host, () => {
+        const corsSummary = allowAnyOrigin
+            ? 'toutes origines'
+            : [...allowedOrigins].join(', ') || (config.cors.allowPrivateNetwork ? '(aucune liste)' : 'même origine uniquement');
+        console.log(`🚀 Serveur Escape Game démarré sur le port ${config.server.port}`);
+        console.log(`📊 Environnement: ${config.env}`);
+        console.log(`🌐 URL: http://${config.server.host}:${config.server.port}`);
+        console.log(`📋 Health check: http://${config.server.host}:${config.server.port}/api/health`);
+        console.log(`💾 Données: ${dataStore.dataDir}`);
+        console.log(`🔐 CORS: ${corsSummary}${config.cors.allowPrivateNetwork ? ' + localhost/LAN (développement)' : ''}`);
+        console.log(`🛡️  Trust proxy: ${JSON.stringify(config.server.trustProxy)} | Rate limit: ${config.rateLimit.maxRequests} req / ${Math.round(config.rateLimit.windowMs / 60000)} min`);
+        if (config.security.jwtSecretSource === 'dev-default') {
+            console.log('🔑 JWT: secret de développement (définissez JWT_SECRET hors développement)');
+        }
+    });
 
-// Gestion gracieuse de l'arrêt
-process.on('SIGTERM', () => {
-    console.log('🛑 Signal SIGTERM reçu, arrêt gracieux...');
-    process.exit(0);
-});
-
-process.on('SIGINT', () => {
-    console.log('🛑 Signal SIGINT reçu, arrêt gracieux...');
-    process.exit(0);
-});
+    const shutdown = (signal) => {
+        console.log(`🛑 Signal ${signal} reçu, arrêt gracieux...`);
+        server.close(() => process.exit(0));
+        setTimeout(() => process.exit(0), 5000).unref();
+    };
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+}
 
 module.exports = app;

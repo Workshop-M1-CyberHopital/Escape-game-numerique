@@ -11,25 +11,25 @@
           <!-- Alert Badge -->
           <div class="scale-in">
               <span
-                  class="inline-flex items-center gap-2 px-6 py-2 text-sm font-tech bg-red-600 text-white rounded-full pulse-glow animate-pulse"
+                  class="inline-flex items-center gap-2 px-4 sm:px-6 py-2 text-xs sm:text-sm font-tech bg-red-600 text-white rounded-full pulse-glow animate-pulse"
               >
-                  <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                  <AlertTriangle class="w-4 h-4 shrink-0" />
                   ALERTE CRITIQUE - CYBERATTAQUE EN COURS
               </span>
           </div>
 
           <!-- Main Title with Glitch Effect -->
           <h1
-              class="text-6xl md:text-7xl font-cyber font-black text-white glitch"
-              ref="glitchTitle"
+              class="text-4xl sm:text-6xl md:text-7xl font-cyber font-black text-white glitch break-words"
+              :class="{ active: isGlitching }"
           >
-              <span class="glitch-text">URGENCE à l'HÔPITAL</span>
-              <span class="glitch-layer red">URGENCE à l'HÔPITAL</span>
-              <span class="glitch-layer cyan">URGENCE à l'HÔPITAL</span>
+              <span class="glitch-text">URGENCE À L'HÔPITAL</span>
+              <span class="glitch-layer red" aria-hidden="true">URGENCE À L'HÔPITAL</span>
+              <span class="glitch-layer cyan" aria-hidden="true">URGENCE À L'HÔPITAL</span>
           </h1>
 
           <div
-              class="text-3xl md:text-5xl font-cyber font-bold text-cyber-blue"
+              class="text-2xl sm:text-3xl md:text-5xl font-cyber font-bold text-cyber-blue"
           >
               Mission Résilience
           </div>
@@ -37,14 +37,11 @@
           <!-- Vital Signs Monitor with Canvas -->
           <div class="py-8">
               <div
-                  class="bg-gray-900/80 backdrop-blur-md rounded-lg p-6 max-w-xl mx-auto scanline"
+                  class="bg-gray-900/80 backdrop-blur-md rounded-lg p-4 sm:p-6 max-w-xl mx-auto scanline"
               >
-                  <div class="flex justify-between items-center mb-4">
+                  <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
                       <div class="flex items-center gap-2">
-                          <i
-                              data-lucide="activity"
-                              class="w-6 h-6 text-cyber-blue"
-                          ></i>
+                          <Activity class="w-6 h-6 text-cyber-blue shrink-0" />
                           <span class="font-tech text-sm text-gray-400"
                               >MONITEUR DE SIGNES VITAUX</span
                           >
@@ -59,10 +56,10 @@
                       </div>
                   </div>
 
-                  <div class="grid grid-cols-3 gap-4 mb-4">
+                  <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
                       <div class="text-center">
                           <div
-                              class="text-2xl font-bold text-red-500 font-cyber"
+                              class="text-lg sm:text-2xl font-bold text-red-500 font-cyber"
                           >
                               98 BPM
                           </div>
@@ -72,7 +69,7 @@
                       </div>
                       <div class="text-center">
                           <div
-                              class="text-2xl font-bold text-yellow-500 font-cyber"
+                              class="text-lg sm:text-2xl font-bold text-yellow-500 font-cyber"
                           >
                               35%
                           </div>
@@ -82,7 +79,7 @@
                       </div>
                       <div class="text-center">
                           <div
-                              class="text-2xl font-bold text-cyber-green font-cyber"
+                              class="text-lg sm:text-2xl font-bold text-cyber-green font-cyber"
                           >
                               ACTIF
                           </div>
@@ -112,16 +109,15 @@
           <!-- Story Section -->
           <div class="fade-in-delay max-w-3xl mx-auto">
               <div
-                  class="bg-gray-900/60 backdrop-blur-md border-2 border-cyber-red rounded-lg p-8 scanline"
+                  class="bg-gray-900/60 backdrop-blur-md border-2 border-cyber-red rounded-lg p-5 sm:p-8 scanline"
               >
-                  <div class="flex items-start gap-4 mb-4">
-                      <i
-                          data-lucide="shield"
-                          class="w-8 h-8 text-cyber-red flex-shrink-0 mt-1"
-                      ></i>
-                      <div class="text-left">
+                  <div class="flex items-start gap-3 sm:gap-4 mb-4">
+                      <Shield
+                          class="w-6 h-6 sm:w-8 sm:h-8 text-cyber-red flex-shrink-0 mt-1"
+                      />
+                      <div class="text-left min-w-0">
                           <h2
-                              class="text-2xl font-cyber font-bold text-cyber-red mb-3"
+                              class="text-xl sm:text-2xl font-cyber font-bold text-cyber-red mb-3"
                           >
                               SITUATION D'URGENCE
                           </h2>
@@ -164,10 +160,11 @@
               class="flex flex-col sm:flex-row gap-4 justify-center pt-8 fade-in-delay"
           >
               <button
+                  type="button"
                   @click="$emit('start-mission')"
-                  class="flex items-center justify-center gap-2 px-8 py-6 bg-cyber-red hover:bg-cyber-red/80 text-white font-cyber text-lg rounded-lg pulse-glow transition-all"
+                  class="flex items-center justify-center gap-2 px-6 sm:px-8 py-5 sm:py-6 bg-cyber-red hover:bg-cyber-red/80 text-white font-cyber text-base sm:text-lg rounded-lg pulse-glow transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-cyber-blue/70"
               >
-                  <i data-lucide="play" class="w-5 h-5"></i>
+                  <Play class="w-5 h-5" />
                   COMMENCER LA MISSION
               </button>
           </div>
@@ -176,49 +173,48 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
+import { AlertTriangle, Activity, Shield, Play } from "lucide-vue-next";
 import { drawHeartbeat } from "../utils/vitalSigns";
-import { ROOM_IDS } from "../composables/useGameState";
+import { ROOMS_CONFIG } from "../config/roomsConfig";
 
-const emit = defineEmits(["start-mission"]);
+defineEmits(["start-mission"]);
 
-const glitchTitle = ref(null);
 const vitalCanvas = ref(null);
+const isGlitching = ref(false);
 let glitchInterval = null;
+let glitchTimeout = null;
 let stopHeartbeat = null;
 
-// Nombre de salles calculé dynamiquement depuis la source unique
-const totalRooms = computed(() => ROOM_IDS.length);
+// Nombre de salles calculé depuis la source unique (roomsConfig)
+const totalRooms = ROOMS_CONFIG.length;
 
 onMounted(() => {
-  // Initialize Lucide Icons
-  if (window.lucide) {
-      window.lucide.createIcons();
-  }
+  // Effet glitch périodique sur le titre
+  glitchInterval = setInterval(() => {
+      isGlitching.value = true;
+      clearTimeout(glitchTimeout);
+      glitchTimeout = setTimeout(() => {
+          isGlitching.value = false;
+          glitchTimeout = null;
+      }, 200);
+  }, 3000);
 
-  // Start glitch effect
-  if (glitchTitle.value) {
-      glitchInterval = setInterval(() => {
-          glitchTitle.value.classList.add("active");
-          setTimeout(() => {
-              glitchTitle.value.classList.remove("active");
-          }, 200);
-      }, 3000);
-  }
-
-  // Start vital signs animation
+  // Animation du moniteur de signes vitaux
   if (vitalCanvas.value) {
       stopHeartbeat = drawHeartbeat(vitalCanvas.value);
   }
 });
 
 onUnmounted(() => {
-  if (glitchInterval) {
-      clearInterval(glitchInterval);
-  }
-  if (stopHeartbeat) {
+  clearInterval(glitchInterval);
+  clearTimeout(glitchTimeout);
+  glitchInterval = null;
+  glitchTimeout = null;
+  if (typeof stopHeartbeat === "function") {
       stopHeartbeat();
   }
+  stopHeartbeat = null;
 });
 </script>
 

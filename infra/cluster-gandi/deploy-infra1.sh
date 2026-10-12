@@ -8,15 +8,21 @@ set -Eeuo pipefail
 
 # Chargement des variables d’environnement depuis un fichier .env local (non versionné)
 # -----------------------------------------------------------------
-# Le fichier .env doit être placé à la racine du projet (même dossier que ce script)
+# Fichier lu : .env du dossier courant (lancez le script depuis son dossier, infra/cluster-*/),
+# sinon .env à la racine du dépôt (le même que pour Docker Compose). Modèle : .env.example
 # Exemple de contenu :
 #   GANDI_API_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #   REDIS_PASSWORD=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 # -----------------------------------------------------------------
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+ENV_FILE=".env"
+if [ ! -f "$ENV_FILE" ]; then
+  ENV_FILE="$(dirname "$0")/../../.env"
+fi
+if [ -f "$ENV_FILE" ]; then
+  echo "Variables chargées depuis : $ENV_FILE"
+  export $(grep -v '^#' "$ENV_FILE" | xargs)
 else
-  echo "Fichier .env introuvable. Créez un fichier .env avec vos variables sensibles (ex: GANDI_API_TOKEN)."
+  echo "Fichier .env introuvable (ni ici, ni à la racine du dépôt). Copiez .env.example en .env et renseignez vos variables sensibles (ex: GANDI_API_TOKEN)."
   exit 1
 fi
 
@@ -55,7 +61,7 @@ deploy_workshop() {
   az aks get-credentials --resource-group "$rgname" --name "$aksname" --overwrite-existing
 
   separator
-  echo "Création des secrets Redis, MariaDB et Gandi..."
+  echo "Création des secrets Redis, MariaDB, Gandi et JWT..."
   kubectl create secret generic redis-secret-traefik \
     --from-literal=password="$redpass" --dry-run=client -o yaml | kubectl apply -f -
 
@@ -71,6 +77,17 @@ kubectl create secret generic mariadb-secret \
   --from-literal=database="$MARIADB_DATABASE" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+  # Secret JWT de l'API (clé jwt-secret, lue par escape.yaml via secretKeyRef).
+  # Valeur JWT_SECRET du .env si elle est définie, sinon secret aléatoire généré UNE seule fois
+  # (conservé aux redéploiements suivants pour ne pas déconnecter les joueurs).
+  if [ -n "${JWT_SECRET:-}" ]; then
+    kubectl create secret generic escape-jwt-secret \
+      --from-literal=jwt-secret="$JWT_SECRET" --dry-run=client -o yaml | kubectl apply -f -
+  elif ! kubectl get secret escape-jwt-secret &>/dev/null; then
+    kubectl create secret generic escape-jwt-secret \
+      --from-literal=jwt-secret="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+  fi
+
   # Secret Gandi, lecture du token depuis la variable d’environnement GANDI_API_TOKEN
   kubectl create secret generic gandi-credentials \
     --from-literal=api-token="$GANDI_API_TOKEN" \
@@ -79,6 +96,8 @@ kubectl create secret generic mariadb-secret \
   separator
   echo "Déploiement de Redis, MariaDB et de l’application Escape Game..."
   kubectl apply -f escape.yaml
+  # Stockage JSON de l'API = 1 seul réplica : supprime un éventuel autoscaler (HPA) d'un ancien déploiement
+  kubectl delete hpa scale-escape --ignore-not-found
   sleep 15
 
   separator

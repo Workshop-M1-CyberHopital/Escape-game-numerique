@@ -4,7 +4,7 @@
 # ===============================================
 #  - Redis (cache avec stockage local éphémère)
 #  - MariaDB (base locale avec stockage K8S hostpath)
-#  - Application Escape Game (connexion Redis + MariaDB)
+#  - Application Escape Game (1 seul réplica : stockage JSON, Redis/MariaDB pas encore utilisés par l'API)
 # ===============================================
 
 
@@ -142,12 +142,22 @@ spec:
 ---
 
 # --- Application Escape Game ---
+# ⚠️ STOCKAGE JSON => EXACTEMENT 1 RÉPLICA
+# L'API Node.js enregistre les comptes et les scores dans des fichiers JSON (/app/back/data), gérés
+# en mémoire par UN SEUL processus. Avec plusieurs pods, chacun aurait ses propres fichiers :
+# connexions refusées au hasard, joueurs déconnectés, scores absents du classement.
+# => replicas: 1, stratégie Recreate (jamais deux pods sur les mêmes fichiers) et pas de scale-out
+#    (autoscaling.yaml est bridé à 1 réplica) tant que l'API n'utilise pas une base de données partagée.
+# Redis et MariaDB ci-dessus ne sont pas encore utilisés par l'API : aucune variable ne leur est passée.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: escape-app
 spec:
-  replicas: 2
+  replicas: 1
+  strategy:
+    type: Recreate
+    rollingUpdate: null   # supprime les paramètres RollingUpdate d'un déploiement existant (kubectl apply)
   selector:
     matchLabels:
       app: escape-app
@@ -158,45 +168,78 @@ spec:
     spec:
       nodeSelector:
         "kubernetes.io/os": linux
+      # supervisord (PID 1) arrête proprement Nginx puis Node.js à la réception de SIGTERM
+      terminationGracePeriodSeconds: 30
+      volumes:
+        # Données de l'API (users.json, scores.json) conservées sur le disque du nœud AKS, comme MariaDB
+        # (le compte étudiant Azure n'autorise pas Azure Files CSI). Semi-persistant : survit aux
+        # redémarrages et redéploiements du pod, mais repart d'un dossier vide si le pod change de nœud.
+        # /var/lib est sur le disque système du nœud (/mnt est le disque temporaire Azure, effacé
+        # quand le cluster est arrêté). Si l'abonnement le permet, préférez le PersistentVolumeClaim
+        # proposé en bas de ce fichier.
+        - name: escape-data
+          hostPath:
+            path: /var/lib/escape-game/data
+            type: DirectoryOrCreate
       containers:
       - name: escape
+        # Pour figer la version déployée, remplacez latest par le tag sha-<commit> affiché par push-to-hub.sh
         image: produn/escape-workshop:latest
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
             cpu: 250m
-            memory: 256Mi
-        # ⚙️ L’application écoute en réalité sur le port 3001, pas 80
+            memory: 192Mi
+          limits:
+            # Nginx + Node.js + supervisord. bcrypt (inscription / connexion) est coûteux en CPU :
+            # avec 250m, les connexions simultanées d'une classe dépassaient le délai du client.
+            cpu: "1"
+            memory: 512Mi
+        # Nginx écoute sur le port 80 : frontend + proxy /api/ vers Node.js (127.0.0.1:3001, interne au pod)
         ports:
-        - containerPort: 3001
+        - name: http
+          containerPort: 80
         env:
-        - name: REDIS
-          value: "redis-service"
-        - name: REDIS_PWD
+        - name: NODE_ENV
+          value: "production"
+        # Secret créé par deploy-infra*.sh (clé jwt-secret). optional: true => le pod démarre même si le
+        # Secret manque ; l'API génère alors un secret aléatoire (sessions perdues à chaque redémarrage)
+        # et l'indique clairement dans ses logs.
+        - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: redis-secret-traefik
-              key: password
-        - name: MARIADB_HOST
-          value: "mariadb"
-        - name: MARIADB_DB
-          valueFrom:
-            secretKeyRef:
-              name: mariadb-secret
-              key: database
-        - name: MARIADB_USER
-          valueFrom:
-            secretKeyRef:
-              name: mariadb-secret
-              key: user
-        - name: MARIADB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mariadb-secret
-              key: password
+              name: escape-jwt-secret
+              key: jwt-secret
+              optional: true
+        - name: BCRYPT_ROUNDS
+          value: "10"
+        # Traefik puis Nginx devant Node.js : 2 proxies de confiance pour retrouver l'IP réelle des joueurs
+        - name: TRUST_PROXY
+          value: "2"
+        - name: CORS_ORIGIN
+          value: "https://escape.eisi-dune.eu,http://escape.eisi-dune.eu"
+        - name: DATA_DIR
+          value: "/app/back/data"
+        volumeMounts:
+        - name: escape-data
+          mountPath: /app/back/data
+        # /api/health traverse Nginx puis l'API (route exclue du rate limiting)
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
 
 ---
 
@@ -213,7 +256,25 @@ spec:
   - name: http
     port: 80
     protocol: TCP
-    # 🚀 Redirection interne vers le vrai port exposé par l’app
+    # Nginx du conteneur (il relaie lui-même /api/ vers Node.js)
     targetPort: 80
   selector:
     app: escape-app
+
+# --- Variante persistante (si votre abonnement Azure autorise les disques managés) ---
+# Remplacez le volume hostPath "escape-data" du Deployment par :
+#         - name: escape-data
+#           persistentVolumeClaim:
+#             claimName: escape-data-pvc
+# et ajoutez ce PVC (ReadWriteOnce suffit : un seul pod, stratégie Recreate) :
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: escape-data-pvc
+# spec:
+#   accessModes: ["ReadWriteOnce"]
+#   storageClassName: managed-csi
+#   resources:
+#     requests:
+#       storage: 1Gi

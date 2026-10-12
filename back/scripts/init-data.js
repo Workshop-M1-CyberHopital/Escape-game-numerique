@@ -1,16 +1,12 @@
+// Crée le dossier de données (DATA_DIR, par défaut back/data) et les fichiers JSON vides manquants.
 const fs = require('fs');
 const path = require('path');
+const config = require('../config');
 
-// Créer le dossier data s'il n'existe pas
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
+const dataDir = config.storage.dataDir;
+fs.mkdirSync(dataDir, { recursive: true });
 
-// Initialiser les fichiers JSON vides s'ils n'existent pas
-const files = ['users.json', 'scores.json', 'sessions.json'];
-
-files.forEach(file => {
+['users.json', 'scores.json'].forEach((file) => {
     const filePath = path.join(dataDir, file);
     if (!fs.existsSync(filePath)) {
         fs.writeFileSync(filePath, '{}', 'utf8');
@@ -20,4 +16,4 @@ files.forEach(file => {
     }
 });
 
-console.log('🎯 Initialisation des données terminée');
+console.log(`🎯 Initialisation des données terminée (${dataDir})`);

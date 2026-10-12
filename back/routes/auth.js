@@ -1,82 +1,104 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const dataStore = require('../storage/dataStore');
+const config = require('../config');
+const { authenticateToken, signToken } = require('../middleware/auth');
+const { toPublicUser } = require('../utils/serializers');
+const {
+    normalizeEmail,
+    normalizeUsername,
+    normalizeTeamName,
+    validateNewPassword,
+    validatePasswordInput,
+} = require('../utils/validation');
 
 const router = express.Router();
+const BCRYPT_ROUNDS = config.security.bcryptRounds;
 
-// Middleware et configuration d'authentification
-const { authenticateToken, JWT_SECRET } = require('../middleware/auth');
-const JWT_EXPIRES_IN = '24h';
+// Hash factice : la connexion avec un email inconnu prend autant de temps qu'avec un mauvais mot de passe.
+const DUMMY_HASH = bcrypt.hashSync('escape-game-dummy-password', BCRYPT_ROUNDS);
+
+const badRequest = (res, message) => res.status(400).json({
+    error: 'Données invalides',
+    message,
+    code: 'VALIDATION_ERROR',
+});
+
+const invalidCredentials = (res, message) => res.status(401).json({
+    error: 'Identifiants invalides',
+    message,
+    code: 'INVALID_CREDENTIALS',
+});
+
+// Comparaison insensible à la casse et aux espaces (début, fin, espaces multiples).
+const canonical = (value) => value.replace(/\s+/g, ' ').trim().toLowerCase();
+const sameText = (a, b) => typeof a === 'string' && typeof b === 'string' && canonical(a) === canonical(b);
+
+const findConflict = (email, username) => {
+    for (const user of dataStore.getAllUsers()) {
+        if (sameText(user.email, email)) {
+            return { field: 'email', message: 'Un compte existe déjà avec cet email.' };
+        }
+        if (sameText(user.username, username)) {
+            return { field: 'username', message: 'Ce nom d\'utilisateur est déjà pris.' };
+        }
+    }
+    return null;
+};
 
 // Inscription d'un nouvel utilisateur
 router.post('/register', async (req, res) => {
     try {
-        const { username, email, password, teamName } = req.body;
-        
-        // Validation des données
-        if (!username || !email || !password) {
-            return res.status(400).json({
-                error: 'Données manquantes',
-                required: ['username', 'email', 'password']
-            });
+        const body = req.body || {};
+        const email = normalizeEmail(body.email);
+        if (email.error) return badRequest(res, email.error);
+        const username = normalizeUsername(body.username);
+        if (username.error) return badRequest(res, username.error);
+        const password = validateNewPassword(body.password);
+        if (password.error) return badRequest(res, password.error);
+        const teamName = normalizeTeamName(body.teamName);
+        if (teamName.error) return badRequest(res, teamName.error);
+
+        const conflictBefore = findConflict(email.value, username.value);
+        if (conflictBefore) {
+            return res.status(409).json({ error: 'Utilisateur déjà existant', message: conflictBefore.message, code: 'ALREADY_EXISTS' });
         }
 
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = dataStore.getAllUsers().find(user => 
-            user.email === email || user.username === username
-        );
-        
-        if (existingUser) {
-            return res.status(409).json({
-                error: 'Utilisateur déjà existant',
-                message: 'Un utilisateur avec cet email ou nom d\'utilisateur existe déjà'
-            });
+        const hashedPassword = await bcrypt.hash(password.value, BCRYPT_ROUNDS);
+
+        // Nouvelle vérification après l'attente du hash (deux inscriptions simultanées).
+        const conflictAfter = findConflict(email.value, username.value);
+        if (conflictAfter) {
+            return res.status(409).json({ error: 'Utilisateur déjà existant', message: conflictAfter.message, code: 'ALREADY_EXISTS' });
         }
 
-        // Hacher le mot de passe
-        const hashedPassword = await bcrypt.hash(password, 12);
-        
-        // Créer l'utilisateur
         const userId = uuidv4();
         const user = {
             id: userId,
-            username: username.trim(),
-            email: email.toLowerCase().trim(),
+            username: username.value,
+            email: email.value,
             password: hashedPassword,
-            teamName: teamName?.trim() || null,
+            teamName: teamName.value,
             createdAt: new Date(),
-            lastLogin: null,
+            lastLogin: new Date(),
             isActive: true,
+            tokenVersion: 0,
             gamesPlayed: 0,
             bestScore: 0,
-            totalScore: 0
+            totalScore: 0,
         };
 
         dataStore.setUser(userId, user);
 
-        // Générer le token JWT
-        const token = jwt.sign(
-            { userId, username: user.username, email: user.email },
-            JWT_SECRET,
-            { expiresIn: JWT_EXPIRES_IN }
-        );
-
         res.status(201).json({
             success: true,
             message: 'Utilisateur créé avec succès',
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                teamName: user.teamName,
-                createdAt: user.createdAt
-            },
-            token
+            user: toPublicUser(user),
+            token: signToken(user),
         });
     } catch (error) {
-        console.error('Erreur inscription:', error);
+        console.error('Erreur inscription:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
@@ -84,185 +106,115 @@ router.post('/register', async (req, res) => {
 // Connexion d'un utilisateur
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        
-        if (!email || !password) {
-            return res.status(400).json({
-                error: 'Email et mot de passe requis'
-            });
+        const body = req.body || {};
+        const email = normalizeEmail(body.email);
+        const password = validatePasswordInput(body.password);
+        if (typeof body.email !== 'string' || !body.email.trim() || password.error) {
+            return badRequest(res, 'Email et mot de passe requis.');
         }
 
-        // Trouver l'utilisateur
-        const user = dataStore.getAllUsers().find(u => 
-            u.email === email.toLowerCase().trim() && u.isActive
-        );
-        
-        if (!user) {
-            return res.status(401).json({
-                error: 'Identifiants invalides'
-            });
+        const user = email.value
+            ? dataStore.getAllUsers().find((u) => u.isActive !== false && sameText(u.email, email.value))
+            : null;
+
+        const hasHash = Boolean(user) && typeof user.password === 'string' && user.password.length > 0;
+        const isValidPassword = await bcrypt.compare(password.value, hasHash ? user.password : DUMMY_HASH);
+        if (!hasHash || !isValidPassword) {
+            return invalidCredentials(res, 'Email ou mot de passe incorrect.');
         }
 
-        // Vérifier le mot de passe
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        
-        if (!isValidPassword) {
-            return res.status(401).json({
-                error: 'Identifiants invalides'
-            });
-        }
-
-        // Mettre à jour la dernière connexion
-        user.lastLogin = new Date();
-        dataStore.setUser(user.id, user);
-
-        // Générer le token JWT
-        const token = jwt.sign(
-            { userId: user.id, username: user.username, email: user.email },
-            JWT_SECRET,
-            { expiresIn: JWT_EXPIRES_IN }
-        );
-
-        // Créer une session
-        const sessionId = uuidv4();
-        dataStore.setSession(sessionId, {
-            id: sessionId,
-            userId: user.id,
-            createdAt: new Date(),
-            isActive: true
-        });
+        const updated = { ...user, lastLogin: new Date() };
+        dataStore.setUser(user.id, updated);
 
         res.json({
             success: true,
             message: 'Connexion réussie',
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                teamName: user.teamName,
-                lastLogin: user.lastLogin,
-                gamesPlayed: user.gamesPlayed,
-                bestScore: user.bestScore,
-                totalScore: user.totalScore
-            },
-            token,
-            sessionId
+            user: toPublicUser(updated),
+            token: signToken(updated),
         });
     } catch (error) {
-        console.error('Erreur connexion:', error);
+        console.error('Erreur connexion:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
 
-// Déconnexion
-router.post('/logout', authenticateToken, (req, res) => {
-    try {
-        // En production, ajouter le token à une blacklist
-        res.json({
-            success: true,
-            message: 'Déconnexion réussie'
-        });
-    } catch (error) {
-        console.error('Erreur déconnexion:', error);
-        res.status(500).json({ error: 'Erreur interne du serveur' });
-    }
+// Déconnexion : les JWT sont sans état, le client supprime simplement son jeton.
+router.post('/logout', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Déconnexion réussie'
+    });
 });
 
-// Vérifier le token
+// Vérifier le token (le middleware vérifie aussi que le compte existe toujours)
 router.get('/verify', authenticateToken, (req, res) => {
-    try {
-        const user = dataStore.getUser(req.user.userId);
-        
-        if (!user || !user.isActive) {
-            return res.status(401).json({ error: 'Utilisateur non trouvé ou inactif' });
-        }
-
-        res.json({
-            success: true,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                teamName: user.teamName,
-                lastLogin: user.lastLogin,
-                gamesPlayed: user.gamesPlayed,
-                bestScore: user.bestScore,
-                totalScore: user.totalScore
-            }
-        });
-    } catch (error) {
-        console.error('Erreur vérification token:', error);
-        res.status(500).json({ error: 'Erreur interne du serveur' });
-    }
+    res.json({
+        success: true,
+        user: toPublicUser(req.currentUser)
+    });
 });
 
-// Changer le mot de passe
+// Changer le mot de passe : les autres sessions sont invalidées, un nouveau jeton est renvoyé.
 router.put('/change-password', authenticateToken, async (req, res) => {
     try {
-        const { currentPassword, newPassword } = req.body;
-        
-        if (!currentPassword || !newPassword) {
-            return res.status(400).json({
-                error: 'Mot de passe actuel et nouveau mot de passe requis'
-            });
-        }
+        const body = req.body || {};
+        const currentPassword = validatePasswordInput(body.currentPassword, 'Le mot de passe actuel est requis.');
+        if (currentPassword.error) return badRequest(res, currentPassword.error);
+        const newPassword = validateNewPassword(body.newPassword);
+        if (newPassword.error) return badRequest(res, newPassword.error);
 
-        const user = dataStore.getUser(req.user.userId);
-        if (!user) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-
-        // Vérifier le mot de passe actuel
-        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        const user = req.currentUser;
+        const isValidPassword = await bcrypt.compare(currentPassword.value, user.password);
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Mot de passe actuel incorrect' });
+            return invalidCredentials(res, 'Mot de passe actuel incorrect.');
         }
 
-        // Hacher le nouveau mot de passe
-        const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-        user.password = hashedNewPassword;
-        dataStore.setUser(user.id, user);
+        const hashedNewPassword = await bcrypt.hash(newPassword.value, BCRYPT_ROUNDS);
+        const fresh = dataStore.getUser(user.id);
+        if (!fresh) {
+            return res.status(401).json({ error: 'Utilisateur non trouvé ou supprimé', code: 'USER_NOT_FOUND' });
+        }
+        const updated = {
+            ...fresh,
+            password: hashedNewPassword,
+            tokenVersion: (fresh.tokenVersion || 0) + 1,
+            updatedAt: new Date(),
+        };
+        dataStore.setUser(user.id, updated);
 
         res.json({
             success: true,
-            message: 'Mot de passe modifié avec succès'
+            message: 'Mot de passe modifié avec succès',
+            token: signToken(updated),
+            user: toPublicUser(updated),
         });
     } catch (error) {
-        console.error('Erreur changement mot de passe:', error);
+        console.error('Erreur changement mot de passe:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
 
-// Supprimer le compte
+// Supprimer le compte : suppression DÉFINITIVE du compte et de tous ses scores.
 router.delete('/account', authenticateToken, async (req, res) => {
     try {
-        const { password } = req.body;
-        
-        if (!password) {
-            return res.status(400).json({ error: 'Mot de passe requis pour supprimer le compte' });
-        }
+        const password = validatePasswordInput((req.body || {}).password, 'Mot de passe requis pour supprimer le compte.');
+        if (password.error) return badRequest(res, password.error);
 
-        const user = dataStore.getUser(req.user.userId);
-        if (!user) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-
-        // Vérifier le mot de passe
-        const isValidPassword = await bcrypt.compare(password, user.password);
+        const user = req.currentUser;
+        const isValidPassword = await bcrypt.compare(password.value, user.password);
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Mot de passe incorrect' });
+            return invalidCredentials(res, 'Mot de passe incorrect.');
         }
 
-        // Désactiver l'utilisateur au lieu de le supprimer
-        user.isActive = false;
-        dataStore.setUser(user.id, user);
+        const deletedScores = dataStore.deleteUserAndScores(user.id);
 
         res.json({
             success: true,
-            message: 'Compte supprimé avec succès'
+            message: 'Compte et scores supprimés définitivement',
+            deletedScores
         });
     } catch (error) {
-        console.error('Erreur suppression compte:', error);
+        console.error('Erreur suppression compte:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
