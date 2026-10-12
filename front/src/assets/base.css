@@ -50,21 +50,19 @@
   }
 }
 
+/* Pas de font-weight sur * : appliqué à chaque élément, il cassait l'héritage
+   (un <span> dans un titre font-bold/font-black redevenait en graisse normale). */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
-  font-weight: normal;
 }
 
 body {
   min-height: 100vh;
   color: var(--color-text);
   background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
   line-height: 1.6;
   font-family:
     Inter,

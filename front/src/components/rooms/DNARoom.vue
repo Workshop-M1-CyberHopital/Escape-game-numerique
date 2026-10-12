@@ -4,34 +4,33 @@
         <div v-if="!step1Solved" class="space-y-8">
             <!-- Explication rapide -->
             <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-6 scanline"
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-4 sm:p-6 scanline"
             >
                 <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="info" class="w-5 h-5 text-cyber-purple"></i>
+                    <Info class="w-5 h-5 shrink-0 text-cyber-purple" />
                     <h3 class="font-cyber font-bold text-cyber-purple">
                         RÈGLES D'APPARIEMENT ADN
                     </h3>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
                     <div
-                        class="bg-black/50 border border-red-500/50 rounded p-4 text-center"
+                        v-for="pair in BASE_PAIRS"
+                        :key="pair.label"
+                        class="bg-black/50 border rounded p-3 sm:p-4 text-center"
+                        :class="pair.border"
                     >
-                        <div class="text-3xl font-bold text-red-500 mb-2">
-                            A ↔ T
+                        <div class="text-2xl sm:text-3xl font-bold mb-2">
+                            <span :class="getBaseTextColor(pair.left)">{{
+                                pair.left
+                            }}</span>
+                            <span class="text-gray-400"> ↔ </span>
+                            <span :class="getBaseTextColor(pair.right)">{{
+                                pair.right
+                            }}</span>
                         </div>
                         <div class="text-xs text-gray-400">
-                            Adénine avec Thymine
-                        </div>
-                    </div>
-                    <div
-                        class="bg-black/50 border border-green-500/50 rounded p-4 text-center"
-                    >
-                        <div class="text-3xl font-bold text-green-500 mb-2">
-                            C ↔ G
-                        </div>
-                        <div class="text-xs text-gray-400">
-                            Cytosine avec Guanine
+                            {{ pair.label }}
                         </div>
                     </div>
                 </div>
@@ -39,12 +38,12 @@
 
             <!-- Puzzle simplifié -->
             <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-6 scanline"
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-4 sm:p-6 scanline"
             >
                 <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="dna" class="w-5 h-5 text-cyber-blue"></i>
+                    <Dna class="w-5 h-5 shrink-0 text-cyber-blue" />
                     <h3 class="font-cyber font-bold text-cyber-blue">
-                        ÉTAPE 1: RECONSTITUER LE BRIN COMPLÉMENTAIRE
+                        ÉTAPE 1&nbsp;: RECONSTITUER LE BRIN COMPLÉMENTAIRE
                     </h3>
                 </div>
 
@@ -54,12 +53,11 @@
                         <div class="text-sm font-tech text-gray-400 mb-2">
                             BRIN ORIGINAL
                         </div>
-                        <div class="flex justify-center gap-3">
+                        <div class="flex justify-center gap-2 sm:gap-3">
                             <div
                                 v-for="(base, index) in originalStrand"
                                 :key="index"
-                                class="w-16 h-16 rounded-lg flex items-center justify-center font-bold text-2xl"
-                                :class="getBaseColor(base)"
+                                :class="[STRAND_TILE, getBaseColor(base)]"
                             >
                                 {{ base }}
                             </div>
@@ -71,30 +69,31 @@
                         <div class="text-sm font-tech text-gray-400 mb-2">
                             BRIN COMPLÉMENTAIRE (complétez)
                         </div>
-                        <div class="flex justify-center gap-3 mb-4">
-                            <div
+                        <div class="flex justify-center gap-2 sm:gap-3 mb-4">
+                            <button
                                 v-for="(base, index) in userStrand"
                                 :key="index"
-                                class="w-16 h-16 rounded-lg flex items-center justify-center font-bold text-2xl cursor-pointer transition-all hover:scale-105"
-                                :class="
-                                    base
-                                        ? getBaseColor(base)
-                                        : 'bg-gray-700/50 border-2 border-dashed border-gray-500'
-                                "
+                                type="button"
+                                :class="getSlotClass(base, index)"
+                                :aria-pressed="selectedPosition === index"
+                                :aria-label="getSlotLabel(base, index)"
                                 @click="selectPosition(index)"
                             >
                                 {{ base || "?" }}
-                            </div>
+                            </button>
                         </div>
 
                         <!-- Sélecteur de bases -->
                         <div
                             v-if="selectedPosition !== null"
-                            class="flex justify-center gap-3"
+                            class="flex justify-center gap-2 sm:gap-3"
                         >
                             <button
                                 v-for="base in availableBases"
                                 :key="base"
+                                type="button"
+                                :title="BASE_NAMES[base]"
+                                :aria-label="`Placer ${BASE_NAMES[base]} (${base}) en position ${selectedPosition + 1}`"
                                 @click="placeBase(base)"
                                 class="w-14 h-14 rounded-lg flex items-center justify-center font-bold text-xl transition-all hover:scale-110"
                                 :class="getBaseColor(base)"
@@ -102,26 +101,28 @@
                                 {{ base }}
                             </button>
                         </div>
-                        <div
-                            v-else
+                        <p
                             class="text-center text-sm text-gray-400 font-tech"
+                            :class="selectedPosition !== null ? 'mt-3' : ''"
                         >
-                            Cliquez sur un "?" pour placer une base
-                        </div>
+                            {{ selectorHelp }}
+                        </p>
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex gap-4">
+                    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <button
+                            type="button"
                             @click="resetStrand"
-                            class="flex-1 px-6 py-3 border border-cyber-red text-cyber-red hover:bg-cyber-red/10 font-cyber font-bold rounded-lg transition-all"
+                            class="w-full sm:flex-1 px-3 sm:px-6 py-3 border border-cyber-red text-cyber-red hover:bg-cyber-red/10 font-cyber font-bold text-sm sm:text-base rounded-lg transition-all"
                         >
                             RÉINITIALISER
                         </button>
                         <button
+                            type="button"
                             @click="checkSequence"
-                            :disabled="userStrand.includes(null)"
-                            class="flex-1 px-6 py-3 bg-cyber-green hover:bg-cyber-green/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-cyber font-bold rounded-lg transition-all"
+                            :disabled="!canCheckSequence"
+                            class="w-full sm:flex-1 px-3 sm:px-6 py-3 bg-cyber-green hover:bg-cyber-green/80 disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed text-black font-cyber font-bold text-sm sm:text-base rounded-lg transition-all"
                         >
                             VÉRIFIER
                         </button>
@@ -134,51 +135,64 @@
         <div v-if="step1Solved && !step2Solved" class="space-y-8">
             <!-- Explication du code génétique -->
             <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-6 scanline"
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-purple rounded-lg p-4 sm:p-6 scanline"
             >
                 <div class="flex items-center gap-2 mb-4">
-                    <i
-                        data-lucide="microscope"
-                        class="w-5 h-5 text-cyber-purple"
-                    ></i>
+                    <Microscope class="w-5 h-5 shrink-0 text-cyber-purple" />
                     <h3 class="font-cyber font-bold text-cyber-purple">
                         CODE GÉNÉTIQUE
                     </h3>
                 </div>
 
-                <div class="text-sm text-gray-300 mb-4">
-                    Chaque groupe de 3 bases (codon) code pour un acide aminé.
-                    Voici quelques exemples :
+                <div class="text-sm text-gray-300 mb-4 space-y-2">
+                    <p>
+                        Chaque groupe de 3 bases (codon) code pour un acide
+                        aminé, ou pour un signal «&nbsp;stop&nbsp;». Voici
+                        quelques exemples&nbsp;:
+                    </p>
+                    <p class="text-xs text-gray-400">
+                        Le brin que vous avez reconstitué joue le rôle de brin
+                        codant&nbsp;: sa séquence est celle de l'ARN messager,
+                        avec T à la place de U.
+                    </p>
                 </div>
 
-                <div class="grid grid-cols-3 gap-2 max-w-lg mx-auto text-xs">
+                <div
+                    class="grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-lg mx-auto text-xs"
+                >
                     <div
-                        class="bg-black/50 border border-blue-500/50 rounded p-2 text-center"
+                        v-for="example in CODON_EXAMPLES"
+                        :key="example.label"
+                        class="bg-black/50 border border-gray-600 rounded p-2 text-center"
                     >
-                        <div class="text-blue-400 font-bold">ATG</div>
-                        <div class="text-gray-400">Méthionine</div>
-                    </div>
-                    <div
-                        class="bg-black/50 border border-green-500/50 rounded p-2 text-center"
-                    >
-                        <div class="text-green-400 font-bold">TAA/TAG/TGA</div>
-                        <div class="text-gray-400">Stop</div>
-                    </div>
-                    <div
-                        class="bg-black/50 border border-yellow-500/50 rounded p-2 text-center"
-                    >
-                        <div class="text-yellow-400 font-bold">GCT</div>
-                        <div class="text-gray-400">Alanine</div>
+                        <div class="font-bold break-words">
+                            <template
+                                v-for="(codon, cIndex) in example.codons"
+                                :key="codon"
+                            >
+                                <span v-if="cIndex" class="text-gray-500">
+                                    /
+                                </span>
+                                <span class="whitespace-nowrap"
+                                    ><span
+                                        v-for="(base, bIndex) in codon"
+                                        :key="bIndex"
+                                        :class="getBaseTextColor(base)"
+                                        >{{ base }}</span
+                                    ></span
+                                >
+                            </template>
+                        </div>
+                        <div class="text-gray-400 font-tech">
+                            {{ example.label }}
+                        </div>
                     </div>
                 </div>
 
                 <!-- Table de correspondance simplifiée -->
                 <div class="mt-6">
                     <div class="flex items-center gap-2 mb-3">
-                        <i
-                            data-lucide="book-open"
-                            class="w-5 h-5 text-cyber-purple"
-                        ></i>
+                        <BookOpen class="w-5 h-5 shrink-0 text-cyber-purple" />
                         <h4
                             class="font-cyber font-bold text-cyber-purple text-sm"
                         >
@@ -187,94 +201,27 @@
                     </div>
 
                     <div
-                        class="bg-black/30 border border-cyber-purple/30 rounded p-4"
+                        class="bg-black/30 border border-cyber-purple/30 rounded p-3 sm:p-4"
                     >
                         <div
-                            class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"
+                            class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 text-xs"
                         >
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">GCT</div>
-                                <div class="text-gray-300">Alanine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">CTA</div>
-                                <div class="text-gray-300">Leucine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">ATT</div>
-                                <div class="text-gray-300">Isoleucine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">ATG</div>
-                                <div class="text-gray-300">Méthionine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">TTT</div>
-                                <div class="text-gray-300">Phénylalanine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">TGG</div>
-                                <div class="text-gray-300">Tryptophane</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">CCT</div>
-                                <div class="text-gray-300">Proline</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">GGT</div>
-                                <div class="text-gray-300">Glycine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">TCT</div>
-                                <div class="text-gray-300">Sérine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">GTA</div>
-                                <div class="text-gray-300">Valine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">ACT</div>
-                                <div class="text-gray-300">Thréonine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">TGT</div>
-                                <div class="text-gray-300">Cystéine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">CAT</div>
-                                <div class="text-gray-300">Histidine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">CAA</div>
-                                <div class="text-gray-300">Glutamine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">AAT</div>
-                                <div class="text-gray-300">Asparagine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">AAA</div>
-                                <div class="text-gray-300">Lysine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">GAT</div>
-                                <div class="text-gray-300">
-                                    Acide aspartique
+                            <div
+                                v-for="entry in CODON_TABLE"
+                                :key="entry.codon"
+                                class="bg-gray-800/40 rounded p-2"
+                            >
+                                <div class="font-bold">
+                                    <span
+                                        v-for="(base, bIndex) in entry.codon"
+                                        :key="bIndex"
+                                        :class="getBaseTextColor(base)"
+                                        >{{ base }}</span
+                                    >
                                 </div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">GAA</div>
-                                <div class="text-gray-300">
-                                    Acide glutamique
+                                <div class="text-gray-300 font-tech break-words">
+                                    {{ AMINO_ACID_LABELS[entry.value] }}
                                 </div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">TAC</div>
-                                <div class="text-gray-300">Tyrosine</div>
-                            </div>
-                            <div class="bg-gray-800/40 rounded p-2">
-                                <div class="text-blue-400 font-bold">CGT</div>
-                                <div class="text-gray-300">Arginine</div>
                             </div>
                         </div>
                         <div class="text-xs text-gray-400 mt-3 text-center">
@@ -287,12 +234,12 @@
 
             <!-- Traduction de la séquence -->
             <div
-                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-6 scanline"
+                class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-4 sm:p-6 scanline"
             >
                 <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="zap" class="w-5 h-5 text-cyber-blue"></i>
+                    <Zap class="w-5 h-5 shrink-0 text-cyber-blue" />
                     <h3 class="font-cyber font-bold text-cyber-blue">
-                        ÉTAPE 2: TRADUIRE EN ACIDES AMINÉS
+                        ÉTAPE 2&nbsp;: TRADUIRE EN ACIDES AMINÉS
                     </h3>
                 </div>
 
@@ -302,12 +249,11 @@
                         <div class="text-sm font-tech text-gray-400 mb-2">
                             SÉQUENCE ADN RECONSTITUÉE
                         </div>
-                        <div class="flex justify-center gap-3">
+                        <div class="flex justify-center gap-2 sm:gap-3">
                             <div
                                 v-for="(base, index) in correctStrand"
                                 :key="index"
-                                class="w-16 h-16 rounded-lg flex items-center justify-center font-bold text-2xl"
-                                :class="getBaseColor(base)"
+                                :class="[STRAND_TILE, getBaseColor(base)]"
                             >
                                 {{ base }}
                             </div>
@@ -319,40 +265,26 @@
                         <div class="text-sm font-tech text-gray-400 mb-2">
                             CODONS (GROUPES DE 3 BASES)
                         </div>
-                        <div class="flex justify-center gap-6">
-                            <div class="text-center">
+                        <div
+                            class="flex flex-wrap justify-center gap-4 sm:gap-6"
+                        >
+                            <div
+                                v-for="(codon, cIndex) in codons"
+                                :key="cIndex"
+                                class="text-center"
+                            >
                                 <div class="flex gap-1 mb-2">
                                     <span
-                                        class="w-12 h-12 rounded flex items-center justify-center font-bold text-lg bg-red-500/20 border border-red-500 text-red-500"
-                                        >T</span
-                                    >
-                                    <span
-                                        class="w-12 h-12 rounded flex items-center justify-center font-bold text-lg bg-blue-500/20 border border-blue-500 text-blue-500"
-                                        >A</span
-                                    >
-                                    <span
-                                        class="w-12 h-12 rounded flex items-center justify-center font-bold text-lg bg-green-500/20 border border-green-500 text-green-500"
-                                        >C</span
+                                        v-for="(base, bIndex) in codon"
+                                        :key="bIndex"
+                                        class="w-9 h-9 sm:w-12 sm:h-12 rounded flex items-center justify-center font-bold text-base sm:text-lg"
+                                        :class="getBaseColor(base)"
+                                        >{{ base }}</span
                                     >
                                 </div>
-                                <div class="text-xs text-gray-400">TAC</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="flex gap-1 mb-2">
-                                    <span
-                                        class="w-12 h-12 rounded flex items-center justify-center font-bold text-lg bg-yellow-500/20 border border-yellow-500 text-yellow-500"
-                                        >G</span
-                                    >
-                                    <span
-                                        class="w-12 h-12 rounded flex items-center justify-center font-bold text-lg bg-red-500/20 border border-red-500 text-red-500"
-                                        >T</span
-                                    >
-                                    <span
-                                        class="w-12 h-12 rounded flex items-center justify-center font-bold text-lg bg-blue-500/20 border border-blue-500 text-blue-500"
-                                        >A</span
-                                    >
+                                <div class="text-xs text-gray-400">
+                                    {{ codon }}
                                 </div>
-                                <div class="text-xs text-gray-400">GTA</div>
                             </div>
                         </div>
                     </div>
@@ -362,95 +294,33 @@
                         <div class="text-sm font-tech text-gray-400 mb-2">
                             ACIDES AMINÉS CORRESPONDANTS
                         </div>
-                        <div class="flex justify-center gap-6 mb-4">
-                            <div class="text-center">
-                                <div class="text-xs text-gray-400 mb-2">
-                                    TAC →
-                                </div>
+                        <div
+                            class="flex flex-col sm:flex-row items-stretch sm:items-start justify-center gap-4 sm:gap-6 mb-4"
+                        >
+                            <div
+                                v-for="(codon, cIndex) in codons"
+                                :key="cIndex"
+                                class="text-center w-full sm:w-auto"
+                            >
+                                <label
+                                    :for="`dna-amino-acid-${cIndex}`"
+                                    class="block text-xs text-gray-400 mb-2"
+                                >
+                                    {{ codon }} →
+                                </label>
                                 <select
-                                    v-model="aminoAcid1"
-                                    class="w-40 px-3 py-2 bg-black/50 border border-cyber-blue/30 rounded text-white font-tech text-center focus:outline-none focus:border-cyber-blue transition-all"
+                                    :id="`dna-amino-acid-${cIndex}`"
+                                    v-model="aminoAnswers[cIndex]"
+                                    class="w-full sm:w-48 px-3 py-2 bg-black/50 border border-cyber-blue/30 rounded text-white font-tech text-center focus:outline-none focus:border-cyber-blue transition-all"
                                 >
                                     <option value="">Sélectionnez</option>
-                                    <option value="alanine">Alanine</option>
-                                    <option value="valine">Valine</option>
-                                    <option value="leucine">Leucine</option>
-                                    <option value="isoleucine">
-                                        Isoleucine
+                                    <option
+                                        v-for="amino in AMINO_ACIDS"
+                                        :key="amino.value"
+                                        :value="amino.value"
+                                    >
+                                        {{ amino.label }}
                                     </option>
-                                    <option value="methionine">
-                                        Méthionine
-                                    </option>
-                                    <option value="phenylalanine">
-                                        Phénylalanine
-                                    </option>
-                                    <option value="tryptophan">
-                                        Tryptophane
-                                    </option>
-                                    <option value="proline">Proline</option>
-                                    <option value="glycine">Glycine</option>
-                                    <option value="serine">Sérine</option>
-                                    <option value="threonine">Thrénine</option>
-                                    <option value="cysteine">Cystéine</option>
-                                    <option value="tyrosine">Tyrosine</option>
-                                    <option value="asparagine">
-                                        Asparagine
-                                    </option>
-                                    <option value="glutamine">Glutamine</option>
-                                    <option value="aspartic_acid">
-                                        Acide aspartique
-                                    </option>
-                                    <option value="glutamic_acid">
-                                        Acide glutamique
-                                    </option>
-                                    <option value="lysine">Lysine</option>
-                                    <option value="arginine">Arginine</option>
-                                    <option value="histidine">Histidine</option>
-                                </select>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-xs text-gray-400 mb-2">
-                                    GTA →
-                                </div>
-                                <select
-                                    v-model="aminoAcid2"
-                                    class="w-40 px-3 py-2 bg-black/50 border border-cyber-blue/30 rounded text-white font-tech text-center focus:outline-none focus:border-cyber-blue transition-all"
-                                >
-                                    <option value="">Sélectionnez</option>
-                                    <option value="alanine">Alanine</option>
-                                    <option value="valine">Valine</option>
-                                    <option value="leucine">Leucine</option>
-                                    <option value="isoleucine">
-                                        Isoleucine
-                                    </option>
-                                    <option value="methionine">
-                                        Méthionine
-                                    </option>
-                                    <option value="phenylalanine">
-                                        Phénylalanine
-                                    </option>
-                                    <option value="tryptophan">
-                                        Tryptophane
-                                    </option>
-                                    <option value="proline">Proline</option>
-                                    <option value="glycine">Glycine</option>
-                                    <option value="serine">Sérine</option>
-                                    <option value="threonine">Thrénine</option>
-                                    <option value="cysteine">Cystéine</option>
-                                    <option value="tyrosine">Tyrosine</option>
-                                    <option value="asparagine">
-                                        Asparagine
-                                    </option>
-                                    <option value="glutamine">Glutamine</option>
-                                    <option value="aspartic_acid">
-                                        Acide aspartique
-                                    </option>
-                                    <option value="glutamic_acid">
-                                        Acide glutamique
-                                    </option>
-                                    <option value="lysine">Lysine</option>
-                                    <option value="arginine">Arginine</option>
-                                    <option value="histidine">Histidine</option>
                                 </select>
                             </div>
                         </div>
@@ -459,9 +329,10 @@
                     <!-- Bouton de vérification -->
                     <div class="flex justify-center">
                         <button
+                            type="button"
                             @click="checkAminoAcids"
-                            :disabled="!aminoAcid1 || !aminoAcid2"
-                            class="px-6 py-3 bg-cyber-green hover:bg-cyber-green/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-cyber font-bold rounded-lg transition-all"
+                            :disabled="!canCheckAminoAcids"
+                            class="w-full sm:w-auto px-3 sm:px-6 py-3 bg-cyber-green hover:bg-cyber-green/80 disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed text-black font-cyber font-bold text-sm sm:text-base rounded-lg transition-all"
                         >
                             VÉRIFIER LES ACIDES AMINÉS
                         </button>
@@ -470,55 +341,84 @@
             </div>
         </div>
 
+        <!-- Salle terminée : à retenir -->
+        <div
+            v-if="step2Solved"
+            class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-green rounded-lg p-4 sm:p-6 scanline space-y-4"
+        >
+            <div class="flex items-center gap-2">
+                <CheckCircle2 class="w-6 h-6 shrink-0 text-cyber-green" />
+                <h3 class="font-cyber font-bold text-cyber-green">
+                    SÉQUENCE DÉCODÉE
+                </h3>
+            </div>
+            <p class="text-sm text-gray-300">
+                {{ translationSummary }}&nbsp;: la sécurité biométrique est
+                rétablie.
+            </p>
+            <div class="bg-black/40 border border-cyber-purple/40 rounded p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <GraduationCap class="w-5 h-5 shrink-0 text-cyber-purple" />
+                    <h4 class="font-cyber font-bold text-cyber-purple text-sm">
+                        À RETENIR
+                    </h4>
+                </div>
+                <ul class="list-disc pl-5 space-y-1 text-sm text-gray-300">
+                    <li>
+                        Les deux brins de l'ADN sont complémentaires&nbsp;: A
+                        s'apparie toujours avec T, et C avec G. Chaque brin sert
+                        donc de modèle pour reconstruire l'autre.
+                    </li>
+                    <li>
+                        Dans la cellule, l'ADN est d'abord transcrit en ARN
+                        messager (où U remplace T), puis cet ARN est lu par
+                        codons de 3 bases lors de la traduction&nbsp;: 64 codons
+                        pour 20 acides aminés et 3 signaux «&nbsp;stop&nbsp;».
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Indices -->
-        <div class="mt-8">
+        <div v-if="!isCompleted" class="mt-8">
             <div
-                class="bg-gray-800/40 backdrop-blur-md border border-gray-600 rounded-lg p-6"
+                class="bg-gray-800/40 backdrop-blur-md border border-gray-600 rounded-lg p-4 sm:p-6"
             >
-                <div class="flex items-center gap-2 mb-4">
-                    <i
-                        data-lucide="lightbulb"
-                        class="w-5 h-5 text-yellow-500"
-                    ></i>
+                <div class="flex items-center gap-2 mb-2">
+                    <Lightbulb class="w-5 h-5 shrink-0 text-yellow-500" />
                     <h4 class="font-cyber font-bold text-yellow-500">
                         INDICES
                     </h4>
+                    <span class="ml-auto text-xs font-tech text-gray-400">
+                        {{ visibleHints.length }}/{{ MAX_HINTS_PER_STEP }}
+                    </span>
                 </div>
+                <p class="text-xs font-tech text-gray-500 mb-4">
+                    Un indice débloqué reste acquis et vaut pour les deux étapes
+                    de la salle.
+                </p>
 
                 <div class="space-y-2 text-sm text-gray-300">
-                    <!-- Indices pour l'étape 1 -->
-                    <div v-if="!step1Solved">
-                        <div v-if="hintsShown >= 1" class="fade-in">
-                            💡 Utilisez les règles : A avec T, C avec G
-                        </div>
-                        <div v-if="hintsShown >= 2" class="fade-in">
-                            💡 Le premier base "A" doit s'apparier avec "T"
-                        </div>
-                        <div v-if="hintsShown >= 3" class="fade-in">
-                            💡 Réponse complète : T - A - C - G - T - A
-                        </div>
-                    </div>
-
-                    <!-- Indices pour l'étape 2 -->
-                    <div v-if="step1Solved && !step2Solved">
-                        <div v-if="hintsShown >= 1" class="fade-in">
-                            💡 Chaque codon (3 bases) code pour un acide aminé
-                        </div>
-                        <div v-if="hintsShown >= 2" class="fade-in">
-                            💡 TAC = Tyrosine, GTA = Valine
-                        </div>
-                        <div v-if="hintsShown >= 3" class="fade-in">
-                            💡 Réponses : Tyrosine et Valine
-                        </div>
+                    <div
+                        v-for="(hint, index) in visibleHints"
+                        :key="`${currentStep}-${index}`"
+                        class="fade-in"
+                    >
+                        💡 {{ hint }}
                     </div>
                 </div>
 
                 <button
+                    type="button"
                     @click="showHint"
-                    v-if="hintsShown < 3"
-                    class="mt-4 px-4 py-2 border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 font-tech text-sm rounded transition-all"
+                    :disabled="!canShowHint"
+                    class="mt-4 px-4 py-2 border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 disabled:border-gray-600 disabled:text-gray-500 disabled:hover:bg-transparent disabled:cursor-not-allowed font-tech text-sm rounded transition-all"
                 >
-                    AFFICHER UN INDICE
+                    {{
+                        canShowHint
+                            ? "AFFICHER UN INDICE"
+                            : "PLUS D'INDICE DISPONIBLE"
+                    }}
                 </button>
             </div>
         </div>
@@ -526,79 +426,315 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import {
+    Info,
+    Dna,
+    Microscope,
+    BookOpen,
+    Zap,
+    Lightbulb,
+    CheckCircle2,
+    GraduationCap,
+} from "lucide-vue-next";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
 import { useGameState } from "../../composables/useGameState";
 
+const ROOM_ID = "dna-lab";
+const MAX_HINTS_PER_STEP = 3;
+// Délai pendant lequel le bouton de vérification reste bloqué après une erreur
+const ERROR_COOLDOWN_MS = 1500;
+
 const emit = defineEmits(["exit-room", "room-completed"]);
 const { showSuccess, showError } = useToast();
-const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
+const { gameState, addError, addHint, completeRoom, PENALTY_PER_ERROR } =
+    useGameState();
 
 const roomData = {
     title: "LABORATOIRE ADN",
     subtitle: "Les gènes brouillés",
     description:
-        "Le virus a corrompu une séquence ADN. Utilisez les règles d'appariement (A↔T, C↔G) pour reconstituer le brin complémentaire.",
+        "Le virus a corrompu une séquence ADN. Utilisez les règles d'appariement (A↔T, C↔G) pour reconstituer le brin complémentaire, puis traduisez-le en acides aminés.",
     objective: "Comprendre la logique de l'ADN et des données biomédicales",
     icon: "dna",
     color: "#00ffff",
 };
 
+// --- Données du puzzle -------------------------------------------------------
+
+const BASE_NAMES = {
+    A: "Adénine",
+    T: "Thymine",
+    C: "Cytosine",
+    G: "Guanine",
+};
+
+// Code couleur unique des bases, utilisé partout dans la salle
+const BASE_TILE_COLORS = {
+    A: "bg-red-500/20 border-2 border-red-500 text-red-500",
+    T: "bg-blue-500/20 border-2 border-blue-500 text-blue-500",
+    C: "bg-green-500/20 border-2 border-green-500 text-green-500",
+    G: "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-500",
+};
+const BASE_TEXT_COLORS = {
+    A: "text-red-400",
+    T: "text-blue-400",
+    C: "text-green-400",
+    G: "text-yellow-400",
+};
+
+const BASE_PAIRS = [
+    {
+        left: "A",
+        right: "T",
+        label: "Adénine avec Thymine",
+        border: "border-red-500/50",
+    },
+    {
+        left: "C",
+        right: "G",
+        label: "Cytosine avec Guanine",
+        border: "border-green-500/50",
+    },
+];
+
+const AMINO_ACIDS = [
+    { value: "alanine", label: "Alanine" },
+    { value: "valine", label: "Valine" },
+    { value: "leucine", label: "Leucine" },
+    { value: "isoleucine", label: "Isoleucine" },
+    { value: "methionine", label: "Méthionine" },
+    { value: "phenylalanine", label: "Phénylalanine" },
+    { value: "tryptophan", label: "Tryptophane" },
+    { value: "proline", label: "Proline" },
+    { value: "glycine", label: "Glycine" },
+    { value: "serine", label: "Sérine" },
+    { value: "threonine", label: "Thréonine" },
+    { value: "cysteine", label: "Cystéine" },
+    { value: "tyrosine", label: "Tyrosine" },
+    { value: "asparagine", label: "Asparagine" },
+    { value: "glutamine", label: "Glutamine" },
+    { value: "aspartic_acid", label: "Acide aspartique" },
+    { value: "glutamic_acid", label: "Acide glutamique" },
+    { value: "lysine", label: "Lysine" },
+    { value: "arginine", label: "Arginine" },
+    { value: "histidine", label: "Histidine" },
+];
+const AMINO_ACID_LABELS = Object.fromEntries(
+    AMINO_ACIDS.map((amino) => [amino.value, amino.label]),
+);
+
+// Codons du brin codant (même séquence que l'ARNm, avec T au lieu de U)
+const CODON_TABLE = [
+    { codon: "GCT", value: "alanine" },
+    { codon: "CTA", value: "leucine" },
+    { codon: "ATT", value: "isoleucine" },
+    { codon: "ATG", value: "methionine" },
+    { codon: "TTT", value: "phenylalanine" },
+    { codon: "TGG", value: "tryptophan" },
+    { codon: "CCT", value: "proline" },
+    { codon: "GGT", value: "glycine" },
+    { codon: "TCT", value: "serine" },
+    { codon: "GTA", value: "valine" },
+    { codon: "ACT", value: "threonine" },
+    { codon: "TGT", value: "cysteine" },
+    { codon: "CAT", value: "histidine" },
+    { codon: "CAA", value: "glutamine" },
+    { codon: "AAT", value: "asparagine" },
+    { codon: "AAA", value: "lysine" },
+    { codon: "GAT", value: "aspartic_acid" },
+    { codon: "GAA", value: "glutamic_acid" },
+    { codon: "TAC", value: "tyrosine" },
+    { codon: "CGT", value: "arginine" },
+];
+
+const CODON_EXAMPLES = [
+    { codons: ["ATG"], label: "Méthionine (codon d'initiation)" },
+    { codons: ["TAA", "TAG", "TGA"], label: "Stop (fin de la traduction)" },
+    { codons: ["GCT"], label: "Alanine" },
+];
+
 const originalStrand = ["A", "T", "G", "C", "A", "T"];
-const correctStrand = ["T", "A", "C", "G", "T", "A"];
+const COMPLEMENT = { A: "T", T: "A", C: "G", G: "C" };
+const correctStrand = originalStrand.map((base) => COMPLEMENT[base]);
+// Codons lus sur le brin reconstitué : ["TAC", "GTA"]
+const codons = [
+    correctStrand.slice(0, 3).join(""),
+    correctStrand.slice(3, 6).join(""),
+];
+const expectedAminoAcids = codons.map(
+    (codon) => CODON_TABLE.find((entry) => entry.codon === codon)?.value,
+);
+const translationSummary = codons
+    .map((codon, i) => `${codon} → ${AMINO_ACID_LABELS[expectedAminoAcids[i]]}`)
+    .join(", ");
+const availableBases = ["A", "T", "C", "G"];
+
+// Classe commune des cases des brins (fluide pour tenir sur un écran de 375 px)
+const STRAND_TILE =
+    "flex-1 min-w-0 max-w-[4rem] aspect-square rounded-lg flex items-center justify-center font-bold text-xl sm:text-2xl";
+const EMPTY_SLOT = "bg-gray-700/50 border-2 border-dashed border-gray-500";
+
+// Espace insécable avant les deux-points (typographie française, évite un « : » seul en début de ligne)
+const NBSP = "\u00a0";
+
+const HINTS = {
+    1: [
+        `Procédez base par base${NBSP}: sous un A placez un T, sous un T un A, sous un C un G et sous un G un C.`,
+        "Les trois premières bases du brin complémentaire sont T - A - C.",
+        `Réponse complète${NBSP}: T - A - C - G - T - A`,
+    ],
+    2: [
+        `Lisez la séquence reconstituée par groupes de 3 bases, puis cherchez chaque codon (${codons[0]}, puis ${codons[1]}) dans la table des codons ci-dessus.`,
+        `Le premier codon, ${codons[0]}, code la ${AMINO_ACID_LABELS[expectedAminoAcids[0]].toLowerCase()}.`,
+        `Réponses${NBSP}: ${translationSummary}`,
+    ],
+};
+// Délai minimal entre deux indices payants (un double clic ne doit pas coûter 2 indices)
+const HINT_CLICK_GUARD_MS = 800;
+
+// --- État ---------------------------------------------------------------------
+
 const userStrand = ref([null, null, null, null, null, null]);
 const selectedPosition = ref(null);
-const availableBases = ["A", "T", "C", "G"];
 const step1Solved = ref(false);
 const step2Solved = ref(false);
-const aminoAcid1 = ref("");
-const aminoAcid2 = ref("");
+const aminoAnswers = ref(["", ""]);
 const isCompleted = ref(false);
-const hintsShown = ref(0);
+const isOnCooldown = ref(false);
+let cooldownTimer = null;
 
-const getBaseColor = (base) => {
-    const colors = {
-        A: "bg-red-500/20 border-2 border-red-500 text-red-500",
-        T: "bg-blue-500/20 border-2 border-blue-500 text-blue-500",
-        C: "bg-green-500/20 border-2 border-green-500 text-green-500",
-        G: "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-500",
-    };
-    return colors[base] || "";
+// Niveau d'aide payé dans cette salle (conservé après une sortie / un rechargement).
+// Chaque étape affiche ses min(niveau, 3) premiers indices : un indice payé reste
+// visible gratuitement, et chaque nouveau clic payant révèle un nouveau texte.
+const hintLevel = ref(gameState.roomHints?.[ROOM_ID] || 0);
+
+const currentStep = computed(() => (step1Solved.value ? 2 : 1));
+const visibleHints = computed(() =>
+    HINTS[currentStep.value].slice(
+        0,
+        Math.min(hintLevel.value, MAX_HINTS_PER_STEP),
+    ),
+);
+const canShowHint = computed(
+    () =>
+        !isCompleted.value &&
+        Math.min(hintLevel.value, MAX_HINTS_PER_STEP) <
+            HINTS[currentStep.value].length,
+);
+
+const canCheckSequence = computed(
+    () =>
+        !step1Solved.value &&
+        !isOnCooldown.value &&
+        !userStrand.value.includes(null),
+);
+const canCheckAminoAcids = computed(
+    () =>
+        step1Solved.value &&
+        !isCompleted.value &&
+        !isOnCooldown.value &&
+        aminoAnswers.value.every(Boolean),
+);
+
+const selectorHelp = computed(() => {
+    if (selectedPosition.value !== null) {
+        return `Position ${selectedPosition.value + 1}${NBSP}: choisissez sa base complémentaire (ou tapez A, T, C ou G).`;
+    }
+    if (userStrand.value.includes(null)) {
+        return `Cliquez sur un «${NBSP}?${NBSP}» pour placer une base (ou tapez A, T, C ou G au clavier).`;
+    }
+    return `Toutes les cases sont remplies${NBSP}: cliquez sur une case pour la modifier, ou lancez la vérification.`;
+});
+
+// --- Affichage ----------------------------------------------------------------
+
+const getBaseColor = (base) => BASE_TILE_COLORS[base] || "";
+const getBaseTextColor = (base) => BASE_TEXT_COLORS[base] || "text-gray-400";
+
+const getSlotClass = (base, index) => [
+    STRAND_TILE,
+    "cursor-pointer transition-all",
+    base ? getBaseColor(base) : EMPTY_SLOT,
+    selectedPosition.value === index
+        ? "ring-4 ring-cyber-blue scale-110"
+        : "hover:scale-105",
+];
+
+const getSlotLabel = (base, index) =>
+    `Position ${index + 1} : ${base ? `${BASE_NAMES[base]} (${base})` : "vide"}${
+        selectedPosition.value === index ? ", sélectionnée" : ""
+    }`;
+
+// --- Étape 1 ------------------------------------------------------------------
+
+const findNextEmpty = (fromIndex) => {
+    const length = userStrand.value.length;
+    for (let offset = 1; offset <= length; offset++) {
+        const index = (fromIndex + offset) % length;
+        if (userStrand.value[index] === null) return index;
+    }
+    return null;
 };
 
 const selectPosition = (index) => {
-    selectedPosition.value = index;
+    if (step1Solved.value) return;
+    // Un second clic sur la case sélectionnée la désélectionne
+    selectedPosition.value = selectedPosition.value === index ? null : index;
 };
 
 const placeBase = (base) => {
-    if (selectedPosition.value !== null) {
-        userStrand.value[selectedPosition.value] = base;
-        selectedPosition.value = null;
-    }
+    const position = selectedPosition.value;
+    if (position === null || step1Solved.value) return;
+    userStrand.value[position] = base;
+    // Passer automatiquement à la prochaine case vide (mise en évidence)
+    selectedPosition.value = findNextEmpty(position);
 };
 
 const resetStrand = () => {
+    if (step1Solved.value) return;
     userStrand.value = [null, null, null, null, null, null];
     selectedPosition.value = null;
 };
 
+const clearCooldown = () => {
+    if (cooldownTimer) {
+        clearTimeout(cooldownTimer);
+        cooldownTimer = null;
+    }
+    isOnCooldown.value = false;
+};
+
+const startCooldown = () => {
+    clearCooldown();
+    isOnCooldown.value = true;
+    cooldownTimer = setTimeout(() => {
+        cooldownTimer = null;
+        isOnCooldown.value = false;
+    }, ERROR_COOLDOWN_MS);
+};
+
 const checkSequence = () => {
+    if (!canCheckSequence.value) return;
+
     const isCorrect = userStrand.value.every(
         (base, index) => base === correctStrand[index],
     );
 
     if (isCorrect) {
         step1Solved.value = true;
-        hintsShown.value = 0; // Réinitialiser les indices pour l'étape suivante
+        selectedPosition.value = null;
+        clearCooldown();
 
         showSuccess(
             "ÉTAPE 1 RÉUSSIE",
-            "La séquence est correcte. Vous avez réussi à reconstituer le brin complémentaire. Passez maintenant à l'étape 2 : la traduction en acides aminés.",
+            "La séquence est correcte : le brin complémentaire est reconstitué. Passez maintenant à l'étape 2 : la traduction en acides aminés.",
         );
     } else {
-        addError("dna-lab");
+        addError(ROOM_ID);
+        startCooldown();
         showError(
             "SÉQUENCE INCORRECTE",
             `La séquence n'est pas correcte. Vérifiez les règles d'appariement ! +${PENALTY_PER_ERROR}s de pénalité`,
@@ -606,31 +742,32 @@ const checkSequence = () => {
     }
 };
 
+// --- Étape 2 ------------------------------------------------------------------
+
 const checkAminoAcids = () => {
-    const correctAminoAcids = ["tyrosine", "valine"];
-    const userAmino1 = aminoAcid1.value;
-    const userAmino2 = aminoAcid2.value;
+    if (!canCheckAminoAcids.value) return;
 
-    const isCorrect1 = userAmino1 === correctAminoAcids[0];
-    const isCorrect2 = userAmino2 === correctAminoAcids[1];
+    const isCorrect = expectedAminoAcids.every(
+        (expected, index) => aminoAnswers.value[index] === expected,
+    );
 
-    if (isCorrect1 && isCorrect2) {
-        step2Solved.value = true;
+    if (isCorrect) {
         isCompleted.value = true;
-        createFireworks(3000);
+        step2Solved.value = true;
+        clearCooldown();
 
+        completeRoom(ROOM_ID);
+        emit("room-completed", ROOM_ID);
+
+        createFireworks(3000);
         showSuccess(
             "MISSION ACCOMPLIE",
-            "Excellent ! Vous avez traduit la séquence ADN en acides aminés. La sécurité biométrique est maintenant rétablie.",
+            `${translationSummary}. À retenir : A s'apparie avec T et C avec G, et l'information génétique se lit par codons de 3 bases.`,
+            6000,
         );
-
-        // Petit délai pour permettre au briefing de fin de s'afficher
-        setTimeout(() => {
-            completeRoom("dna-lab");
-            emit("room-completed", "dna-lab");
-        }, 300);
     } else {
-        addError("dna-lab");
+        addError(ROOM_ID);
+        startCooldown();
         showError(
             "TRADUCTION INCORRECTE",
             `Les acides aminés ne correspondent pas. Vérifiez le code génétique ! +${PENALTY_PER_ERROR}s de pénalité`,
@@ -638,8 +775,97 @@ const checkAminoAcids = () => {
     }
 };
 
+// --- Indices ------------------------------------------------------------------
+
+let lastHintAt = 0;
+
 const showHint = () => {
-    hintsShown.value++;
-    addHint("dna-lab");
+    if (!canShowHint.value) return;
+    const now = Date.now();
+    if (now - lastHintAt < HINT_CLICK_GUARD_MS) return;
+    lastHintAt = now;
+    hintLevel.value++;
+    addHint(ROOM_ID);
 };
+
+// --- Clavier (étape 1) : A/T/C/G, flèches, retour arrière, Échap -------------
+
+const isTypingTarget = (target) =>
+    !!target &&
+    (target.isContentEditable ||
+        ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+const handleKeydown = (event) => {
+    if (step1Solved.value || isCompleted.value) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (isTypingTarget(event.target)) return;
+
+    const key = typeof event.key === "string" ? event.key : "";
+    const base = key.toUpperCase();
+
+    if (key.length === 1 && availableBases.includes(base)) {
+        if (event.repeat) return;
+        if (selectedPosition.value === null) {
+            const firstEmpty = userStrand.value.indexOf(null);
+            if (firstEmpty === -1) return;
+            selectedPosition.value = firstEmpty;
+        }
+        event.preventDefault();
+        placeBase(base);
+        return;
+    }
+
+    const length = userStrand.value.length;
+
+    if (selectedPosition.value === null) {
+        if (key === "ArrowRight" || key === "ArrowLeft") {
+            // Sans sélection, les flèches sélectionnent la première case vide (ou la première case)
+            event.preventDefault();
+            const firstEmpty = userStrand.value.indexOf(null);
+            selectedPosition.value = firstEmpty === -1 ? 0 : firstEmpty;
+        } else if (key === "Backspace") {
+            // Sans sélection, retour arrière efface la dernière base placée
+            let lastFilled = length - 1;
+            while (lastFilled >= 0 && userStrand.value[lastFilled] === null) {
+                lastFilled--;
+            }
+            if (lastFilled < 0) return;
+            event.preventDefault();
+            userStrand.value[lastFilled] = null;
+            selectedPosition.value = lastFilled;
+        }
+        return;
+    }
+
+    if (key === "ArrowRight" || key === "ArrowLeft") {
+        event.preventDefault();
+        const delta = key === "ArrowRight" ? 1 : -1;
+        selectedPosition.value =
+            (selectedPosition.value + delta + length) % length;
+    } else if (key === "Delete") {
+        event.preventDefault();
+        userStrand.value[selectedPosition.value] = null;
+    } else if (key === "Backspace") {
+        event.preventDefault();
+        // Sur une case vide, retour arrière revient à la case précédente et l'efface
+        if (
+            userStrand.value[selectedPosition.value] === null &&
+            selectedPosition.value > 0
+        ) {
+            selectedPosition.value--;
+        }
+        userStrand.value[selectedPosition.value] = null;
+    } else if (key === "Escape") {
+        selectedPosition.value = null;
+    }
+};
+
+onMounted(() => {
+    window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("keydown", handleKeydown);
+    clearCooldown();
+});
 </script>

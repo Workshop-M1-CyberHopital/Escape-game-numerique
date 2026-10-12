@@ -5,7 +5,7 @@
                 class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-cyan rounded-lg p-4 scanline"
             >
                 <div class="flex items-center gap-2 mb-3">
-                    <i data-lucide="brain" class="w-5 h-5 text-cyber-cyan"></i>
+                    <Brain class="w-5 h-5 text-cyber-cyan" />
                     <h3 class="font-cyber font-bold text-cyber-cyan text-lg">
                         RECONSTITUTION IRM
                     </h3>
@@ -20,12 +20,18 @@
                         >
                         de haut en bas (numérotez-les de 1 à 4).
                     </p>
+                    <p class="font-tech text-xs text-gray-400">
+                        Cliquez (ou sélectionnez avec Tab puis Entrée) sur une
+                        coupe pour lui donner le prochain numéro libre.
+                        Cliquez à nouveau sur une coupe numérotée pour retirer
+                        son numéro.
+                    </p>
                     <div
                         class="bg-cyan-900/30 border border-cyan-500/50 rounded p-2"
                     >
                         <div class="text-cyber-cyan font-tech text-xs">
-                            <strong>ASTUCE :</strong> Du sommet (petit) vers la
-                            base (large)
+                            <strong>ASTUCE :</strong> du sommet du crâne vers
+                            la base du cerveau, les coupes s'élargissent.
                         </div>
                     </div>
                 </div>
@@ -34,28 +40,33 @@
             <div
                 class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-blue rounded-lg p-4 scanline"
             >
-                <div class="flex items-center justify-between mb-4">
+                <div
+                    class="flex flex-wrap items-center justify-between gap-2 mb-4"
+                >
                     <div class="flex items-center gap-2">
-                        <i
-                            data-lucide="layers"
-                            class="w-5 h-5 text-cyber-blue"
-                        ></i>
+                        <Layers class="w-5 h-5 text-cyber-blue" />
                         <h3 class="font-cyber font-bold text-cyber-blue">
                             COUPES IRM - Cliquez pour numéroter
                         </h3>
                     </div>
-                    <div class="text-cyber-green font-tech text-sm">
-                        Position actuelle : {{ getCurrentPosition() }}
+                    <div
+                        class="text-cyber-green font-tech text-sm"
+                        aria-live="polite"
+                    >
+                        {{ statusText }}
                     </div>
                 </div>
 
                 <!-- Grille 2x2 -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div
+                    <button
                         v-for="(slice, index) in slices"
-                        :key="index"
+                        :key="slice.label"
+                        type="button"
                         @click="assignNumber(index)"
-                        class="bg-black/50 border-2 rounded-lg p-3 cursor-pointer transition-all hover:border-cyan-400 relative"
+                        :disabled="puzzleSolved"
+                        :aria-label="getSliceAriaLabel(slice)"
+                        class="block w-full text-left bg-black/50 border-2 rounded-lg p-3 cursor-pointer transition-all hover:border-cyan-400 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                         :class="
                             slice.assignedNumber
                                 ? 'border-cyan-500'
@@ -63,17 +74,24 @@
                         "
                     >
                         <!-- Numéro assigné -->
-                        <div
+                        <span
                             v-if="slice.assignedNumber"
                             class="absolute top-2 left-2 w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center font-cyber font-bold text-black text-lg z-10"
+                            aria-hidden="true"
                         >
                             {{ slice.assignedNumber }}
-                        </div>
+                        </span>
 
                         <!-- IRM SVG -->
-                        <svg viewBox="0 0 200 120" class="w-full h-auto">
+                        <svg
+                            viewBox="0 0 200 120"
+                            class="w-full h-auto"
+                            aria-hidden="true"
+                            focusable="false"
+                        >
                             <rect width="200" height="120" fill="#0a0a15" />
 
+                            <!-- Sommet du crâne : cortex seul, pas de ventricules -->
                             <g v-if="slice.id === 1">
                                 <ellipse
                                     cx="100"
@@ -102,18 +120,9 @@
                                     stroke-width="1"
                                     stroke-dasharray="3,3"
                                 />
-                                <text
-                                    x="100"
-                                    y="110"
-                                    font-family="monospace"
-                                    font-size="8"
-                                    fill="#6b7280"
-                                    text-anchor="middle"
-                                >
-                                    SOMMET
-                                </text>
                             </g>
 
+                            <!-- Coupe supérieure : apparition des ventricules latéraux -->
                             <g v-else-if="slice.id === 2">
                                 <ellipse
                                     cx="100"
@@ -160,18 +169,9 @@
                                     stroke-width="1"
                                     stroke-dasharray="3,3"
                                 />
-                                <text
-                                    x="100"
-                                    y="110"
-                                    font-family="monospace"
-                                    font-size="8"
-                                    fill="#6b7280"
-                                    text-anchor="middle"
-                                >
-                                    SUPÉRIEURE
-                                </text>
                             </g>
 
+                            <!-- Coupe médiane : ventricules plus larges + scissures latérales -->
                             <g v-else-if="slice.id === 3">
                                 <ellipse
                                     cx="100"
@@ -230,22 +230,13 @@
                                     stroke-width="1"
                                     stroke-dasharray="3,3"
                                 />
-                                <text
-                                    x="100"
-                                    y="115"
-                                    font-family="monospace"
-                                    font-size="8"
-                                    fill="#6b7280"
-                                    text-anchor="middle"
-                                >
-                                    MÉDIANE
-                                </text>
                             </g>
 
+                            <!-- Base du cerveau : lobes temporaux + cervelet à l'arrière (bas de l'image) -->
                             <g v-else-if="slice.id === 4">
                                 <ellipse
                                     cx="100"
-                                    cy="65"
+                                    cy="61"
                                     rx="74"
                                     ry="58"
                                     fill="none"
@@ -254,7 +245,7 @@
                                 />
                                 <ellipse
                                     cx="100"
-                                    cy="65"
+                                    cy="61"
                                     rx="64"
                                     ry="48"
                                     fill="#2d3748"
@@ -263,7 +254,7 @@
                                 />
                                 <ellipse
                                     cx="88"
-                                    cy="62"
+                                    cy="58"
                                     rx="6"
                                     ry="10"
                                     fill="#1a202c"
@@ -272,7 +263,7 @@
                                 />
                                 <ellipse
                                     cx="112"
-                                    cy="62"
+                                    cy="58"
                                     rx="6"
                                     ry="10"
                                     fill="#1a202c"
@@ -293,39 +284,56 @@
                                 />
                                 <ellipse
                                     cx="100"
-                                    cy="85"
-                                    rx="20"
-                                    ry="6"
-                                    fill="#1a202c"
-                                    stroke="#4a5568"
+                                    cy="92"
+                                    rx="26"
+                                    ry="10"
+                                    fill="#4a5568"
+                                    stroke="#a0aec0"
                                     stroke-width="1"
                                 />
-                                <text
-                                    x="100"
-                                    y="110"
-                                    font-family="monospace"
-                                    font-size="8"
-                                    fill="#6b7280"
-                                    text-anchor="middle"
-                                >
-                                    BASE
-                                </text>
+                                <line
+                                    x1="100"
+                                    y1="82"
+                                    x2="100"
+                                    y2="102"
+                                    stroke="#2d3748"
+                                    stroke-width="1"
+                                />
                             </g>
                         </svg>
-                    </div>
+
+                        <!-- Identifiant neutre de la coupe (ne révèle pas l'ordre) -->
+                        <span
+                            class="block mt-2 text-center font-tech text-xs text-gray-300"
+                            aria-hidden="true"
+                        >
+                            COUPE {{ slice.label }}
+                        </span>
+                    </button>
                 </div>
 
-                <div class="flex justify-center gap-3">
+                <p
+                    v-if="isLastWrongOrder"
+                    class="text-center text-xs font-tech text-cyber-red mb-3"
+                    aria-live="polite"
+                >
+                    Cet ordre a déjà été testé : cliquez sur une coupe pour
+                    retirer son numéro et modifiez l'ordre.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-3">
                     <button
+                        type="button"
                         @click="resetNumbers"
                         class="px-4 py-2 border border-cyber-red text-cyber-red hover:bg-cyber-red/10 font-cyber text-sm rounded-lg transition-all"
                     >
                         RÉINITIALISER
                     </button>
                     <button
+                        type="button"
                         @click="checkOrder"
-                        :disabled="!allNumbersAssigned()"
-                        class="px-6 py-2 bg-cyber-green hover:bg-cyber-green/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-cyber text-sm rounded-lg transition-all"
+                        :disabled="!canCheck"
+                        class="px-6 py-2 bg-cyber-green hover:bg-cyber-green/80 disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed text-black font-cyber text-sm rounded-lg transition-all"
                     >
                         VÉRIFIER
                     </button>
@@ -337,34 +345,68 @@
                 class="bg-gray-800/40 backdrop-blur-md border border-gray-600 rounded-lg p-3"
             >
                 <div class="flex items-center gap-2 mb-2">
-                    <i
-                        data-lucide="lightbulb"
-                        class="w-4 h-4 text-yellow-500"
-                    ></i>
+                    <Lightbulb class="w-4 h-4 text-yellow-500" />
                     <h4 class="font-cyber font-bold text-yellow-500 text-sm">
                         INDICES
                     </h4>
                 </div>
 
-                <div class="space-y-1 text-xs text-gray-300">
-                    <div v-if="hintsShown >= 1" class="fade-in">
-                        💡 Plus c'est petit, plus c'est haut dans le crâne
-                    </div>
-                    <div v-if="hintsShown >= 2" class="fade-in">
-                        💡 La base du crâne a une forme ovale en bas
-                    </div>
-                    <div v-if="hintsShown >= 3" class="fade-in">
-                        💡 Ordre : SOMMET → SUPÉRIEURE → MÉDIANE → BASE
+                <div class="space-y-1 text-xs text-gray-300" aria-live="polite">
+                    <div
+                        v-for="(hint, i) in HINTS.slice(0, hintsShown)"
+                        :key="i"
+                        class="fade-in"
+                    >
+                        💡 {{ hint }}
                     </div>
                 </div>
 
                 <button
+                    type="button"
                     @click="showHint"
-                    v-if="hintsShown < 3 && !puzzleSolved"
-                    class="mt-2 px-3 py-1 border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 font-tech text-xs rounded transition-all"
+                    :disabled="!hasMoreHints"
+                    class="mt-2 px-3 py-1 border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 disabled:border-gray-600 disabled:text-gray-500 disabled:hover:bg-transparent disabled:cursor-not-allowed font-tech text-xs rounded transition-all"
                 >
-                    AFFICHER UN INDICE
+                    {{
+                        hasMoreHints
+                            ? `AFFICHER UN INDICE (${HINTS.length - hintsShown} restant${HINTS.length - hintsShown > 1 ? "s" : ""})`
+                            : "Plus d'indice disponible"
+                    }}
                 </button>
+            </div>
+        </div>
+
+        <!-- IRM reconstituée : récapitulatif pédagogique -->
+        <div
+            v-else
+            class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-green rounded-lg p-4 scanline space-y-4"
+        >
+            <div class="flex items-center gap-2">
+                <CheckCircle2 class="w-5 h-5 text-cyber-green" />
+                <h3 class="font-cyber font-bold text-cyber-green text-lg">
+                    IRM RECONSTITUÉE
+                </h3>
+            </div>
+
+            <ol class="space-y-1 font-tech text-sm text-gray-300">
+                <li v-for="slice in orderedSlices" :key="slice.label">
+                    <span class="text-cyber-cyan font-bold"
+                        >{{ slice.id }}. Coupe {{ slice.label }}</span
+                    >
+                    — {{ slice.level }}
+                </li>
+            </ol>
+
+            <div class="bg-cyan-900/30 border border-cyan-500/50 rounded p-3">
+                <div class="flex items-center gap-2 mb-1">
+                    <BookOpen class="w-4 h-4 text-cyber-cyan" />
+                    <span class="font-cyber font-bold text-cyber-cyan text-sm">
+                        À RETENIR
+                    </span>
+                </div>
+                <p class="font-tech text-xs text-gray-300 leading-relaxed">
+                    {{ TAKEAWAY }}
+                </p>
             </div>
         </div>
     </GameRoom>
@@ -372,14 +414,19 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { Brain, Layers, Lightbulb, CheckCircle2, BookOpen } from "lucide-vue-next";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
 import { useGameState } from "../../composables/useGameState";
 
+const ROOM_ID = "imaging";
+const SLICE_COUNT = 4;
+
 const emit = defineEmits(["exit-room", "room-completed"]);
 const { showSuccess, showError } = useToast();
-const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
+const { gameState, addError, addHint, completeRoom, PENALTY_PER_ERROR } =
+    useGameState();
 
 const roomData = {
     title: "SALLE D'IMAGERIE",
@@ -391,80 +438,157 @@ const roomData = {
     color: "#00ff88",
 };
 
+// Indices progressifs : chacun apporte un repère visuel nouveau (jamais affiché à l'écran).
+const HINTS = [
+    "Au sommet du crâne, la coupe passe au-dessus des ventricules : c'est la seule coupe sans cavité sombre au centre.",
+    "La coupe la plus basse traverse la base du cerveau : c'est la seule où l'on voit le cervelet, la forme ovale claire en bas de l'image (l'arrière du crâne).",
+    "Des deux coupes restantes, la plus basse montre déjà les scissures latérales (de Sylvius), les petites courbes sur les côtés : elle prend le n°3, l'autre le n°2.",
+];
+
+const TAKEAWAY =
+    "L'IRM utilise un aimant très puissant et des ondes radio, sans rayons X. Elle produit des images du cerveau en fines coupes (virtuelles) que le radiologue lit dans l'ordre, comme les pages d'un livre, pour repérer et localiser précisément une tumeur ou un AVC.";
+
+// id = position correcte (1 = sommet ... 4 = base). L'ordre d'affichage est mélangé
+// et chaque coupe ne porte qu'un identifiant neutre (A à D).
 const slices = ref([
-    { id: 3, assignedNumber: null },
-    { id: 1, assignedNumber: null },
-    { id: 4, assignedNumber: null },
-    { id: 2, assignedNumber: null },
+    {
+        id: 3,
+        label: "A",
+        level: "niveau médian : ventricules latéraux plus larges et scissures latérales (de Sylvius)",
+        assignedNumber: null,
+    },
+    {
+        id: 1,
+        label: "B",
+        level: "sommet du crâne (vertex) : seulement le cortex, sans ventricules",
+        assignedNumber: null,
+    },
+    {
+        id: 4,
+        label: "C",
+        level: "base du cerveau : lobes temporaux et cervelet, à l'arrière",
+        assignedNumber: null,
+    },
+    {
+        id: 2,
+        label: "D",
+        level: "niveau supérieur : apparition des ventricules latéraux (liquide cérébrospinal)",
+        assignedNumber: null,
+    },
 ]);
 
-const currentNumber = ref(1);
 const puzzleSolved = ref(false);
 const isCompleted = ref(false);
-const hintsShown = ref(0);
+// Ordre déjà soumis et refusé : on n'autorise pas une nouvelle vérification identique
+// (évite les doubles pénalités sur double clic / répétition de touche).
+const lastWrongOrder = ref(null);
+
+// Les indices déjà payés restent affichés gratuitement après être sorti / revenu dans la salle.
+const hintsShown = ref(
+    Math.min(HINTS.length, gameState.roomHints?.[ROOM_ID] || 0),
+);
+const hasMoreHints = computed(() => hintsShown.value < HINTS.length);
+
+const orderKey = () => slices.value.map((s) => s.assignedNumber).join(",");
+
+// Plus petit numéro (1..4) qui n'est attribué à aucune coupe, ou null si tous le sont.
+const nextFreeNumber = computed(() => {
+    for (let n = 1; n <= SLICE_COUNT; n++) {
+        if (!slices.value.some((s) => s.assignedNumber === n)) return n;
+    }
+    return null;
+});
+
+const allNumbersAssigned = computed(() =>
+    slices.value.every((slice) => slice.assignedNumber !== null),
+);
+
+const isLastWrongOrder = computed(
+    () => allNumbersAssigned.value && lastWrongOrder.value === orderKey(),
+);
+
+const canCheck = computed(
+    () =>
+        !isCompleted.value &&
+        allNumbersAssigned.value &&
+        !isLastWrongOrder.value,
+);
+
+const statusText = computed(() => {
+    if (nextFreeNumber.value === null)
+        return "Toutes les coupes sont numérotées";
+    return `Prochain numéro : ${nextFreeNumber.value}`;
+});
+
+const orderedSlices = computed(() =>
+    [...slices.value].sort((a, b) => a.id - b.id),
+);
+
+const getSliceAriaLabel = (slice) => {
+    const state = slice.assignedNumber
+        ? `numéro ${slice.assignedNumber} (activer pour retirer ce numéro)`
+        : "sans numéro";
+    return `Coupe ${slice.label}, ${state}`;
+};
 
 const assignNumber = (index) => {
     if (puzzleSolved.value) return;
+    const slice = slices.value[index];
+    if (!slice) return;
 
-    if (slices.value[index].assignedNumber) {
-        slices.value[index].assignedNumber = null;
+    // Une coupe déjà numérotée libère son numéro, qui redevient attribuable.
+    if (slice.assignedNumber) {
+        slice.assignedNumber = null;
         return;
     }
 
-    if (currentNumber.value <= 4) {
-        slices.value[index].assignedNumber = currentNumber.value;
-        currentNumber.value++;
-    }
+    const n = nextFreeNumber.value;
+    if (n !== null) slice.assignedNumber = n;
 };
 
 const resetNumbers = () => {
+    if (puzzleSolved.value) return;
     slices.value.forEach((slice) => {
         slice.assignedNumber = null;
     });
-    currentNumber.value = 1;
-};
-
-const allNumbersAssigned = () => {
-    return slices.value.every((slice) => slice.assignedNumber !== null);
 };
 
 const checkOrder = () => {
+    if (!canCheck.value) return;
+
     const isCorrect = slices.value.every(
         (slice) => slice.assignedNumber === slice.id,
     );
 
     if (isCorrect) {
-        puzzleSolved.value = true;
         isCompleted.value = true;
+        puzzleSolved.value = true;
+
+        // Complétion synchrone : aucun délai qui pourrait perdre l'emit si la salle est quittée.
+        completeRoom(ROOM_ID);
+        emit("room-completed", ROOM_ID);
+
         createFireworks(3000);
-
         showSuccess(
-            "RÉPONSE CORRECTE",
-            "L'ordre est correct. Vous avez réussi à restaurer l'imagerie médicale.",
+            "IRM RECONSTITUÉE",
+            `Ordre correct : ${orderedSlices.value.map((s) => s.label).join(" → ")}. À retenir : l'IRM utilise un aimant et des ondes radio, sans rayons X, pour obtenir des images du cerveau en fines coupes, lues dans l'ordre.`,
+            8000,
         );
-
-        // Petit délai pour permettre au briefing de fin de s'afficher
-        setTimeout(() => {
-            completeRoom("imaging");
-            emit("room-completed", "imaging");
-        }, 300);
     } else {
-        addError("imaging");
+        lastWrongOrder.value = orderKey();
+        addError(ROOM_ID);
         showError(
             "ORDRE INCORRECT",
-            `L'ordre n'est pas correct. Réessayez ! (Indice : du plus petit au plus large) +${PENALTY_PER_ERROR}s de pénalité`,
+            `L'ordre n'est pas correct. Cliquez sur une coupe pour retirer son numéro et réessayez. +${PENALTY_PER_ERROR}s de pénalité`,
         );
     }
 };
 
-const getCurrentPosition = () => {
-    if (currentNumber.value > 4) return "Complété";
-    return `Cliquez pour position ${currentNumber.value}`;
-};
-
 const showHint = () => {
+    if (!hasMoreHints.value || puzzleSolved.value) return;
+    const alreadyPaid = gameState.roomHints?.[ROOM_ID] || 0;
     hintsShown.value++;
-    addHint("imaging");
+    if (hintsShown.value > alreadyPaid) addHint(ROOM_ID);
 };
 </script>
 

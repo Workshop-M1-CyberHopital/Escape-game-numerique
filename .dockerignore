@@ -1,140 +1,83 @@
-# Dependencies
-node_modules/
-*/node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# ==============================================================================
+# Contexte de build Docker (racine du dépôt)
+# ==============================================================================
+# Rien de ce qui est listé ici n'est envoyé au builder, donc rien ne peut finir dans l'image publiée
+# sur Docker Hub. Les motifs sont relatifs à la racine du contexte ("**/" = n'importe quel dossier).
 
-# Build outputs
-dist/
-build/
-*/dist/
-*/build/
+# --- Données d'exécution du backend (comptes, hachages de mots de passe, scores) ----------------
+# Elles ne doivent JAMAIS être embarquées dans l'image : le DataStore recrée des fichiers vides au
+# démarrage, et la persistance passe par un volume monté sur /app/back/data.
+back/data/*
+!back/data/.gitignore
 
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*/.env
-*/.env.local
-*/.env.development.local
-*/.env.test.local
-*/.env.production.local
+# --- Secrets et fichiers d'environnement --------------------------------------------------------
+# (back/config.env contient les valeurs de développement : inutile et indésirable en production)
+**/.env
+**/.env.*
+**/*.env
+**/*.env.txt
+**/*.pem
+**/*.key
+**/*.crt
 
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# --- Dépendances et sorties de build (réinstallées / reconstruites dans l'image) ----------------
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/build/
+**/coverage/
+**/.nyc_output/
+**/.cache/
+**/.parcel-cache/
+**/.eslintcache
+**/*.tsbuildinfo
+**/*.tgz
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# --- Gestionnaires de paquets : seul pnpm-lock.yaml fait foi -------------------------------------
+**/package-lock.json
+**/yarn.lock
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
 
-# Git
+# --- Logs et fichiers temporaires ---------------------------------------------------------------
+**/logs/
+**/*.log
+**/*.pid
+**/*.seed
+**/*.pid.lock
+**/tmp/
+**/temp/
+
+# --- Git, IDE, assistants, OS -------------------------------------------------------------------
 .git/
-.gitignore
-.gitattributes
+**/.gitattributes
+.idea/
+**/.idea/
+.vscode/
+**/.vscode/
+.claude/
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store
+**/._*
+**/Thumbs.db
+**/ehthumbs.db
 
-# Docker
+# --- Fichiers Docker eux-mêmes (le Dockerfile est lu par le builder même s'il est listé ici) -----
 Dockerfile*
 docker-compose*.yml
 .dockerignore
+push-to-hub.sh
 
-# Documentation
-README.md
+# --- Documentation ------------------------------------------------------------------------------
 docs/
 *.md
+front/README.md
+back/README.md
 
-# Logs
-logs/
-*.log
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# Lock files (keep only pnpm-lock.yaml)
-package-lock.json
-yarn.lock
-
-# Test files
-test/
-tests/
-__tests__/
-*.test.js
-*.test.ts
-*.spec.js
-*.spec.ts
-
-# Development tools
-nodemon.json
-.vscode/
-.idea/
-
-# Infrastructure
-infra/
+# --- Infrastructure Kubernetes : seule la configuration du conteneur (infra/docker) est utile ----
+infra/*
+!infra/docker/

@@ -1,5 +1,7 @@
-# Fichiers de données JSON
+# Fichiers de données JSON (et leurs sauvegardes automatiques)
 *.json
+*.json.*
+*.tmp
 
 # Garder le dossier mais ignorer les fichiers
 !.gitignore

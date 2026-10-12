@@ -2,6 +2,14 @@
 # Autoscaling de l'application Escape Game
 # Workshop EISI 2025–2026
 # ===============================================
+# ⚠️ BRIDÉ À 1 RÉPLICA (minReplicas = maxReplicas = 1) : NE PAS AUGMENTER maxReplicas.
+# L'API stocke les comptes et les scores dans des fichiers JSON locaux, gérés par UN SEUL processus
+# Node.js. Chaque pod supplémentaire aurait ses propres fichiers : inscriptions « perdues »,
+# connexions refusées au hasard, scores absents du classement selon le pod qui répond.
+# (La mémoire de base de Nginx + Node.js suffisait d'ailleurs à déclencher un scale-out.)
+# Ce fichier n'est pas appliqué par deploy-infra*.sh, qui supprime au contraire un éventuel HPA
+# "scale-escape" existant. Il ne pourra être élargi qu'une fois l'API branchée sur une base de
+# données partagée (MariaDB / Redis) au lieu des fichiers JSON.
 
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -12,8 +20,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: escape-app
-  minReplicas: 2
-  maxReplicas: 8
+  minReplicas: 1
+  maxReplicas: 1
   metrics:
   - type: Resource
     resource:
@@ -21,9 +29,3 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 75

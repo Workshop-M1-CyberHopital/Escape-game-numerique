@@ -1,98 +1,95 @@
 # Multi-stage Dockerfile pour Escape Game Cyber-Hôpital
-# Combine le frontend Vue.js et le backend Node.js dans un seul container
+# Un seul conteneur : Nginx (frontend Vue + proxy /api/) et l'API Node.js, orchestrés par supervisord.
+#
+# Build local   : docker build -t produn/escape-workshop:dev .
+# Multi-arch    : ./push-to-hub.sh <tag>
+#
+# Aucune donnée d'exécution n'est embarquée : back/data/*.json et les fichiers .env sont exclus
+# du contexte par .dockerignore. Les comptes et scores vivent dans le volume monté sur /app/back/data.
 
-# Stage 1: Build du frontend
-FROM node:20-alpine AS frontend-builder
+# Node 22 LTS (Node 20 est en fin de vie ; Vite 7 exige Node >= 20.19)
+ARG NODE_IMAGE=node:22-alpine
+# Même version de pnpm que celle qui a produit les pnpm-lock.yaml (lockfileVersion 9.0)
+ARG PNPM_VERSION=9.12.0
+
+# ------------------------------------------------------------------------------
+# Stage 1 : build du frontend
+# ------------------------------------------------------------------------------
+# Le résultat (HTML/JS/CSS statiques) ne dépend pas de l'architecture : en build multi-arch
+# (push-to-hub.sh), ce stage tourne une seule fois sur la plateforme de la machine de build,
+# sans émulation QEMU (lente et parfois instable avec Node.js).
+FROM --platform=$BUILDPLATFORM ${NODE_IMAGE} AS frontend-builder
+ARG PNPM_VERSION
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+    COREPACK_ENABLE_AUTO_PIN=0
+RUN corepack enable pnpm && corepack install -g "pnpm@${PNPM_VERSION}" && pnpm --version
 
 WORKDIR /app/front
 
-# Copier les fichiers de configuration du frontend
-COPY front/package*.json ./
-COPY front/pnpm-lock.yaml ./
+# Dépendances d'abord (couche mise en cache tant que package.json / le lockfile ne changent pas).
+# --frozen-lockfile : le build échoue si pnpm-lock.yaml n'est pas synchronisé avec package.json.
+COPY front/package.json front/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Installer pnpm et les dépendances
-RUN npm install -g pnpm
-RUN pnpm install --no-frozen-lockfile
-
-# Copier le code source du frontend
+# Code source puis build de production (sortie : /app/front/dist)
 COPY front/ .
 
-# Build du frontend pour la production
-RUN pnpm run build
+# Options de build Vite facultatives (les fichiers front/.env* ne sont pas copiés) :
+#   docker build --build-arg VITE_DEV_MODE=false .   -> masque les DevTools du jeu
+#   --build-arg VITE_API_URL=https://api.exemple/api -> API sur une autre origine (défaut : /api)
+# Une valeur vide est retirée de l'environnement : le comportement par défaut du frontend s'applique.
+ARG VITE_DEV_MODE
+ARG VITE_API_URL
+RUN if [ -z "${VITE_DEV_MODE}" ]; then unset VITE_DEV_MODE; fi; \
+    if [ -z "${VITE_API_URL}" ]; then unset VITE_API_URL; fi; \
+    pnpm run build
 
-# Stage 2: Build du backend
-FROM node:20-alpine AS backend-builder
+# ------------------------------------------------------------------------------
+# Stage 2 : dépendances de production du backend
+# ------------------------------------------------------------------------------
+FROM ${NODE_IMAGE} AS backend-builder
+ARG PNPM_VERSION
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+    COREPACK_ENABLE_AUTO_PIN=0
+RUN corepack enable pnpm && corepack install -g "pnpm@${PNPM_VERSION}" && pnpm --version
 
 WORKDIR /app/back
 
-# Copier les fichiers de configuration du backend
-COPY back/package*.json ./
-COPY back/pnpm-lock.yaml ./
+COPY back/package.json back/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
-# Installer pnpm et les dépendances
-RUN npm install -g pnpm
-RUN pnpm install --no-frozen-lockfile --production
-
-# Copier le code source du backend
+# Code source du backend (sans back/data/*.json ni back/config.env, cf. .dockerignore)
 COPY back/ .
 
-# Stage 3: Image finale avec Nginx + Node.js
-FROM node:20-alpine
+# ------------------------------------------------------------------------------
+# Stage 3 : image finale Nginx + Node.js
+# ------------------------------------------------------------------------------
+FROM ${NODE_IMAGE}
 
-# Installer nginx et autres dépendances
-RUN apk add --no-cache nginx supervisor
+RUN apk add --no-cache nginx supervisor \
+    && mkdir -p /run/nginx /var/lib/nginx/tmp /var/log/nginx /app/back/data
 
-# Créer les répertoires nécessaires
-RUN mkdir -p /var/log/supervisor /var/log/nginx /var/lib/nginx/tmp /run/nginx /etc/supervisor/conf.d
-
-# Configuration de Nginx
+# Configuration Nginx (frontend + proxy /api/) et supervisord (PID 1, logs sur stdout/stderr)
 COPY front/nginx.conf /etc/nginx/nginx.conf
+COPY infra/docker/supervisord.conf /etc/supervisord.conf
 
-# Copier les fichiers buildés du frontend
+# Frontend buildé et backend avec ses dépendances de production
 COPY --from=frontend-builder /app/front/dist /usr/share/nginx/html
-
-# Copier le backend
 COPY --from=backend-builder /app/back /app/back
 
-# Copier les fichiers de données
-COPY back/data /app/back/data
+# Variables par défaut. JWT_SECRET n'a volontairement PAS de valeur par défaut : passez-le à
+# l'exécution (docker run -e, docker-compose + .env, Secret Kubernetes). Voir .env.example.
+ENV NODE_ENV=production \
+    PORT=3001 \
+    DATA_DIR=/app/back/data
 
-# Configuration de Supervisor pour gérer Nginx et Node.js
-RUN echo '[supervisord]' > /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'nodaemon=true' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo '' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo '[program:nginx]' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'command=nginx -g "daemon off;"' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'autostart=true' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'autorestart=true' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'stderr_logfile=/var/log/supervisor/nginx.err.log' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'stdout_logfile=/var/log/supervisor/nginx.out.log' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo '' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo '[program:nodejs]' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'command=node main.js' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'directory=/app/back' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'autostart=true' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'autorestart=true' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'stderr_logfile=/var/log/supervisor/nodejs.err.log' >> /etc/supervisor/conf.d/supervisord.conf && \
-    echo 'stdout_logfile=/var/log/supervisor/nodejs.out.log' >> /etc/supervisor/conf.d/supervisord.conf
-
-# Configuration des variables d'environnement
-ENV NODE_ENV=production
-ENV PORT=3001
-ENV FRONTEND_URL=http://localhost:80
-
-# Exposer les ports
+# 80 : application (frontend + /api). 3001 : API Node.js en direct (debug uniquement, non nécessaire).
 EXPOSE 80 3001
 
-# Créer un script de démarrage
-RUN echo '#!/bin/sh' > /start.sh && \
-    echo 'echo "🚀 Démarrage de l'\''Escape Game Cyber-Hôpital..."' >> /start.sh && \
-    echo 'echo "📦 Frontend: Nginx sur le port 80"' >> /start.sh && \
-    echo 'echo "🔧 Backend: Node.js sur le port 3001"' >> /start.sh && \
-    echo 'echo "🌐 Application accessible sur http://localhost:80"' >> /start.sh && \
-    echo 'echo "📊 API accessible sur http://localhost:3001"' >> /start.sh && \
-    echo 'supervisord -c /etc/supervisor/conf.d/supervisord.conf' >> /start.sh && \
-    chmod +x /start.sh
+# Vérifie toute la chaîne Nginx -> API (la route de santé n'est pas soumise au rate limiting)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1/api/health || exit 1
 
-# Point d'entrée
-CMD ["/start.sh"]
+# supervisord en PID 1 (forme exec, sans shell) : il reçoit SIGTERM et arrête proprement Nginx et Node.js
+STOPSIGNAL SIGTERM
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

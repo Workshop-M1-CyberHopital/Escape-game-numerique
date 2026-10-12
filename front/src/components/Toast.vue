@@ -1,77 +1,76 @@
 <template>
-  <Transition name="toast">
-    <div 
-      v-if="visible" 
-      class="max-w-sm w-full"
+  <div class="w-full sm:w-96 max-w-full pointer-events-auto">
+    <div
+      :class="[
+        'bg-gray-900/95 backdrop-blur-md border-2 rounded-lg p-4 scanline shadow-2xl',
+        type === 'error' ? 'border-cyber-red' :
+        type === 'success' ? 'border-cyber-green' :
+        type === 'warning' ? 'border-yellow-500' : 'border-cyber-blue'
+      ]"
     >
-      <div 
-        :class="[
-          'bg-gray-900/95 backdrop-blur-md border-2 rounded-lg p-4 scanline shadow-2xl',
-          type === 'error' ? 'border-cyber-red' : 
-          type === 'success' ? 'border-cyber-green' : 
-          type === 'warning' ? 'border-yellow-500' : 'border-cyber-blue'
-        ]"
-      >
-        <div class="flex items-start gap-3">
-          <!-- Icon -->
-          <div 
-            :class="[
-              'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-              type === 'error' ? 'bg-cyber-red/20' : 
-              type === 'success' ? 'bg-cyber-green/20' : 
-              type === 'warning' ? 'bg-yellow-500/20' : 'bg-cyber-blue/20'
-            ]"
-          >
-            <AlertTriangle v-if="type === 'error'" class="w-5 h-5 text-cyber-red" />
-            <CheckCircle v-else-if="type === 'success'" class="w-5 h-5 text-cyber-green" />
-            <AlertTriangle v-else-if="type === 'warning'" class="w-5 h-5 text-yellow-500" />
-            <Info v-else class="w-5 h-5 text-cyber-blue" />
-          </div>
-          
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <h4 
-              :class="[
-                'font-cyber font-bold text-sm mb-1',
-                type === 'error' ? 'text-cyber-red' : 
-                type === 'success' ? 'text-cyber-green' : 
-                type === 'warning' ? 'text-yellow-500' : 'text-cyber-blue'
-              ]"
-            >
-              {{ title }}
-            </h4>
-            <p class="text-gray-300 font-tech text-xs leading-relaxed">
-              {{ message }}
-            </p>
-          </div>
-          
-          <!-- Close Button -->
-          <button 
-            @click="close"
-            class="text-gray-400 hover:text-white transition-colors flex-shrink-0"
-          >
-            <X class="w-4 h-4" />
-          </button>
-        </div>
-        
-        <!-- Progress Bar -->
-        <div 
-          v-if="autoClose"
-          class="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden"
+      <div class="flex items-start gap-3">
+        <!-- Icon -->
+        <div
+          :class="[
+            'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
+            type === 'error' ? 'bg-cyber-red/20' :
+            type === 'success' ? 'bg-cyber-green/20' :
+            type === 'warning' ? 'bg-yellow-500/20' : 'bg-cyber-blue/20'
+          ]"
+          aria-hidden="true"
         >
-          <div 
-            :class="[
-              'h-full transition-all duration-100 ease-linear',
-              type === 'error' ? 'bg-cyber-red' : 
-              type === 'success' ? 'bg-cyber-green' : 
-              type === 'warning' ? 'bg-yellow-500' : 'bg-cyber-blue'
-            ]"
-            :style="{ width: progressWidth + '%' }"
-          ></div>
+          <AlertTriangle v-if="type === 'error'" class="w-5 h-5 text-cyber-red" />
+          <CheckCircle v-else-if="type === 'success'" class="w-5 h-5 text-cyber-green" />
+          <AlertTriangle v-else-if="type === 'warning'" class="w-5 h-5 text-yellow-500" />
+          <Info v-else class="w-5 h-5 text-cyber-blue" />
         </div>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <h4
+            :class="[
+              'font-cyber font-bold text-sm mb-1 break-words',
+              type === 'error' ? 'text-cyber-red' :
+              type === 'success' ? 'text-cyber-green' :
+              type === 'warning' ? 'text-yellow-500' : 'text-cyber-blue'
+            ]"
+          >
+            {{ title }}
+          </h4>
+          <p class="text-gray-300 font-tech text-xs leading-relaxed break-words">
+            {{ message }}
+          </p>
+        </div>
+
+        <!-- Close Button -->
+        <button
+          type="button"
+          @click="close"
+          class="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+          aria-label="Fermer la notification"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div
+        v-if="autoClose"
+        class="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden"
+        aria-hidden="true"
+      >
+        <div
+          :class="[
+            'h-full transition-all duration-100 ease-linear',
+            type === 'error' ? 'bg-cyber-red' :
+            type === 'success' ? 'bg-cyber-green' :
+            type === 'warning' ? 'bg-yellow-500' : 'bg-cyber-blue'
+          ]"
+          :style="{ width: progressWidth + '%' }"
+        ></div>
       </div>
     </div>
-  </Transition>
+  </div>
 </template>
 
 <script setup>
@@ -104,80 +103,42 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const visible = ref(false)
 const progressWidth = ref(100)
 let progressInterval = null
-let closeTimeout = null
+let isClosed = false
 
+const stopProgress = () => {
+  if (progressInterval) {
+    clearInterval(progressInterval)
+    progressInterval = null
+  }
+}
+
+// Idempotent : la barre de progression et le bouton ne peuvent pas émettre deux fois
 const close = () => {
-  visible.value = false
+  if (isClosed) return
+  isClosed = true
+  stopProgress()
   emit('close')
 }
 
 const startProgress = () => {
   if (!props.autoClose) return
-  
+
+  const duration = Math.max(1, props.duration)
   const startTime = Date.now()
-  const updateProgress = () => {
+  progressInterval = setInterval(() => {
     const elapsed = Date.now() - startTime
-    const remaining = Math.max(0, props.duration - elapsed)
-    progressWidth.value = (remaining / props.duration) * 100
-    
+    const remaining = Math.max(0, duration - elapsed)
+    progressWidth.value = (remaining / duration) * 100
+
     if (remaining <= 0) {
       close()
     }
-  }
-  
-  progressInterval = setInterval(updateProgress, 50)
+  }, 50)
 }
 
-onMounted(() => {
-  visible.value = true
-  
-  if (props.autoClose) {
-    closeTimeout = setTimeout(close, props.duration)
-    startProgress()
-  }
-})
+onMounted(startProgress)
 
-onUnmounted(() => {
-  if (progressInterval) {
-    clearInterval(progressInterval)
-  }
-  if (closeTimeout) {
-    clearTimeout(closeTimeout)
-  }
-})
+onUnmounted(stopProgress)
 </script>
-
-<style scoped>
-.toast-enter-active {
-  animation: toastSlideIn 0.3s ease-out;
-}
-
-.toast-leave-active {
-  animation: toastSlideOut 0.3s ease-out;
-}
-
-@keyframes toastSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes toastSlideOut {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-</style>

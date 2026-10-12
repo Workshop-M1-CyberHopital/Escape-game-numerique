@@ -1,20 +1,29 @@
 <template>
   <div 
     v-if="visible"
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="team-setup-title"
+    @keydown.esc="handleClose"
   >
-    <div class="bg-gray-900/95 border-2 border-cyber-red rounded-lg max-w-2xl w-full relative overflow-hidden">
+    <!-- my-auto : centré quand la modale tient à l'écran, défilable (haut atteignable) sinon -->
+    <form
+      class="my-auto bg-gray-900/95 border-2 border-cyber-red rounded-lg max-w-2xl w-full relative overflow-hidden flex flex-col max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)]"
+      novalidate
+      @submit.prevent="handleStartGame"
+    >
       <!-- Scanlines effect -->
       <div class="absolute inset-0 scanline opacity-20 pointer-events-none"></div>
       
       <!-- Header -->
-      <div class="border-b border-cyber-red/50 p-6">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
+      <div class="border-b border-cyber-red/50 p-4 sm:p-6 shrink-0">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 sm:gap-4 min-w-0">
             <!-- Agent Avatar -->
-            <div class="relative">
-              <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center border-2 border-cyber-red">
-                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <div class="relative shrink-0">
+              <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center border-2 border-cyber-red">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/>
                 </svg>
               </div>
@@ -23,11 +32,11 @@
             </div>
             
             <!-- Agent Info -->
-            <div>
-              <h3 class="text-xl font-bold text-cyber-red font-tech">
+            <div class="min-w-0">
+              <h3 id="team-setup-title" class="text-lg sm:text-xl font-bold text-cyber-red font-tech">
                 COMMANDANT CYBER-001
               </h3>
-              <p class="text-sm text-gray-300 font-tech">
+              <p class="text-xs sm:text-sm text-gray-300 font-tech">
                 Centre de Commandement - Configuration d'Équipe
               </p>
               <div class="flex items-center gap-2 mt-1">
@@ -39,19 +48,21 @@
           
           <!-- Close Button -->
           <button
+            type="button"
             @click="handleClose"
-            class="w-8 h-8 bg-cyber-red/20 border border-cyber-red/50 rounded-full flex items-center justify-center hover:bg-cyber-red/30 transition-all duration-300 hover:scale-110"
+            class="shrink-0 w-8 h-8 bg-cyber-red/20 border border-cyber-red/50 rounded-full flex items-center justify-center hover:bg-cyber-red/30 transition-all duration-300 hover:scale-110"
             title="Fermer"
+            aria-label="Fermer"
           >
-            <svg class="w-4 h-4 text-cyber-red" fill="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-cyber-red" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
             </svg>
           </button>
         </div>
       </div>
       
-      <!-- Content -->
-      <div class="p-4">
+      <!-- Content (seule zone qui défile : en-tête et boutons restent visibles) -->
+      <div class="p-3 sm:p-4 overflow-y-auto min-h-0 flex-1">
         <div class="bg-gray-800/50 border border-cyber-red/30 rounded-lg p-4">
           <div class="text-cyber-red font-tech text-sm mb-4">
             [CONFIGURATION D'ÉQUIPE - MISSION RÉSILIENCE]
@@ -63,12 +74,16 @@
             <div class="space-y-4">
               <!-- Team Name Input -->
               <div>
-                <label class="block text-cyber-red font-tech font-bold text-sm mb-2">
+                <label for="team-name-input" class="block text-cyber-red font-tech font-bold text-sm mb-2">
                   NOM DE L'ÉQUIPE
                 </label>
                 <input
+                  id="team-name-input"
+                  ref="teamNameInput"
                   v-model="teamName"
                   type="text"
+                  :maxlength="TEAM_NAME_MAX_LENGTH"
+                  autocomplete="off"
                   placeholder="Entrez le nom de votre équipe..."
                   class="w-full px-3 py-2 bg-gray-900 border border-cyber-red/50 rounded text-white font-tech text-sm focus:border-cyber-red focus:outline-none transition-all pointer-events-auto"
                 />
@@ -81,8 +96,15 @@
                     MEMBRES DE L'ÉQUIPE
                   </label>
                   <button
+                    type="button"
                     @click="addPlayer"
-                    class="px-2 py-1 bg-cyber-red/20 border border-cyber-red text-cyber-red font-tech text-xs rounded hover:bg-cyber-red/30 transition-all pointer-events-auto"
+                    :disabled="players.length >= MAX_PLAYERS"
+                    :class="[
+                      'px-2 py-1 border font-tech text-xs rounded transition-all pointer-events-auto',
+                      players.length >= MAX_PLAYERS
+                        ? 'bg-gray-600/20 border-gray-500 text-gray-400 cursor-not-allowed'
+                        : 'bg-cyber-red/20 border-cyber-red text-cyber-red hover:bg-cyber-red/30'
+                    ]"
                   >
                     + AJOUTER
                   </button>
@@ -99,6 +121,7 @@
                       <input
                         v-model="players[index]"
                         type="text"
+                        :aria-label="`Joueur ${index + 1} (connecté)`"
                         :placeholder="`Joueur ${index + 1}...`"
                         readonly
                         class="w-full px-2 py-1 bg-gray-800 border border-cyber-green/50 rounded text-cyber-green font-tech text-xs cursor-not-allowed"
@@ -111,17 +134,22 @@
                       <input
                         v-model="players[index]"
                         type="text"
+                        :maxlength="PLAYER_NAME_MAX_LENGTH"
+                        autocomplete="off"
+                        :aria-label="`Joueur ${index + 1}`"
                         :placeholder="`Joueur ${index + 1}...`"
                         class="w-full px-2 py-1 bg-gray-900 border border-cyber-red/50 rounded text-white font-tech text-xs focus:border-cyber-red focus:outline-none transition-all"
                       />
                     </div>
                     
                     <button
+                      type="button"
                       @click="removePlayer(index)"
-                      :disabled="players.length <= 1 || (index === 0 && connectedPlayerName)"
+                      :aria-label="`Retirer le joueur ${index + 1}`"
+                      :disabled="!canRemovePlayer(index)"
                       :class="[
                         'w-6 h-6 border rounded flex items-center justify-center transition-all',
-                        (players.length <= 1 || (index === 0 && connectedPlayerName))
+                        !canRemovePlayer(index)
                           ? 'bg-gray-600/20 border-gray-500 text-gray-400 cursor-not-allowed'
                           : 'bg-red-600/20 border-red-500 text-red-400 hover:bg-red-600/30'
                       ]"
@@ -149,7 +177,7 @@
               </div>
 
               <!-- Section d'incitation à l'authentification -->
-              <div v-if="!isAuthenticated" class="bg-gradient-to-r from-cyber-blue/10 to-cyber-red/10 border border-cyber-blue/50 rounded p-3">
+              <div v-if="!isAuthenticated && !authPromptDismissed" class="bg-gradient-to-r from-cyber-blue/10 to-cyber-red/10 border border-cyber-blue/50 rounded p-3">
                 <div class="text-center">
                   <div class="w-8 h-8 bg-gradient-to-br from-cyber-blue to-cyber-red rounded-full flex items-center justify-center border-2 border-cyber-blue mx-auto mb-2">
                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -174,8 +202,9 @@
                   <!-- Boutons d'action -->
                   <div class="space-y-2">
                     <button
+                      type="button"
                       @click="handleOpenAuth"
-                      class="w-full px-3 py-2 bg-gradient-to-r from-cyber-blue to-cyber-red hover:from-cyber-blue/80 hover:to-cyber-red/80 text-white font-tech font-bold text-xs rounded transition-all duration-300 hover:scale-105 flex items-center justify-center gap-1"
+                      class="w-full px-3 py-2 bg-gradient-to-r from-cyber-blue to-cyber-red hover:from-cyber-blue/80 hover:to-cyber-red/80 text-black font-tech font-bold text-xs rounded transition-all duration-300 hover:scale-105 flex items-center justify-center gap-1"
                     >
                       <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
@@ -184,7 +213,8 @@
                     </button>
                     
                     <button
-                      @click="handleClose"
+                      type="button"
+                      @click="handleContinueWithoutAccount"
                       class="w-full px-3 py-2 bg-gray-600/50 hover:bg-gray-600 text-gray-300 font-tech text-xs rounded transition-all border border-gray-500"
                     >
                       CONTINUER SANS COMPTE
@@ -193,11 +223,29 @@
                 </div>
               </div>
 
+              <!-- Mode invité (après « CONTINUER SANS COMPTE ») -->
+              <div v-else-if="!isAuthenticated" class="bg-gray-800/60 border border-gray-500/60 rounded p-3">
+                <div class="text-gray-200 font-tech font-bold text-xs mb-1">
+                  👤 MODE INVITÉ
+                </div>
+                <div class="text-gray-400 text-xs mb-2">
+                  Vous pouvez jouer sans compte. Pour enregistrer votre score dans le classement,
+                  connectez-vous avant ou à la fin de la mission.
+                </div>
+                <button
+                  type="button"
+                  @click="handleOpenAuth"
+                  class="text-cyber-blue hover:text-white font-tech text-xs underline underline-offset-2 transition-colors"
+                >
+                  Se connecter / s'inscrire
+                </button>
+              </div>
+
               <!-- Section utilisateur connecté -->
               <div v-else class="bg-gradient-to-r from-cyber-green/10 to-cyber-blue/10 border border-cyber-green/50 rounded p-3">
                 <div class="text-center">
                   <div class="w-6 h-6 bg-cyber-green rounded-full flex items-center justify-center mx-auto mb-2">
-                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
                     </svg>
                   </div>
@@ -215,16 +263,20 @@
       </div>
       
       <!-- Footer with action buttons -->
-      <div class="border-t border-cyber-red/50 p-4">
-        <div class="flex gap-3 justify-end">
+      <div class="border-t border-cyber-red/50 p-3 sm:p-4 shrink-0">
+        <p v-if="!canStart" class="text-xs font-tech text-gray-400 mb-2 sm:text-right">
+          Renseignez le nom de l'équipe et au moins un joueur pour lancer la mission.
+        </p>
+        <div class="flex flex-wrap gap-3 justify-end">
           <button
+            type="button"
             @click="handleClose"
             class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white font-tech text-sm rounded transition-all"
           >
             ANNULER
           </button>
           <button
-            @click="handleStartGame"
+            type="submit"
             :disabled="!canStart"
             :class="[
               'px-4 py-2 font-tech text-sm rounded transition-all',
@@ -237,12 +289,12 @@
           </button>
         </div>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useAuth } from '../composables/useAuth'
 
 const props = defineProps({
@@ -258,11 +310,20 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'start-game', 'open-auth'])
 
+// Limites (le serveur refuse un nom d'équipe de plus de 50 caractères)
+const TEAM_NAME_MAX_LENGTH = 50
+const PLAYER_NAME_MAX_LENGTH = 30
+const MAX_PLAYERS = 6
+
 // Utiliser le composable d'authentification
 const { isAuthenticated, user } = useAuth()
 
 const teamName = ref('')
 const players = ref([props.connectedPlayerName || ''])
+const teamNameInput = ref(null)
+
+// « CONTINUER SANS COMPTE » masque l'incitation à la connexion et laisse poursuivre la configuration
+const authPromptDismissed = ref(false)
 
 // Watcher pour mettre à jour le premier joueur quand le pseudo connecté change
 watch(() => props.connectedPlayerName, (newName) => {
@@ -271,19 +332,35 @@ watch(() => props.connectedPlayerName, (newName) => {
   }
 }, { immediate: true })
 
+// Focus sur le nom d'équipe à l'ouverture, seulement avec souris/clavier
+// (sur téléphone, le clavier virtuel masquerait la moitié de la modale)
+const hasFinePointer = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(pointer: fine)').matches
+
+watch(() => props.visible, async (isVisible) => {
+  if (!isVisible || !hasFinePointer()) return
+  await nextTick()
+  teamNameInput.value?.focus()
+}, { immediate: true })
+
 const canStart = computed(() => {
   return teamName.value.trim() !== '' && 
-         players.value.some(player => player.trim() !== '')
+         players.value.some(player => (player || '').trim() !== '')
 })
 
+const canRemovePlayer = (index) =>
+  players.value.length > 1 && !(index === 0 && props.connectedPlayerName)
+
 const addPlayer = () => {
-  if (players.value.length < 6) {
+  if (players.value.length < MAX_PLAYERS) {
     players.value.push('')
   }
 }
 
 const removePlayer = (index) => {
-  if (players.value.length > 1) {
+  if (canRemovePlayer(index)) {
     players.value.splice(index, 1)
   }
 }
@@ -292,11 +369,21 @@ const handleClose = () => {
   emit('close')
 }
 
+const handleContinueWithoutAccount = async () => {
+  authPromptDismissed.value = true
+  await nextTick()
+  if (!teamName.value.trim()) {
+    teamNameInput.value?.focus()
+  }
+}
+
 const handleStartGame = () => {
   if (canStart.value) {
     const teamData = {
-      name: teamName.value.trim(),
-      players: players.value.filter(player => player.trim() !== '')
+      name: teamName.value.trim().slice(0, TEAM_NAME_MAX_LENGTH),
+      players: players.value
+        .map(player => (player || '').trim())
+        .filter(player => player !== '')
     }
     emit('start-game', teamData)
   }
