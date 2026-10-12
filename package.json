@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Escape Game Numérique Cyber-Hôpital - Mission Résilience",
   "private": true,
+  "packageManager": "pnpm@9.12.0",
   "scripts": {
     "install:all": "pnpm --prefix front install && pnpm --prefix back install",
     "dev:front": "pnpm --prefix front dev",
@@ -11,7 +12,9 @@
     "start:back": "pnpm --prefix back start",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:logs": "docker compose logs -f",
+    "docker:down": "docker compose down",
+    "docker:push": "bash ./push-to-hub.sh"
   },
   "keywords": [
     "escape-game",
@@ -24,6 +27,6 @@
   "author": "Équipe EPSI M1",
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

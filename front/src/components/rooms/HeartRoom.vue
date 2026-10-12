@@ -1,55 +1,19 @@
 <template>
     <GameRoom :room-data="roomData" @exit-room="$emit('exit-room')">
-        <!-- Score en temps réel -->
-        <div v-if="isRunning" class="fixed top-4 right-4 z-50">
-            <div class="bg-gray-900/95 backdrop-blur-md border-2 border-cyber-red rounded-lg p-4 shadow-lg">
-                <div class="text-center">
-                    <div class="text-sm text-gray-400 font-tech mb-1">SCORE RCP</div>
-                    <div class="text-3xl font-bold text-cyber-red">
-                        {{ correctCompressions }}/{{ requiredCompressions }}
-                    </div>
-                    <div class="text-xs text-gray-500 mt-1">
-                        {{ Math.round((correctCompressions / requiredCompressions) * 100) }}% complété
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Feedback visuel central -->
-        <div v-if="isRunning && lastCompressionSuccess !== null" class="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
-            <div 
-                class="text-center p-8 rounded-2xl border-4 transition-all duration-500 transform"
-                :class="{
-                    'bg-green-500/90 border-green-400 text-white scale-110 shadow-2xl shadow-green-400/50': lastCompressionSuccess === true,
-                    'bg-red-500/90 border-red-400 text-white scale-110 shadow-2xl shadow-red-400/50': lastCompressionSuccess === false
-                }"
-            >
-                <div class="text-6xl mb-4">
-                    <i v-if="lastCompressionSuccess === true" data-lucide="check-circle" class="animate-pulse"></i>
-                    <i v-else data-lucide="x-circle" class="animate-pulse"></i>
-                </div>
-                <div class="text-2xl font-bold mb-2">
-                    {{ lastCompressionSuccess === true ? 'EXCELLENT !' : 'RATÉ !' }}
-                </div>
-                <div class="text-lg">
-                    {{ lastCompressionSuccess === true ? 'Compression correcte' : 'Respectez le rythme' }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Instructions -->
+        <!-- Simulation RCP -->
         <div v-if="!puzzleSolved" class="space-y-8">
             <!-- Moniteur cardiaque -->
             <div
-                class="bg-gray-900/80 backdrop-blur-md border-2 border-gray-600 rounded-lg p-6 scanline"
+                class="bg-gray-900/80 backdrop-blur-md border-2 border-gray-600 rounded-lg p-4 sm:p-6 scanline"
             >
-                <div class="flex items-center justify-between mb-4">
+                <div
+                    class="flex flex-wrap items-center justify-between gap-2 mb-4"
+                >
                     <div class="flex items-center gap-2">
-                        <i
-                            data-lucide="monitor"
-                            class="w-5 h-5 text-cyber-blue"
-                        ></i>
-                        <h3 class="font-cyber font-bold text-cyber-blue">
+                        <Monitor class="w-5 h-5 text-cyber-blue shrink-0" />
+                        <h3
+                            class="font-cyber font-bold text-cyber-blue text-sm sm:text-base"
+                        >
                             MONITEUR CARDIAQUE - DÉFIBRILLATEUR
                         </h3>
                     </div>
@@ -61,14 +25,14 @@
                 <div class="space-y-6">
                     <!-- ECG Display -->
                     <div
-                        class="bg-black border-2 border-gray-600 rounded-lg p-4"
+                        class="bg-black border-2 border-gray-600 rounded-lg p-3 sm:p-4"
                     >
                         <div class="flex items-center justify-between mb-3">
                             <div class="text-xs text-green-400 font-tech">
                                 ECG LEAD II
                             </div>
                             <div class="text-xs text-gray-400 font-tech">
-                                HR: --- BPM
+                                {{ isRunning ? "MCE : 100/min" : "FC : --- BPM" }}
                             </div>
                         </div>
 
@@ -80,7 +44,7 @@
                                 <!-- Grid lines -->
                                 <defs>
                                     <pattern
-                                        id="grid"
+                                        id="heart-ecg-grid"
                                         width="20"
                                         height="20"
                                         patternUnits="userSpaceOnUse"
@@ -96,7 +60,7 @@
                                 <rect
                                     width="400"
                                     height="60"
-                                    fill="url(#grid)"
+                                    fill="url(#heart-ecg-grid)"
                                 />
 
                                 <!-- ECG Baseline -->
@@ -158,57 +122,65 @@
 
                     <!-- Compression Monitor -->
                     <div
-                        class="bg-gray-800/50 border border-gray-600 rounded-lg p-4"
+                        class="bg-gray-800/50 border border-gray-600 rounded-lg p-3 sm:p-4"
                     >
-                        <div class="flex items-center justify-between mb-3">
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-2 mb-3"
+                        >
                             <div class="text-sm text-cyber-blue font-tech">
                                 PRESSION THORACIQUE
                             </div>
                             <div class="text-xs text-gray-400 font-tech">
-                                Temps restant:
-                                {{
-                                    Math.ceil(
-                                        (requiredCompressions -
-                                            correctCompressions) *
-                                            0.6,
-                                    )
-                                }}s
+                                Temps minimum restant :
+                                {{ minimumRemainingSeconds }}s
                             </div>
                         </div>
 
                         <!-- Progress Bar Central -->
                         <div class="mb-6">
                             <div class="flex items-center justify-between mb-3">
-                                <span class="text-lg text-gray-300 font-tech font-bold">PROGRESSION RCP</span>
+                                <span
+                                    class="text-base sm:text-lg text-gray-300 font-tech font-bold"
+                                    >PROGRESSION RCP</span
+                                >
                                 <div class="flex items-center gap-2">
-                                    <span class="text-2xl text-cyber-blue font-bold">
-                                        {{ correctCompressions }}/{{ requiredCompressions }}
+                                    <span
+                                        class="text-2xl text-cyber-blue font-bold"
+                                    >
+                                        {{ correctCompressions }}/{{
+                                            requiredCompressions
+                                        }}
                                     </span>
                                     <div class="text-xs text-gray-400">
-                                        {{ Math.round((correctCompressions / requiredCompressions) * 100) }}%
+                                        {{ progressPercent }}%
                                     </div>
                                 </div>
                             </div>
-                            <div class="w-full bg-gray-700 rounded-full h-4 border-2 border-gray-600 overflow-hidden shadow-inner">
-                                <div 
+                            <div
+                                class="w-full bg-gray-700 rounded-full h-4 border-2 border-gray-600 overflow-hidden shadow-inner"
+                            >
+                                <div
                                     class="h-full bg-gradient-to-r from-cyber-red via-red-400 to-red-300 transition-all duration-500 ease-out relative"
-                                    :style="{ width: `${(correctCompressions / requiredCompressions) * 100}%` }"
+                                    :style="{ width: `${progressPercent}%` }"
                                 >
                                     <!-- Effet de brillance sur la barre de progression -->
-                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                                    <div
+                                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"
+                                    ></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Indicateur de performance -->
                             <div class="mt-2 flex justify-center">
                                 <div class="flex items-center gap-1">
-                                    <div 
-                                        v-for="i in 5" 
+                                    <div
+                                        v-for="i in 5"
                                         :key="i"
                                         class="w-3 h-3 rounded-full transition-all duration-300"
                                         :class="{
-                                            'bg-green-400 shadow-lg shadow-green-400/50': i <= Math.ceil((correctCompressions / requiredCompressions) * 5),
-                                            'bg-gray-600': i > Math.ceil((correctCompressions / requiredCompressions) * 5)
+                                            'bg-green-400 shadow-lg shadow-green-400/50':
+                                                i <= performanceDots,
+                                            'bg-gray-600': i > performanceDots,
                                         }"
                                     ></div>
                                 </div>
@@ -217,42 +189,67 @@
 
                         <!-- Feedback Status Central -->
                         <div class="mb-4">
-                            <div 
+                            <!-- Clés distinctes (chaînes) : la clé change à chaque compression pour rejouer
+                                 le flash, sans jamais entrer en collision avec la branche v-else -->
+                            <div
                                 v-if="isRunning"
-                                class="text-center p-4 rounded-lg border-2 transition-all duration-300"
+                                :key="`feedback-${feedbackKey}`"
+                                class="text-center p-3 sm:p-4 rounded-lg border-2"
                                 :class="{
-                                    'border-green-500 bg-green-500/10 text-green-400 success-flash': lastCompressionSuccess,
-                                    'border-red-500 bg-red-500/10 text-red-400 error-flash': lastCompressionSuccess === false,
-                                    'border-gray-500 bg-gray-500/10 text-gray-400': lastCompressionSuccess === null
+                                    'border-green-500 bg-green-500/10 text-green-400 success-flash':
+                                        lastCompressionSuccess === true,
+                                    'border-red-500 bg-red-500/10 text-red-400 error-flash':
+                                        lastCompressionSuccess === false,
+                                    'border-gray-500 bg-gray-500/10 text-gray-400':
+                                        lastCompressionSuccess === null,
                                 }"
                             >
-                                <div class="flex items-center justify-center gap-2 mb-2">
-                                    <i 
+                                <div
+                                    class="flex items-center justify-center gap-2 mb-2"
+                                >
+                                    <CheckCircle
                                         v-if="lastCompressionSuccess === true"
-                                        data-lucide="check-circle" 
-                                        class="w-6 h-6 text-green-400"
-                                    ></i>
-                                    <i 
+                                        class="w-6 h-6 text-green-400 shrink-0"
+                                    />
+                                    <XCircle
                                         v-else-if="lastCompressionSuccess === false"
-                                        data-lucide="x-circle" 
-                                        class="w-6 h-6 text-red-400"
-                                    ></i>
-                                    <i 
+                                        class="w-6 h-6 text-red-400 shrink-0"
+                                    />
+                                    <Heart
                                         v-else
-                                        data-lucide="heart" 
-                                        class="w-6 h-6 text-gray-400"
-                                    ></i>
-                                    <span class="font-bold text-lg">
-                                        {{ lastCompressionSuccess === true ? 'COMPRESSION CORRECTE' : 
-                                           lastCompressionSuccess === false ? 'RYTHME INCORRECT' : 
-                                           'ATTENDEZ LE RYTHME' }}
+                                        class="w-6 h-6 text-gray-400 shrink-0"
+                                    />
+                                    <span class="font-bold text-base sm:text-lg">
+                                        {{
+                                            lastCompressionSuccess === true
+                                                ? "COMPRESSION CORRECTE"
+                                                : lastCompressionSuccess === false
+                                                  ? "RYTHME INCORRECT"
+                                                  : "SUIVEZ LE RYTHME"
+                                        }}
                                     </span>
                                 </div>
                                 <div class="text-sm">
-                                    {{ lastCompressionSuccess === true ? `+1 compression (${correctCompressions}/${requiredCompressions})` : 
-                                       lastCompressionSuccess === false ? 'Continuez ! Respectez le rythme' : 
-                                       'Attendez que la zone rouge s\'illumine' }}
+                                    {{
+                                        lastCompressionSuccess === true
+                                            ? `+1 compression (${correctCompressions}/${requiredCompressions})`
+                                            : lastCompressionSuccess === false
+                                              ? "Continuez ! Appuyez quand le curseur est dans la zone rouge"
+                                              : "Appuyez quand le curseur blanc traverse la zone rouge"
+                                    }}
                                 </div>
+                            </div>
+                            <div
+                                v-else
+                                key="feedback-idle"
+                                class="text-center p-3 sm:p-4 rounded-lg border-2 border-gray-600 bg-gray-700/20 text-gray-400 text-sm"
+                            >
+                                Lancez le métronome avec
+                                <span class="text-green-400 font-bold"
+                                    >DÉBUT RCP</span
+                                >, puis réalisez
+                                {{ requiredCompressions }} compressions en
+                                rythme.
                             </div>
                         </div>
 
@@ -268,16 +265,18 @@
                                             !isCompressing,
                                     }"
                                 >
-                                    <i
-                                        data-lucide="heart"
-                                        class="w-12 h-12 text-cyber-red transition-all duration-300"
+                                    <!-- Le cœur bat au rythme du métronome : il est le plus gros au milieu du cycle -->
+                                    <span
+                                        class="inline-flex"
                                         :class="{
-                                            'heartbeat':
-                                                isBeating,
-                                            'compression-pulse':
-                                                isCompressing,
+                                            'compression-pulse': isCompressing,
                                         }"
-                                    ></i>
+                                    >
+                                        <Heart
+                                            class="w-12 h-12 text-cyber-red"
+                                            :class="{ heartbeat: isRunning }"
+                                        />
+                                    </span>
 
                                     <!-- Compression depth indicator -->
                                     <div
@@ -289,30 +288,26 @@
                                         ></div>
                                     </div>
 
-                                    <!-- Success/Error overlay -->
+                                    <!-- Success/Error overlay : une seule impulsion par compression
+                                         (clé par pression), pour ne pas masquer le cœur en continu -->
                                     <div
                                         v-if="lastCompressionSuccess !== null"
-                                        class="absolute inset-0 flex items-center justify-center"
+                                        :key="`ping-${feedbackKey}`"
+                                        class="absolute inset-0 flex items-center justify-center pointer-events-none"
                                     >
                                         <div
-                                            class="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500"
-                                            :class="{
-                                                'bg-green-500/80 text-white scale-110 animate-ping':
-                                                    lastCompressionSuccess === true,
-                                                'bg-red-500/80 text-white scale-110 animate-ping':
-                                                    lastCompressionSuccess === false,
-                                            }"
+                                            class="w-16 h-16 rounded-full flex items-center justify-center text-white feedback-ping"
+                                            :class="
+                                                lastCompressionSuccess === true
+                                                    ? 'bg-green-500/80'
+                                                    : 'bg-red-500/80'
+                                            "
                                         >
-                                            <i
+                                            <Check
                                                 v-if="lastCompressionSuccess === true"
-                                                data-lucide="check"
                                                 class="w-8 h-8"
-                                            ></i>
-                                            <i
-                                                v-else
-                                                data-lucide="x"
-                                                class="w-8 h-8"
-                                            ></i>
+                                            />
+                                            <X v-else class="w-8 h-8" />
                                         </div>
                                     </div>
                                 </div>
@@ -320,67 +315,112 @@
 
                             <!-- Rhythm synchronizer -->
                             <div
-                                class="bg-gray-900/50 border border-gray-600 rounded p-4"
+                                ref="syncPanel"
+                                class="bg-gray-900/50 border border-gray-600 rounded p-3 sm:p-4"
                             >
                                 <div
                                     class="text-xs text-gray-400 font-tech mb-3 text-center"
                                 >
                                     SYNCHRONISEUR RYTHMIQUE
                                 </div>
+                                <!-- La barre représente un cycle de 600 ms ; la zone rouge correspond exactement
+                                     à la fenêtre acceptée (de 150 à 450 ms après chaque battement). -->
                                 <div
-                                    class="relative w-72 h-8 mx-auto bg-gray-700 rounded-full overflow-hidden border border-gray-600"
+                                    class="relative w-full max-w-xs h-8 mx-auto bg-gray-700 rounded-full overflow-hidden border border-gray-600"
                                 >
-                                    <!-- Zone rouge de tolérance (correspond à la fenêtre de timing réelle) -->
+                                    <!-- Remplissage bleu : avancement dans le cycle (sans transition) -->
                                     <div
-                                        class="absolute top-0 h-full bg-red-500/40 rounded-full border border-red-400/50 transition-all duration-300"
+                                        class="absolute inset-y-0 left-0 w-full origin-left bg-gradient-to-r from-cyber-blue/30 to-blue-400/40"
                                         :style="{
-                                            left: `${50 - (beatWindow / beatInterval) * 25}%`,
-                                            width: `${(beatWindow / beatInterval) * 50}%`
-                                        }"
-                                        :class="{
-                                            'bg-red-500/60 border-red-400 shadow-lg shadow-red-400/50':
-                                                isInBeatWindow,
+                                            transform: `scaleX(${beatProgress / 100})`,
                                         }"
                                     ></div>
-                                    
-                                    <!-- Barre de progression bleue -->
+
+                                    <!-- Zone rouge de tolérance = fenêtre de timing réelle -->
                                     <div
-                                        class="absolute top-0 left-0 h-full bg-gradient-to-r from-cyber-blue to-blue-400 transition-all duration-300 ease-linear"
-                                        :style="{ width: `${beatProgress}%` }"
+                                        class="absolute inset-y-0 z-10 rounded-full border"
+                                        :class="
+                                            isInBeatWindow
+                                                ? 'bg-red-500/60 border-red-300 shadow-lg shadow-red-400/50'
+                                                : 'bg-red-500/25 border-red-400/50'
+                                        "
+                                        :style="{
+                                            left: `${zoneLeftPercent}%`,
+                                            width: `${zoneWidthPercent}%`,
+                                        }"
                                     ></div>
-                                    
-                                    <!-- Point indicateur -->
+
+                                    <!-- Repère du moment idéal (milieu du cycle) -->
                                     <div
-                                        class="absolute inset-0 flex items-center justify-center"
+                                        class="absolute inset-y-0 left-1/2 z-10 flex items-center -translate-x-1/2"
                                     >
                                         <div
-                                            class="w-6 h-6 bg-cyber-red rounded-full transition-all duration-200 border-2 border-white shadow-lg"
+                                            class="w-3 h-3 bg-cyber-red rounded-full border-2 border-white shadow-lg transition-transform duration-100"
                                             :class="{
-                                                'scale-150 bg-red-400 shadow-red-400/50 animate-ping':
-                                                    isInBeatWindow,
-                                                'animate-pulse':
-                                                    isBeating,
+                                                'scale-150': isInBeatWindow,
                                             }"
                                         ></div>
                                     </div>
+
+                                    <!-- Curseur : position exacte dans le cycle -->
+                                    <div
+                                        class="absolute inset-y-0 z-20 w-1 -ml-0.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+                                        :style="{ left: `${beatProgress}%` }"
+                                    ></div>
                                 </div>
                                 <div
                                     class="text-xs text-gray-500 mt-3 text-center font-tech"
                                 >
-                                    <span class="text-cyber-blue font-bold">Appuyez sur ESPACE</span>
-                                    <span class="text-cyber-red font-bold"> quand la zone rouge s'illumine</span>
+                                    <span class="text-cyber-blue font-bold"
+                                        >Appuyez sur ESPACE, ENTRÉE ou le bouton
+                                        COMPRESSER</span
+                                    >
+                                    <span class="text-cyber-red font-bold">
+                                        quand le curseur blanc traverse la zone
+                                        rouge</span
+                                    >
+                                    <span class="block mt-1 text-gray-500"
+                                        >Une manette ou un bouton USB fonctionne
+                                        aussi. Une seule compression compte par
+                                        cycle.</span
+                                    >
                                 </div>
-                                
+
+                                <!-- Bouton tactile / souris -->
+                                <button
+                                    v-if="isRunning"
+                                    ref="compressButton"
+                                    type="button"
+                                    class="compress-button mt-4 w-full px-3 py-5 sm:py-6 bg-cyber-red hover:bg-red-500 active:scale-95 text-white font-cyber font-bold text-lg sm:text-2xl rounded-lg transition-transform border-2 border-red-400 shadow-lg shadow-cyber-red/30 select-none flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3"
+                                    @pointerdown.prevent="handleCompressPointer"
+                                    @contextmenu.prevent
+                                >
+                                    <span class="flex items-center gap-2">
+                                        <HeartPulse
+                                            class="w-6 h-6 sm:w-7 sm:h-7 shrink-0"
+                                        />
+                                        COMPRESSER
+                                    </span>
+                                    <span
+                                        class="text-sm sm:text-base font-tech opacity-80"
+                                        >{{ correctCompressions }}/{{
+                                            requiredCompressions
+                                        }}</span
+                                    >
+                                </button>
+
                                 <!-- Rythme visuel -->
                                 <div class="mt-3 flex justify-center">
                                     <div class="flex gap-1">
-                                        <div 
-                                            v-for="i in 4" 
+                                        <div
+                                            v-for="i in 4"
                                             :key="i"
                                             class="w-2 h-2 rounded-full transition-all duration-200"
                                             :class="{
-                                                'bg-cyber-blue animate-pulse': isBeating && (i % 2 === 0),
-                                                'bg-gray-500': !isBeating || (i % 2 === 1)
+                                                'bg-cyber-blue animate-pulse':
+                                                    isBeating && i % 2 === 0,
+                                                'bg-gray-500':
+                                                    !isBeating || i % 2 === 1,
                                             }"
                                         ></div>
                                     </div>
@@ -390,37 +430,31 @@
                     </div>
 
                     <!-- Contrôles médicaux -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
-                            @click="startSimulation"
                             v-if="!isRunning"
+                            type="button"
+                            @click="startSimulation"
                             class="px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-cyber font-bold rounded-lg transition-all border border-green-500 shadow-lg hover:shadow-green-500/25"
                         >
-                            <i
-                                data-lucide="play"
-                                class="w-4 h-4 inline mr-2"
-                            ></i>
+                            <Play class="w-4 h-4 inline mr-2" />
                             DÉBUT RCP
                         </button>
                         <button
+                            v-else
+                            type="button"
                             @click="stopSimulation"
-                            v-if="isRunning"
                             class="px-4 py-3 bg-red-600 hover:bg-red-500 text-white font-cyber font-bold rounded-lg transition-all border border-red-500 shadow-lg hover:shadow-red-500/25"
                         >
-                            <i
-                                data-lucide="square"
-                                class="w-4 h-4 inline mr-2"
-                            ></i>
+                            <Square class="w-4 h-4 inline mr-2" />
                             ARRÊT URGENT
                         </button>
                         <button
+                            type="button"
                             @click="resetSimulation"
                             class="px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white font-cyber rounded-lg transition-all border border-gray-500 shadow-lg hover:shadow-gray-500/25"
                         >
-                            <i
-                                data-lucide="rotate-ccw"
-                                class="w-4 h-4 inline mr-2"
-                            ></i>
+                            <RotateCcw class="w-4 h-4 inline mr-2" />
                             RESET
                         </button>
                     </div>
@@ -428,45 +462,102 @@
             </div>
         </div>
 
+        <!-- Patient stabilisé : récapitulatif pédagogique -->
+        <div
+            v-else
+            class="bg-gray-800/60 backdrop-blur-md border-2 border-cyber-green rounded-lg p-4 sm:p-6 scanline space-y-4 fade-in"
+        >
+            <div class="flex items-center gap-2">
+                <CheckCircle class="w-6 h-6 text-cyber-green shrink-0" />
+                <h3
+                    class="font-cyber font-bold text-cyber-green text-lg sm:text-xl"
+                >
+                    PATIENT STABILISÉ
+                </h3>
+            </div>
+            <p class="text-gray-300 text-sm sm:text-base">
+                {{ requiredCompressions }} compressions au bon rythme : le sang a
+                continué d'irriguer le cerveau jusqu'au choc du défibrillateur.
+            </p>
+            <div
+                class="bg-gray-900/60 border border-cyber-blue/40 rounded-lg p-4"
+            >
+                <div class="flex items-center gap-2 mb-3">
+                    <BookOpen class="w-4 h-4 text-cyber-blue shrink-0" />
+                    <span class="font-cyber font-bold text-cyber-blue text-sm">
+                        À RETENIR
+                    </span>
+                </div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                    <li class="flex items-start gap-2">
+                        <Phone class="w-4 h-4 text-cyber-blue shrink-0 mt-0.5" />
+                        <span
+                            ><strong class="text-white">Alerter :</strong> appelez
+                            le 15 (SAMU) ou le 112.</span
+                        >
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <HeartPulse
+                            class="w-4 h-4 text-cyber-red shrink-0 mt-0.5"
+                        />
+                        <span
+                            ><strong class="text-white">Masser :</strong> mains au
+                            centre de la poitrine, bras tendus, enfoncez de 5 à
+                            6 cm, 100 à 120 fois par minute, en laissant la
+                            poitrine remonter entre chaque compression.</span
+                        >
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <Zap class="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+                        <span
+                            ><strong class="text-white">Défibriller :</strong>
+                            faites apporter un DAE (défibrillateur automatisé
+                            externe), allumez-le et suivez ses instructions
+                            vocales. Ne vous arrêtez qu'à l'arrivée des
+                            secours.</span
+                        >
+                    </li>
+                </ul>
+                <p class="mt-3 text-xs text-gray-400">
+                    Le saviez-vous ? En France, tout le monde peut utiliser un DAE,
+                    même sans formation, et chaque minute sans massage fait perdre
+                    environ 10 % de chances de survie.
+                </p>
+            </div>
+        </div>
+
         <!-- Indices -->
         <div class="mt-8">
             <div
-                class="bg-gray-800/40 backdrop-blur-md border border-gray-600 rounded-lg p-6"
+                class="bg-gray-800/40 backdrop-blur-md border border-gray-600 rounded-lg p-4 sm:p-6"
             >
                 <div class="flex items-center gap-2 mb-4">
-                    <i
-                        data-lucide="lightbulb"
-                        class="w-5 h-5 text-yellow-500"
-                    ></i>
-                    <h4 class="font-cyber font-bold text-yellow-500">
-                        INDICES
-                    </h4>
+                    <Lightbulb class="w-5 h-5 text-yellow-500" />
+                    <h4 class="font-cyber font-bold text-yellow-500">INDICES</h4>
                 </div>
 
-                <div class="space-y-2 text-sm text-gray-300">
-                    <div v-if="hintsShown >= 1" class="fade-in">
-                        💡 Le rythme du massage cardiaque est de 100-120
-                        compressions par minute
-                    </div>
-                    <div v-if="hintsShown >= 2" class="fade-in">
-                        💡 Suivez le rythme de la musique "Stayin' Alive" des
-                        Bee Gees
-                    </div>
-                    <div v-if="hintsShown >= 3" class="fade-in">
-                        💡 Appuyez sur ESPACE quand la zone rouge s'illumine pour compter comme
-                        compression correcte
-                    </div>
-                    <div v-if="hintsShown >= 4" class="fade-in">
-                        💡 La zone rouge s'illumine quand le timing est correct (vers 300ms du cycle)
+                <div class="space-y-2 text-sm text-gray-300" aria-live="polite">
+                    <div
+                        v-for="(hint, i) in HINTS.slice(0, hintsShown)"
+                        :key="i"
+                        class="fade-in"
+                    >
+                        💡 {{ hint }}
                     </div>
                 </div>
 
                 <button
+                    v-if="!puzzleSolved"
+                    type="button"
                     @click="showHint"
-                    v-if="hintsShown < 4"
-                    class="mt-4 px-4 py-2 border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 font-tech text-sm rounded transition-all"
+                    :disabled="!hasMoreHints"
+                    class="mt-4 px-4 py-2 border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 disabled:border-gray-600 disabled:text-gray-500 disabled:hover:bg-transparent disabled:cursor-not-allowed font-tech text-sm rounded transition-all"
                 >
-                    AFFICHER UN INDICE
+                    {{
+                        hasMoreHints
+                            ? `AFFICHER UN INDICE (${HINTS.length - hintsShown} restant${HINTS.length - hintsShown > 1 ? "s" : ""})`
+                            : "Plus d'indice disponible"
+                    }}
                 </button>
             </div>
         </div>
@@ -474,71 +565,213 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
+import {
+    BookOpen,
+    Check,
+    CheckCircle,
+    Heart,
+    HeartPulse,
+    Lightbulb,
+    Monitor,
+    Phone,
+    Play,
+    RotateCcw,
+    Square,
+    X,
+    XCircle,
+    Zap,
+} from "lucide-vue-next";
 import GameRoom from "../GameRoom.vue";
 import { createFireworks } from "../../utils/fireworks";
 import { useToast } from "../../composables/useToast";
 import { useGameState } from "../../composables/useGameState";
 
+const ROOM_ID = "heart";
+
 const emit = defineEmits(["exit-room", "room-completed"]);
 const { showSuccess, showError } = useToast();
-const { addError, addHint, completeRoom, PENALTY_PER_ERROR } = useGameState();
+const { gameState, addError, addHint, completeRoom, PENALTY_PER_ERROR } =
+    useGameState();
 
 const roomData = {
     title: "SALLE DU CŒUR",
     subtitle: "Arrêt cardiaque simulé",
     description:
-        "Un patient fait un arrêt cardiaque ! Vous devez effectuer un massage cardiaque d'urgence en respectant le rythme correct de 100 compressions par minute.",
+        "Un patient fait un arrêt cardiaque ! Les secours (15 ou 112) sont prévenus et quelqu'un est parti chercher le défibrillateur (DAE). En attendant, réalisez 30 compressions thoraciques en rythme : le métronome bat à 100 compressions par minute (la recommandation est de 100 à 120 par minute).",
     objective: "Apprendre les gestes de premiers secours",
     icon: "heart",
     color: "#ff00ff",
 };
 
+const HINTS = [
+    "Le massage cardiaque se pratique à 100-120 compressions par minute. Ici, le métronome bat à 100/min : une compression toutes les 0,6 seconde.",
+    "Appuyez quand le curseur blanc traverse la zone rouge : elle couvre toute la moitié centrale de chaque cycle de 0,6 s (de 0,15 s à 0,45 s).",
+    "Une seule compression compte par cycle : inutile de marteler la touche, et une pression hors de la zone rouge coûte une pénalité. Attendez le cycle suivant.",
+    "Le cœur grossit et le pic de l'ECG apparaît pile au milieu de la zone rouge : appuyez à cet instant. Pour garder le rythme, pensez à « Stayin' Alive » des Bee Gees (environ 100 battements par minute).",
+];
+
 const requiredCompressions = 30;
+
+// Rythme : 100 compressions/min = un battement toutes les 600 ms
+const beatInterval = 600;
+// Fenêtre acceptée : ±150 ms autour du milieu du cycle, soit de 150 à 450 ms après chaque battement
+const beatWindow = 150;
+const WINDOW_START = beatInterval / 2 - beatWindow;
+const WINDOW_END = beatInterval / 2 + beatWindow;
+// La zone rouge du synchroniseur est dessinée à partir de la même fenêtre (25 % → 75 % de la barre)
+const zoneLeftPercent = (WINDOW_START / beatInterval) * 100;
+const zoneWidthPercent = ((WINDOW_END - WINDOW_START) / beatInterval) * 100;
+// Durée du « pic » ECG / des points de rythme, centrés sur le moment idéal (milieu de la zone rouge) :
+// tous les repères visuels (curseur, cœur, ECG, points) désignent le même instant
+const BEAT_FLASH_DURATION = 150;
+const BEAT_FLASH_START = beatInterval / 2 - BEAT_FLASH_DURATION / 2;
+const BEAT_FLASH_END = beatInterval / 2 + BEAT_FLASH_DURATION / 2;
+const COMPRESS_ANIMATION_DURATION = 200;
+const FEEDBACK_DURATION = 1000;
+
 const correctCompressions = ref(0);
 const puzzleSolved = ref(false);
+// Garde : la salle ne peut être validée qu'une seule fois (touche répétée, manette, timers tardifs…)
 const isCompleted = ref(false);
-const hintsShown = ref(0);
+// Les indices déjà payés (même lors d'une visite précédente) sont réaffichés gratuitement
+const hintsShown = ref(
+    Math.min(HINTS.length, gameState.roomHints?.[ROOM_ID] || 0),
+);
+const hasMoreHints = computed(() => hintsShown.value < HINTS.length);
 const isRunning = ref(false);
 const isCompressing = ref(false);
 const isBeating = ref(false);
 const beatProgress = ref(0);
 const isInBeatWindow = ref(false);
 const lastCompressionSuccess = ref(null);
+// Change à chaque compression pour rejouer l'animation de flash du bloc de statut
+const feedbackKey = ref(0);
+const compressButton = ref(null);
+const syncPanel = ref(null);
 
-// Rythme : 100 BPM = 600ms par compression (rythme réaliste)
-const beatInterval = 600;
-const beatWindow = 150; // Tolérance ±150ms
-let beatTimer = null;
+const progressPercent = computed(() =>
+    Math.round((correctCompressions.value / requiredCompressions) * 100),
+);
+const performanceDots = computed(() =>
+    Math.ceil((correctCompressions.value / requiredCompressions) * 5),
+);
+const minimumRemainingSeconds = computed(() =>
+    Math.ceil(
+        ((requiredCompressions - correctCompressions.value) * beatInterval) /
+            1000,
+    ),
+);
+
+let simulationStart = 0;
+let lastJudgedBeat = -1;
+let animationFrameId = null;
 let compressTimer = null;
-let lastBeatTime = 0;
-let gamepadInterval = null;
-let lastGamepadButtonState = false;
+let feedbackTimer = null;
+let lastGamepadPressed = false;
+let gamepadAvailable = true;
+// Dernier mode d'interaction : un bouton focalisé au clavier (Tab) doit pouvoir réagir à Entrée/Espace,
+// alors qu'un bouton resté focalisé après un clic souris ne doit pas voler les compressions.
+let lastInteraction = "keyboard";
 
-const startSimulation = () => {
-    if (isRunning.value) return;
+// Le temps est calculé depuis une origine fixe : pas de dérive, le rythme reste exactement à 100/min
+const getElapsed = (now) => Math.max(0, now - simulationStart);
+const getPhase = (now) => getElapsed(now) % beatInterval;
+const getBeatIndex = (now) => Math.floor(getElapsed(now) / beatInterval);
+const isInWindow = (phase) => phase >= WINDOW_START && phase <= WINDOW_END;
 
-    console.log('🎮 SIMULATION DÉMARRÉE');
-    isRunning.value = true;
+const cancelLoop = () => {
+    if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+};
+
+const clearFeedbackTimers = () => {
+    clearTimeout(compressTimer);
+    compressTimer = null;
+    clearTimeout(feedbackTimer);
+    feedbackTimer = null;
+};
+
+// Gamepad API : absente hors contexte sécurisé (http://IP) ou bloquée par une Permissions-Policy
+const isAnyGamepadButtonPressed = () => {
+    if (!gamepadAvailable) return false;
+    if (
+        typeof navigator === "undefined" ||
+        typeof navigator.getGamepads !== "function"
+    ) {
+        gamepadAvailable = false;
+        return false;
+    }
+    let gamepads;
+    try {
+        gamepads = navigator.getGamepads() || [];
+    } catch {
+        gamepadAvailable = false;
+        return false;
+    }
+    for (let i = 0; i < gamepads.length; i++) {
+        const gamepad = gamepads[i];
+        if (gamepad?.buttons?.some((button) => button.pressed)) return true;
+    }
+    return false;
+};
+
+// Une fenêtre modale (briefing, profil…) est ouverte par-dessus la salle : aucune compression
+const isModalOpen = () => !!document.querySelector('[aria-modal="true"]');
+
+// Front montant sur l'ensemble des manettes : maintenir un bouton ne compte qu'une fois
+const pollGamepads = () => {
+    const pressed = isAnyGamepadButtonPressed();
+    if (pressed && !lastGamepadPressed && !isModalOpen()) triggerCompression();
+    lastGamepadPressed = pressed;
+};
+
+const tick = () => {
+    animationFrameId = null;
+    if (!isRunning.value) return;
+
+    const phase = getPhase(performance.now());
+    beatProgress.value = (phase / beatInterval) * 100;
+    isInBeatWindow.value = isInWindow(phase);
+    isBeating.value = phase >= BEAT_FLASH_START && phase < BEAT_FLASH_END;
+
+    pollGamepads();
+
+    if (isRunning.value) animationFrameId = requestAnimationFrame(tick);
+};
+
+const startSimulation = async () => {
+    if (isRunning.value || isCompleted.value) return;
+
+    // Le bouton DÉBUT RCP disparaît : on évite qu'un élément garde le focus et capte Espace/Entrée
+    if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+    }
+
     correctCompressions.value = 0;
-    lastBeatTime = Date.now();
+    lastCompressionSuccess.value = null;
+    lastJudgedBeat = -1;
+    // Un bouton de manette déjà enfoncé au démarrage ne compte pas comme compression
+    lastGamepadPressed = isAnyGamepadButtonPressed();
+    simulationStart = performance.now();
+    isRunning.value = true;
+    animationFrameId = requestAnimationFrame(tick);
 
-    // Démarrer le rythme
-    startBeatTimer();
-    
-    // Démarrer le polling gamepad
-    startGamepadPolling();
+    await nextTick();
+    syncPanel.value?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
 };
 
 const stopSimulation = () => {
-    console.log('🛑 SIMULATION ARRÊTÉE');
     isRunning.value = false;
-    clearInterval(beatTimer);
-    clearTimeout(compressTimer);
-    clearInterval(gamepadInterval);
+    cancelLoop();
+    clearFeedbackTimers();
+    isCompressing.value = false;
     isBeating.value = false;
     beatProgress.value = 0;
     isInBeatWindow.value = false;
+    lastCompressionSuccess.value = null;
 };
 
 const resetSimulation = () => {
@@ -546,171 +779,231 @@ const resetSimulation = () => {
     correctCompressions.value = 0;
 };
 
-const startBeatTimer = () => {
-    beatTimer = setInterval(() => {
-        const now = Date.now();
-        const elapsed = now - lastBeatTime;
-        const progress = (elapsed / beatInterval) * 100;
+const completeSimulation = () => {
+    if (isCompleted.value) return;
+    isCompleted.value = true;
+    stopSimulation();
+    puzzleSolved.value = true;
 
-        beatProgress.value = Math.min(progress, 100);
-        isInBeatWindow.value =
-            Math.abs(elapsed - beatInterval / 2) < beatWindow;
+    // Synchrone et une seule fois (contrat des salles)
+    completeRoom(ROOM_ID);
+    emit("room-completed", ROOM_ID);
 
-        if (elapsed >= beatInterval) {
-            // Nouveau battement
-            isBeating.value = true;
-            lastBeatTime = now;
-
-            // Reset après un court instant
-            setTimeout(() => {
-                isBeating.value = false;
-            }, 200);
-
-            beatProgress.value = 0;
-        }
-    }, 50);
-};
-
-const startGamepadPolling = () => {
-    console.log('🎮 Démarrage du polling gamepad...');
-    gamepadInterval = setInterval(() => {
-        const gamepads = navigator.getGamepads();
-        for (let i = 0; i < gamepads.length; i++) {
-            const gamepad = gamepads[i];
-            if (gamepad) {
-                // Vérifier tous les boutons
-                for (let j = 0; j < gamepad.buttons.length; j++) {
-                    const button = gamepad.buttons[j];
-                    if (button.pressed && !lastGamepadButtonState) {
-                        console.log(`🎮 GAMEPAD BUTTON ${j} PRESSED!`, {
-                            gamepadIndex: i,
-                            buttonIndex: j,
-                            value: button.value,
-                            gamepadId: gamepad.id
-                        });
-                        lastGamepadButtonState = true;
-                        triggerCompression();
-                        break;
-                    }
-                }
-                if (!gamepad.buttons.some(b => b.pressed)) {
-                    lastGamepadButtonState = false;
-                }
-            }
-        }
-    }, 50); // Poll rapide pour détecter les pressions
+    // App quitte la salle dès l'événement : le message à retenir passe aussi par le toast
+    createFireworks(3000);
+    showSuccess(
+        "PATIENT SAUVÉ !",
+        "Massage réussi : le sang a irrigué le cerveau jusqu'au choc du défibrillateur. À retenir : appeler le 15 ou le 112, masser (5 à 6 cm, 100 à 120 par minute), défibriller avec un DAE.",
+        7000,
+    );
 };
 
 const triggerCompression = () => {
-    if (!isRunning.value) {
-        console.log('⚠️ Simulation non démarrée, compression ignorée');
-        return;
-    }
+    if (!isRunning.value || isCompleted.value) return;
 
-    console.log('💓 COMPRESSION DÉCLENCHÉE!');
+    const now = performance.now();
+    const beat = getBeatIndex(now);
+    // Une seule compression évaluée par battement : marteler la touche ne rapporte rien
+    if (beat === lastJudgedBeat) return;
+    lastJudgedBeat = beat;
+
+    const isCorrectTiming = isInWindow(getPhase(now));
+
     isCompressing.value = true;
+    clearTimeout(compressTimer);
+    compressTimer = setTimeout(() => {
+        compressTimer = null;
+        isCompressing.value = false;
+    }, COMPRESS_ANIMATION_DURATION);
 
-    // Vérifier si dans la fenêtre de rythme
-    const now = Date.now();
-    const timeSinceLastBeat = now - lastBeatTime;
-    const isCorrectTiming =
-        Math.abs(timeSinceLastBeat - beatInterval / 2) < beatWindow;
-
-    console.log('⏱️ Timing check:', {
-        timeSinceLastBeat,
-        targetTime: beatInterval / 2,
-        tolerance: beatWindow,
-        isCorrect: isCorrectTiming
-    });
+    lastCompressionSuccess.value = isCorrectTiming;
+    feedbackKey.value++;
+    clearTimeout(feedbackTimer);
+    feedbackTimer = setTimeout(() => {
+        feedbackTimer = null;
+        lastCompressionSuccess.value = null;
+    }, FEEDBACK_DURATION);
 
     if (isCorrectTiming) {
         correctCompressions.value++;
-        lastCompressionSuccess.value = true;
-        
-        console.log('✅ COMPRESSION CORRECTE!', {
-            total: correctCompressions.value,
-            required: requiredCompressions
-        });
-        
-        showSuccess(
-            "COMPRESSION CORRECTE",
-            `+1 compression (${correctCompressions.value}/${requiredCompressions})`,
-        );
-
         if (correctCompressions.value >= requiredCompressions) {
             completeSimulation();
         }
     } else {
-        addError("heart");
-        lastCompressionSuccess.value = false;
-        
-        console.log('❌ COMPRESSION RATÉE!');
-        
+        addError(ROOM_ID);
         showError(
             "RYTHME INCORRECT",
-            `Compression hors rythme. Continuez ! +${PENALTY_PER_ERROR}s de pénalité`,
+            `Compression hors de la zone rouge. Continuez ! +${PENALTY_PER_ERROR}s de pénalité`,
+            3000,
         );
     }
-
-    // Reset compression après un instant
-    setTimeout(() => {
-        isCompressing.value = false;
-    }, 200);
-
-    // Reset le feedback après 2 secondes
-    setTimeout(() => {
-        lastCompressionSuccess.value = null;
-    }, 2000);
 };
 
-const handleKeyPress = (event) => {
-    console.log('⌨️ KEY EVENT DETECTED:', {
-        type: event.type,
-        code: event.code,
-        key: event.key,
-        keyCode: event.keyCode,
-        which: event.which,
-        isTrusted: event.isTrusted,
-        target: event.target?.tagName,
-        targetId: event.target?.id,
-        timestamp: event.timeStamp
-    });
-    
-    const validKeys = [
-        'Space', 'Enter', 'NumpadEnter',
-        ' ', 'Enter',
-        13, 32 // keyCodes
-    ];
-    
-    const isValidKey = 
-        validKeys.includes(event.code) ||
-        validKeys.includes(event.key) ||
-        validKeys.includes(event.keyCode) ||
-        validKeys.includes(event.which);
-    
-    if (isValidKey && isRunning.value) {
-        console.log('✅ TOUCHE VALIDE DÉTECTÉE - Déclenchement compression');
-        event.preventDefault();
-        triggerCompression();
-    } else {
-        console.log('⚠️ Touche ignorée:', {
-            isValidKey,
-            isRunning: isRunning.value
-        });
+const handleCompressPointer = (event) => {
+    // Souris : bouton principal uniquement (le tactile et le stylet arrivent avec button = 0)
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    triggerCompression();
+};
+
+const showHint = () => {
+    if (puzzleSolved.value || !hasMoreHints.value) return;
+    hintsShown.value++;
+    const alreadyPaid = gameState.roomHints?.[ROOM_ID] || 0;
+    if (hintsShown.value > alreadyPaid) addHint(ROOM_ID);
+
+    // Pendant le massage, le bouton (même activé au clavier) ne doit pas garder le focus :
+    // sinon l'Espace suivant, destiné à une compression, achèterait un autre indice
+    if (isRunning.value && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
     }
 };
 
-// Attacher les listeners et nettoyer au démontage
+const TEXT_ENTRY_SELECTOR =
+    'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+const MODAL_SELECTOR = '[role="dialog"], [aria-modal="true"]';
+const CONTROL_SELECTOR =
+    'button, a[href], summary, [role="button"], [role="link"]';
+
+const isCompressionKey = (event) =>
+    event.code === "Space" ||
+    event.code === "Enter" ||
+    event.code === "NumpadEnter" ||
+    event.key === " " ||
+    event.key === "Enter";
+
+// Compression uniquement sur keydown (jamais keyup), sans répétition automatique
+const handleKeyDown = (event) => {
+    if (event.key === "Tab") {
+        lastInteraction = "keyboard";
+        return;
+    }
+    if (!isRunning.value || isCompleted.value) return;
+    if (!isCompressionKey(event)) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+    const target = event.target instanceof Element ? event.target : null;
+    // Saisie de texte ou fenêtre modale (même si le focus est resté hors de la modale) : on ne capture rien
+    if (target?.closest(TEXT_ENTRY_SELECTOR) || target?.closest(MODAL_SELECTOR)) {
+        return;
+    }
+    if (isModalOpen()) return;
+    const control = target?.closest(CONTROL_SELECTOR);
+    const isOtherControl = !!control && control !== compressButton.value;
+    // Bouton atteint au clavier (ARRÊT URGENT, RESET, RETOUR…) : il réagit normalement
+    if (isOtherControl && lastInteraction === "keyboard") return;
+
+    // Évite le défilement de la page et l'activation d'un bouton resté focalisé après un clic
+    event.preventDefault();
+    if (isOtherControl) control.blur();
+    if (event.repeat) return;
+
+    triggerCompression();
+};
+
+const handlePointerDown = () => {
+    lastInteraction = "pointer";
+};
+
 onMounted(() => {
-    window.addEventListener('keydown', handleKeyPress, { passive: false });
-    window.addEventListener('keyup', handleKeyPress, { passive: false });
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointerdown", handlePointerDown, true);
 });
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeyPress);
-    window.removeEventListener('keyup', handleKeyPress);
-    clearInterval(beatTimer);
-    clearTimeout(compressTimer);
-    clearInterval(gamepadInterval);
+    stopSimulation();
+    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("pointerdown", handlePointerDown, true);
 });
 </script>
+
+<style scoped>
+/* Animations de feedback (restaurées) */
+@keyframes heartbeat {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes compressionPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes successFlash {
+    0%,
+    100% {
+        background-color: rgba(34, 197, 94, 0.1);
+        border-color: rgb(34, 197, 94);
+    }
+    50% {
+        background-color: rgba(34, 197, 94, 0.3);
+        border-color: rgb(34, 197, 94);
+    }
+}
+
+@keyframes errorFlash {
+    0%,
+    100% {
+        background-color: rgba(239, 68, 68, 0.1);
+        border-color: rgb(239, 68, 68);
+    }
+    50% {
+        background-color: rgba(239, 68, 68, 0.3);
+        border-color: rgb(239, 68, 68);
+    }
+}
+
+/* Même période que le métronome (600 ms) : le cœur est le plus gros au milieu du cycle */
+.heartbeat {
+    animation: heartbeat 0.6s ease-in-out infinite;
+}
+
+.compression-pulse {
+    animation: compressionPulse 0.2s ease-in-out;
+}
+
+/* Pastille ✓ / ✗ : une impulsion unique qui s'efface (le cœur reste visible ensuite) */
+@keyframes feedbackPing {
+    0% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+}
+
+.feedback-ping {
+    animation: feedbackPing 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+.success-flash {
+    animation: successFlash 0.5s ease-in-out;
+}
+
+.error-flash {
+    animation: errorFlash 0.5s ease-in-out;
+}
+
+/* Bouton tactile : pas de zoom au double-tap, pas de surbrillance ni de menu contextuel */
+.compress-button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+</style>

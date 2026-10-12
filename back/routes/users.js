@@ -1,147 +1,138 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
 const dataStore = require('../storage/dataStore');
+const { authenticateToken } = require('../middleware/auth');
+const { toPublicUser, toOwnScore, round1, toTime, byDateDesc } = require('../utils/serializers');
+const { normalizeUsername, normalizeTeamName, parsePagination, queryString } = require('../utils/validation');
+
 const router = express.Router();
 
-// Middleware d'authentification
-const { authenticateToken } = require('../middleware/auth');
+const PERIODS_MS = {
+    day: 24 * 60 * 60 * 1000,
+    week: 7 * 24 * 60 * 60 * 1000,
+    month: 30 * 24 * 60 * 60 * 1000,
+};
 
-// Le stockage est maintenant géré par dataStore
+const badRequest = (res, message) => res.status(400).json({
+    error: 'Données invalides',
+    message,
+    code: 'VALIDATION_ERROR',
+});
+
+const activeUsers = () => dataStore.getAllUsers().filter((user) => user.isActive !== false);
 
 // Récupérer le profil de l'utilisateur connecté
 router.get('/profile', authenticateToken, (req, res) => {
-    try {
-        const user = dataStore.getUser(req.user.userId);
-        
-        if (!user || !user.isActive) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-
-        res.json({
-            success: true,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                teamName: user.teamName,
-                createdAt: user.createdAt,
-                lastLogin: user.lastLogin,
-                gamesPlayed: user.gamesPlayed,
-                bestScore: user.bestScore,
-                totalScore: user.totalScore
-            }
-        });
-    } catch (error) {
-        console.error('Erreur récupération profil:', error);
-        res.status(500).json({ error: 'Erreur interne du serveur' });
-    }
+    res.json({
+        success: true,
+        user: toPublicUser(req.currentUser)
+    });
 });
 
-// Mettre à jour le profil
+// Mettre à jour le profil (nom d'utilisateur et/ou nom d'équipe)
 router.put('/profile', authenticateToken, (req, res) => {
     try {
-        const { username, teamName } = req.body;
-        const user = dataStore.getUser(req.user.userId);
-        
-        if (!user || !user.isActive) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
+        const body = req.body || {};
+        const user = req.currentUser;
+        const changes = {};
 
-        // Vérifier si le nouveau nom d'utilisateur est déjà pris
-        if (username && username !== user.username) {
-            const existingUser = Array.from(users.values()).find(u => 
-                u.username === username && u.id !== user.id
-            );
-            
-            if (existingUser) {
-                return res.status(409).json({
-                    error: 'Nom d\'utilisateur déjà pris'
-                });
+        if (body.username !== undefined) {
+            const username = normalizeUsername(body.username);
+            if (username.error) return badRequest(res, username.error);
+
+            if (username.value !== user.username) {
+                const canonical = (value) => value.replace(/\s+/g, ' ').trim().toLowerCase();
+                const wanted = canonical(username.value);
+                const taken = dataStore.getAllUsers().some((u) =>
+                    u.id !== user.id && typeof u.username === 'string' && canonical(u.username) === wanted
+                );
+                if (taken) {
+                    return res.status(409).json({
+                        error: 'Nom d\'utilisateur déjà pris',
+                        message: 'Ce nom d\'utilisateur est déjà pris.',
+                        code: 'ALREADY_EXISTS'
+                    });
+                }
+                changes.username = username.value;
             }
         }
 
-        // Mettre à jour les champs
-        if (username) user.username = username.trim();
-        if (teamName !== undefined) user.teamName = teamName?.trim() || null;
-        
-        user.updatedAt = new Date();
-        dataStore.setUser(user.id, user);
+        if (body.teamName !== undefined) {
+            const teamName = normalizeTeamName(body.teamName);
+            if (teamName.error) return badRequest(res, teamName.error);
+            changes.teamName = teamName.value;
+        }
+
+        let updated = user;
+        if (Object.keys(changes).length > 0) {
+            updated = { ...user, ...changes, updatedAt: new Date() };
+            dataStore.setUser(user.id, updated);
+            // Les classements affichent le nom actuel du joueur.
+            if (changes.username) {
+                dataStore.updateScoresByUser(user.id, { username: changes.username });
+            }
+        }
 
         res.json({
             success: true,
             message: 'Profil mis à jour',
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                teamName: user.teamName,
-                updatedAt: user.updatedAt
-            }
+            user: toPublicUser(updated)
         });
     } catch (error) {
-        console.error('Erreur mise à jour profil:', error);
+        console.error('Erreur mise à jour profil:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
 
-// Récupérer les statistiques de l'utilisateur
+// Récupérer les statistiques de l'utilisateur (calculées à partir de ses scores réels)
 router.get('/stats', authenticateToken, (req, res) => {
     try {
-        const user = dataStore.getUser(req.user.userId);
-        
-        if (!user || !user.isActive) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-
-        const stats = {
-            gamesPlayed: user.gamesPlayed,
-            bestScore: user.bestScore,
-            totalScore: user.totalScore,
-            averageScore: user.gamesPlayed > 0 ? Math.round(user.totalScore / user.gamesPlayed) : 0,
-            memberSince: user.createdAt,
-            lastLogin: user.lastLogin,
-            teamName: user.teamName
-        };
+        const user = req.currentUser;
+        const scores = dataStore.getScoresByUser(user.id);
+        const stats = dataStore.computeUserStats(user.id);
+        const completed = scores.filter((s) => s.completed === true);
+        const fastest = completed.reduce((best, s) => (best === null || s.duration < best ? s.duration : best), null);
+        const lastGame = scores.slice().sort(byDateDesc)[0];
 
         res.json({
             success: true,
-            stats
+            stats: {
+                ...stats,
+                completedGames: completed.length,
+                bestDuration: fastest,
+                lastGameAt: lastGame ? lastGame.submittedAt : null,
+                memberSince: user.createdAt || null,
+                lastLogin: user.lastLogin || null,
+                teamName: user.teamName || null
+            }
         });
     } catch (error) {
-        console.error('Erreur récupération stats:', error);
+        console.error('Erreur récupération stats:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
 
-// Récupérer l'historique des parties
+// Historique réel des parties de l'utilisateur connecté (plus récentes d'abord)
 router.get('/games', authenticateToken, (req, res) => {
     try {
-        const { limit = 10, offset = 0 } = req.query;
-        
-        // En production, récupérer depuis la base de données
-        const games = Array.from({ length: Math.min(parseInt(limit), 10) }, (_, index) => ({
-            id: uuidv4(),
-            date: new Date(Date.now() - index * 86400000), // Simulation
-            score: Math.floor(Math.random() * 1000) + 500,
-            duration: Math.floor(Math.random() * 3600) + 1800, // 30-90 minutes
-            completed: Math.random() > 0.2, // 80% de réussite
-            roomsCompleted: Math.floor(Math.random() * 4) + 1,
-            errors: Math.floor(Math.random() * 20),
-            hints: Math.floor(Math.random() * 10)
+        const { limit, offset } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 100 });
+        const scores = dataStore.getScoresByUser(req.user.userId).sort(byDateDesc);
+
+        const games = scores.slice(offset, offset + limit).map((score) => toOwnScore(score, {
+            date: score.submittedAt
         }));
 
         res.json({
             success: true,
             games,
             pagination: {
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                total: 25 // Simulation
+                limit,
+                offset,
+                total: scores.length,
+                hasMore: scores.length > offset + limit
             }
         });
     } catch (error) {
-        console.error('Erreur récupération parties:', error);
+        console.error('Erreur récupération parties:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
@@ -149,73 +140,67 @@ router.get('/games', authenticateToken, (req, res) => {
 // Récupérer le classement des utilisateurs
 router.get('/leaderboard', (req, res) => {
     try {
-        const { limit = 10, sortBy = 'bestScore' } = req.query;
-        
-        const allUsers = dataStore.getAllUsers()
-            .filter(user => user.isActive)
-            .sort((a, b) => {
-                switch (sortBy) {
-                    case 'bestScore':
-                        return b.bestScore - a.bestScore;
-                    case 'totalScore':
-                        return b.totalScore - a.totalScore;
-                    case 'gamesPlayed':
-                        return b.gamesPlayed - a.gamesPlayed;
-                    case 'username':
-                        return a.username.localeCompare(b.username);
-                    default:
-                        return b.bestScore - a.bestScore;
-                }
-            })
-            .slice(0, parseInt(limit))
+        const { limit } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 100 });
+        const sortBy = queryString(req.query.sortBy, 'bestScore');
+
+        const comparators = {
+            bestScore: (a, b) => (b.bestScore - a.bestScore) || (b.gamesPlayed - a.gamesPlayed),
+            totalScore: (a, b) => (b.totalScore - a.totalScore) || (b.bestScore - a.bestScore),
+            gamesPlayed: (a, b) => (b.gamesPlayed - a.gamesPlayed) || (b.bestScore - a.bestScore),
+            username: (a, b) => a.username.localeCompare(b.username, 'fr'),
+        };
+        const compare = comparators[sortBy] || comparators.bestScore;
+
+        const leaderboard = activeUsers()
+            .map((user) => ({
+                username: user.username,
+                teamName: user.teamName || null,
+                bestScore: round1(user.bestScore),
+                totalScore: round1(user.totalScore),
+                gamesPlayed: Number(user.gamesPlayed) || 0,
+            }))
+            .sort(compare)
+            .slice(0, limit)
             .map((user, index) => ({
                 rank: index + 1,
-                username: user.username,
-                teamName: user.teamName,
-                bestScore: user.bestScore,
-                totalScore: user.totalScore,
-                gamesPlayed: user.gamesPlayed,
-                averageScore: user.gamesPlayed > 0 ? Math.round(user.totalScore / user.gamesPlayed) : 0
+                ...user,
+                averageScore: user.gamesPlayed > 0 ? round1(user.totalScore / user.gamesPlayed) : 0
             }));
 
         res.json({
             success: true,
-            leaderboard: allUsers,
-            sortBy,
-            total: allUsers.length
+            leaderboard,
+            sortBy: comparators[sortBy] ? sortBy : 'bestScore',
+            total: leaderboard.length
         });
     } catch (error) {
-        console.error('Erreur récupération classement:', error);
+        console.error('Erreur récupération classement:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
 
-// Rechercher des utilisateurs
+// Rechercher des utilisateurs (par nom d'utilisateur ou d'équipe)
 router.get('/search', (req, res) => {
     try {
-        const { q, limit = 10 } = req.query;
-        
-        if (!q || q.trim().length < 2) {
-            return res.status(400).json({
-                error: 'Terme de recherche requis (minimum 2 caractères)'
-            });
+        const q = queryString(req.query.q, '');
+        const { limit } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
+
+        if (q.length < 2) {
+            return badRequest(res, 'Terme de recherche requis (minimum 2 caractères).');
         }
 
-        const searchTerm = q.toLowerCase().trim();
-        const matchingUsers = dataStore.getAllUsers()
-            .filter(user => 
-                user.isActive && (
-                    user.username.toLowerCase().includes(searchTerm) ||
-                    (user.teamName && user.teamName.toLowerCase().includes(searchTerm))
-                )
+        const searchTerm = q.toLowerCase();
+        const matchingUsers = activeUsers()
+            .filter((user) =>
+                user.username.toLowerCase().includes(searchTerm) ||
+                (user.teamName && user.teamName.toLowerCase().includes(searchTerm))
             )
-            .slice(0, parseInt(limit))
-            .map(user => ({
-                id: user.id,
+            .slice(0, limit)
+            .map((user) => ({
                 username: user.username,
-                teamName: user.teamName,
-                bestScore: user.bestScore,
-                gamesPlayed: user.gamesPlayed
+                teamName: user.teamName || null,
+                bestScore: round1(user.bestScore),
+                gamesPlayed: Number(user.gamesPlayed) || 0
             }));
 
         res.json({
@@ -225,38 +210,47 @@ router.get('/search', (req, res) => {
             total: matchingUsers.length
         });
     } catch (error) {
-        console.error('Erreur recherche utilisateurs:', error);
+        console.error('Erreur recherche utilisateurs:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });
 
-// Récupérer les utilisateurs les plus actifs
+// Utilisateurs les plus actifs sur la période (nombre de parties enregistrées)
 router.get('/most-active', (req, res) => {
     try {
-        const { limit = 10, period = 'week' } = req.query;
-        
-        // Simulation des utilisateurs les plus actifs
-        const activeUsers = dataStore.getAllUsers()
-            .filter(user => user.isActive)
-            .sort((a, b) => b.gamesPlayed - a.gamesPlayed)
-            .slice(0, parseInt(limit))
-            .map((user, index) => ({
-                rank: index + 1,
+        const { limit } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 100 });
+        const requested = queryString(req.query.period, 'week');
+        const period = (PERIODS_MS[requested] || requested === 'all') ? requested : 'week';
+        const since = period === 'all' ? 0 : Date.now() - PERIODS_MS[period];
+
+        const counts = new Map();
+        for (const score of dataStore.getAllScores()) {
+            if (toTime(score.submittedAt) >= since) {
+                counts.set(score.userId, (counts.get(score.userId) || 0) + 1);
+            }
+        }
+
+        const users = activeUsers()
+            .filter((user) => counts.has(user.id))
+            .map((user) => ({
                 username: user.username,
-                teamName: user.teamName,
-                gamesPlayed: user.gamesPlayed,
-                lastLogin: user.lastLogin,
-                bestScore: user.bestScore
-            }));
+                teamName: user.teamName || null,
+                gamesPlayed: counts.get(user.id),
+                lastLogin: user.lastLogin || null,
+                bestScore: round1(user.bestScore)
+            }))
+            .sort((a, b) => (b.gamesPlayed - a.gamesPlayed) || (b.bestScore - a.bestScore))
+            .slice(0, limit)
+            .map((user, index) => ({ rank: index + 1, ...user }));
 
         res.json({
             success: true,
-            activeUsers,
+            activeUsers: users,
             period,
-            total: activeUsers.length
+            total: users.length
         });
     } catch (error) {
-        console.error('Erreur récupération utilisateurs actifs:', error);
+        console.error('Erreur récupération utilisateurs actifs:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });

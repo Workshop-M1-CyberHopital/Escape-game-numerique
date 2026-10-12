@@ -1,13 +1,18 @@
+# Utilisé uniquement si front/ sert de contexte de build (docker build front/).
+# L'image officielle est construite depuis la racine du dépôt : c'est alors /.dockerignore qui s'applique.
 node_modules
-npm-debug.log
+dist
+dist-ssr
+coverage
+.nyc_output
+.cache
 .git
 .gitignore
-README.md
-.env
-.nyc_output
-coverage
 .vscode
 .idea
-*.log
-dist
 .DS_Store
+*.log
+README.md
+.env
+.env.*
+*.env
